@@ -50,6 +50,12 @@ export async function runInDocker(
     "--cpus", "1",
     "--pids-limit", "64",
     "--read-only",
+    "--cap-drop=ALL",
+    "--security-opt=no-new-privileges:true",
+    "--user", "1000:1000",
+    "--ulimit", "fsize=10485760:10485760", // 10MB max file size
+    "--ulimit", "nofile=64:64",           // max 64 open file descriptors
+    "--ulimit", "nproc=64:64",            // max 64 processes
     "--tmpfs", "/tmp:rw,noexec,nosuid,size=64m",
     "-i",
     "-v", `${hostPath}:/sandbox:rw`,
@@ -77,13 +83,34 @@ export async function runInDocker(
       });
     }
 
+    const maxOutputBytes = options.maxOutputBytes || 1024 * 1024; // 1MB stdout cap
+    const maxStderrBytes = 1024 * 1024; // 1MB stderr cap
+    let isOutputExceeded = false;
+
     const timer = setTimeout(() => {
       isTimedOut = true;
       try { child.kill(); } catch {}
     }, timeoutMs);
 
-    child.stdout?.on("data", (chunk) => { stdout += chunk.toString(); });
-    child.stderr?.on("data", (chunk) => { stderr += chunk.toString(); });
+    child.stdout?.on("data", (chunk) => {
+      if (stdout.length + chunk.length > maxOutputBytes) {
+        isOutputExceeded = true;
+        stdout += chunk.toString().slice(0, maxOutputBytes - stdout.length);
+        try { child.kill(); } catch {}
+      } else {
+        stdout += chunk.toString();
+      }
+    });
+
+    child.stderr?.on("data", (chunk) => {
+      if (stderr.length + chunk.length > maxStderrBytes) {
+        isOutputExceeded = true;
+        stderr += chunk.toString().slice(0, maxStderrBytes - stderr.length);
+        try { child.kill(); } catch {}
+      } else {
+        stderr += chunk.toString();
+      }
+    });
 
     try {
       child.stdin?.write(inputData);
@@ -113,6 +140,17 @@ export async function runInDocker(
           runtime: timeoutMs,
           isTLE: true,
           error: "Time Limit Exceeded (TLE)",
+        });
+        return;
+      }
+
+      if (isOutputExceeded) {
+        resolve({
+          passed: false,
+          got: stdout.trim(),
+          expected: expectedOutput,
+          runtime,
+          error: "Output Limit Exceeded (OLE) — standard output or error stream exceeded 1MB quota",
         });
         return;
       }

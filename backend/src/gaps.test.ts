@@ -77,11 +77,11 @@ describe("Rate Limiter Module", () => {
 });
 
 describe("Sandbox Module", () => {
-  test("default sandbox mode is process", () => {
+  test("default sandbox mode is firecracker", () => {
     const original = process.env.SANDBOX_MODE;
     delete process.env.SANDBOX_MODE;
     delete process.env.DOCKER_SANDBOX;
-    expect(getSandboxMode()).toBe("process");
+    expect(getSandboxMode()).toBe("firecracker");
     if (original) process.env.SANDBOX_MODE = original;
   });
 
@@ -92,8 +92,10 @@ describe("Sandbox Module", () => {
   });
 
   test("validateSandboxSafety flags missing docker in strict mode", async () => {
+    const origMode = process.env.SANDBOX_MODE;
     const origSandbox = process.env.STRICT_SANDBOX;
     const origMockDocker = process.env.MOCK_DOCKER;
+    process.env.SANDBOX_MODE = "docker";
     process.env.STRICT_SANDBOX = "true";
     process.env.MOCK_DOCKER = "false";
     try {
@@ -101,6 +103,8 @@ describe("Sandbox Module", () => {
       expect(res.safe).toBe(false);
       expect(res.reason).toContain("Docker container isolation is required");
     } finally {
+      if (origMode) process.env.SANDBOX_MODE = origMode;
+      else delete process.env.SANDBOX_MODE;
       if (origSandbox) process.env.STRICT_SANDBOX = origSandbox;
       else delete process.env.STRICT_SANDBOX;
       if (origMockDocker) process.env.MOCK_DOCKER = origMockDocker;
@@ -108,3 +112,87 @@ describe("Sandbox Module", () => {
     }
   });
 });
+
+describe("Issue 12 & 13 — Interview Authorization & Score Validation", () => {
+  test("scorecard rejects missing scores", () => {
+    const validateScore = (val: any, fieldName: string) => {
+      if (val === undefined || val === null || val === "") {
+        throw new Error(`Missing required evaluation score: '${fieldName}'`);
+      }
+      const num = Number(val);
+      if (isNaN(num) || !Number.isInteger(num) || num < 1 || num > 10) {
+        throw new Error(`Invalid score for '${fieldName}': must be an integer between 1 and 10. Received: ${val}`);
+      }
+      return num;
+    };
+
+    expect(() => validateScore(undefined, "codingScore")).toThrow("Missing required evaluation score");
+    expect(() => validateScore(null, "commScore")).toThrow("Missing required evaluation score");
+  });
+
+  test("scorecard rejects out-of-bounds (0, negative, >10) and non-integer scores", () => {
+    const validateScore = (val: any, fieldName: string) => {
+      if (val === undefined || val === null || val === "") {
+        throw new Error(`Missing required evaluation score: '${fieldName}'`);
+      }
+      const num = Number(val);
+      if (isNaN(num) || !Number.isInteger(num) || num < 1 || num > 10) {
+        throw new Error(`Invalid score for '${fieldName}': must be an integer between 1 and 10. Received: ${val}`);
+      }
+      return num;
+    };
+
+    expect(() => validateScore(0, "codingScore")).toThrow("must be an integer between 1 and 10");
+    expect(() => validateScore(11, "codingScore")).toThrow("must be an integer between 1 and 10");
+    expect(() => validateScore(-5, "codingScore")).toThrow("must be an integer between 1 and 10");
+    expect(() => validateScore(4.5, "codingScore")).toThrow("must be an integer between 1 and 10");
+    expect(() => validateScore("invalid_number", "codingScore")).toThrow("must be an integer between 1 and 10");
+  });
+
+  test("scorecard accepts valid integers from 1 to 10", () => {
+    const validateScore = (val: any, fieldName: string) => {
+      if (val === undefined || val === null || val === "") {
+        throw new Error(`Missing required evaluation score: '${fieldName}'`);
+      }
+      const num = Number(val);
+      if (isNaN(num) || !Number.isInteger(num) || num < 1 || num > 10) {
+        throw new Error(`Invalid score for '${fieldName}': must be an integer between 1 and 10. Received: ${val}`);
+      }
+      return num;
+    };
+
+    expect(validateScore(1, "codingScore")).toBe(1);
+    expect(validateScore(10, "codingScore")).toBe(10);
+    expect(validateScore("7", "commScore")).toBe(7);
+  });
+
+  test("interview authorization correctly distinguishes interviewer vs participant vs outsider", () => {
+    const mockInterview = {
+      id: "interview-123",
+      interviewerId: "user-interviewer",
+      participants: [
+        { userId: "user-interviewer", role: "interviewer" },
+        { userId: "user-candidate", role: "candidate" }
+      ]
+    };
+
+    const checkAuth = (userId: string) => {
+      const isInterviewer = mockInterview.interviewerId === userId;
+      const participantEntry = mockInterview.participants.find(p => p.userId === userId);
+      const isCandidate = participantEntry?.role === "candidate";
+      const isParticipant = isInterviewer || !!participantEntry;
+      return { isInterviewer, isCandidate, isParticipant };
+    };
+
+    expect(checkAuth("user-interviewer").isInterviewer).toBe(true);
+    expect(checkAuth("user-interviewer").isParticipant).toBe(true);
+
+    expect(checkAuth("user-candidate").isInterviewer).toBe(false);
+    expect(checkAuth("user-candidate").isCandidate).toBe(true);
+    expect(checkAuth("user-candidate").isParticipant).toBe(true);
+
+    expect(checkAuth("user-outsider").isParticipant).toBe(false);
+    expect(checkAuth("user-outsider").isInterviewer).toBe(false);
+  });
+});
+

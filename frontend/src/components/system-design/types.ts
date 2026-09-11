@@ -91,3 +91,29 @@ export interface ChaosScenario {
   remediationPlaybook: string;
   impactedNodeType: string;
 }
+
+export interface SDProjectVersion {
+  id: string;
+  versionNumber: number;
+  message: string;
+  nodes: SDNode[];
+  connections: SDConnection[];
+  createdAt: string;
+}
+
+export interface SDProject {
+  id: string;
+  title: string;
+  description: string;
+  templateId?: string;
+  ownerId: string;
+  isPublic: boolean;
+  shareToken?: string;
+  nodes: SDNode[];
+  connections: SDConnection[];
+  version: number;
+  versions: SDProjectVersion[];
+  createdAt: string;
+  updatedAt: string;
+}
+

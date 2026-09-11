@@ -61,8 +61,8 @@ if (IS_PROD && (!process.env.CORS_ORIGIN || CORS_ORIGINS.length === 0 || CORS_OR
 
 export const MAX_JSON_BODY = "5mb";
 
-/** Sandbox execution mode: "process" (default) or "docker" */
-export const SANDBOX_MODE = process.env.SANDBOX_MODE || "process";
+/** Sandbox execution mode: "firecracker" (default secure), "docker", or "process" */
+export const SANDBOX_MODE = process.env.SANDBOX_MODE || "firecracker";
 
 /** Allow mock social login without OAuth token in development */
 export function isDevSocialAuthAllowed(): boolean {

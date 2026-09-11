@@ -103,6 +103,99 @@ class NotificationService {
     });
     return result.count > 0;
   }
+
+  async markAllAsRead(userId: string): Promise<number> {
+    const result = await prisma.notification.updateMany({
+      where: {
+        read: false,
+        OR: [{ userId }, { isBroadcast: true }],
+      },
+      data: { read: true },
+    });
+    return result.count;
+  }
+
+  /**
+   * Send notification with deduplication window (e.g. 1 hour window for same title & recipient)
+   */
+  async sendWithDeduplication(
+    userId: string,
+    title: string,
+    message: string,
+    type: NotificationType = "system",
+    link?: string,
+    dedupWindowMinutes = 60
+  ): Promise<NotificationItem | null> {
+    const windowStart = new Date(Date.now() - dedupWindowMinutes * 60 * 1000);
+    const existing = await prisma.notification.findFirst({
+      where: {
+        userId,
+        title,
+        createdAt: { gte: windowStart }
+      }
+    });
+    if (existing) {
+      return null;
+    }
+    return this.send(userId, title, message, type, link);
+  }
+
+  /**
+   * Standardized Event Emitters for Platform Events
+   */
+  async onSubmissionCompleted(userId: string, problemTitle: string, status: string, submissionId: string) {
+    const isSuccess = status === "Success";
+    return this.send(
+      userId,
+      isSuccess ? "Submission Accepted 🎉" : "Submission Result Available",
+      isSuccess
+        ? `Congratulations! Your solution for "${problemTitle}" passed all test cases.`
+        : `Your submission for "${problemTitle}" concluded with verdict: ${status}.`,
+      "submission",
+      `/submissions/${submissionId}`
+    );
+  }
+
+  async onInterviewScheduled(userId: string, interviewTitle: string, interviewId: string, scheduledDate: string) {
+    return this.send(
+      userId,
+      "Technical Interview Scheduled 📅",
+      `You have a technical interview "${interviewTitle}" scheduled for ${scheduledDate}.`,
+      "system",
+      `/interviews`
+    );
+  }
+
+  async onContestStarts(contestTitle: string, contestId: string) {
+    return this.send(
+      "all",
+      "Live Coding Contest Started ⚔️",
+      `"${contestTitle}" is now live! Join now to compete for rating points.`,
+      "contest",
+      `/contests/${contestId}`
+    );
+  }
+
+  async onCommentReply(userId: string, replierName: string, discussionTitle: string, discussionId: string) {
+    return this.send(
+      userId,
+      "New Reply on Discussion 💬",
+      `${replierName} replied to "${discussionTitle}".`,
+      "forum",
+      `/discuss`
+    );
+  }
+
+  async onAchievementUnlocked(userId: string, achievementName: string, xpReward: number) {
+    return this.sendWithDeduplication(
+      userId,
+      `Achievement Unlocked: ${achievementName} 🏆`,
+      `You unlocked "${achievementName}" and earned +${xpReward} XP!`,
+      "achievement",
+      `/profile`,
+      1440
+    );
+  }
 }
 
 export const notificationService = new NotificationService();

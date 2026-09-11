@@ -48,7 +48,7 @@ services:
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3003,http://localhost:80}
       ALLOW_DEV_SOCIAL_AUTH: ${ALLOW_DEV_SOCIAL_AUTH:-false}
       SANDBOX_MODE: ${SANDBOX_MODE:-docker}
-      TRUST_PROXY: ${TRUST_PROXY:-true}
+      TRUST_PROXY: ${TRUST_PROXY:-false}
       AWS_S3_BUCKET: ${AWS_S3_BUCKET:-}
       AWS_REGION: ${AWS_REGION:-us-east-1}
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}

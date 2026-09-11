@@ -64,46 +64,20 @@ const ATTACK_DETECTION_PATTERNS: Array<{
 ];
 
 export class SandboxSecurityEngine extends EventEmitter {
+  // Issues 22 & 23: Initialize telemetry and audit logs with genuine empty state
+  // rather than hardcoded mock demo records, ensuring dashboard displays accurate live telemetry.
   private telemetry: SecurityTelemetryStats = {
-    sandboxViolations: 17,
-    networkAttempts: 4,
-    forkBombsBlocked: 2,
-    cpuAbuse: 11,
-    filesystemViolations: 7,
-    containerEscapeAttempts: 1,
-    totalThreatsNeutralized: 42,
+    sandboxViolations: 0,
+    networkAttempts: 0,
+    forkBombsBlocked: 0,
+    cpuAbuse: 0,
+    filesystemViolations: 0,
+    containerEscapeAttempts: 0,
+    totalThreatsNeutralized: 0,
     activeIsolationMode: "Firecracker"
   };
 
-  private auditLogs: SandboxSecurityEvent[] = [
-    {
-      id: "sec_log_1",
-      timestamp: new Date(Date.now() - 3600000 * 3).toISOString(),
-      type: "fork_bomb",
-      severity: "CRITICAL",
-      description: "Bash fork bomb signature detected",
-      details: { pattern: ":(){ :|:& };:" },
-      actionTaken: "BLOCKED"
-    },
-    {
-      id: "sec_log_2",
-      timestamp: new Date(Date.now() - 3600000 * 8).toISOString(),
-      type: "network_scanning",
-      severity: "HIGH",
-      description: "Direct socket connection / port scan blocked by network namespace isolation",
-      details: { target: "169.254.169.254:80" },
-      actionTaken: "BLOCKED"
-    },
-    {
-      id: "sec_log_3",
-      timestamp: new Date(Date.now() - 3600000 * 14).toISOString(),
-      type: "filesystem_traversal",
-      severity: "HIGH",
-      description: "Unauthorized probe to /etc/passwd in read-only sandbox root",
-      details: { path: "/etc/passwd" },
-      actionTaken: "BLOCKED"
-    }
-  ];
+  private auditLogs: SandboxSecurityEvent[] = [];
 
   public inspectPayload(
     code: string,

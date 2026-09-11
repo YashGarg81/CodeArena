@@ -39,15 +39,16 @@ export async function shouldUseDockerSandbox(): Promise<boolean> {
 
 /**
  * Returns the currently active execution sandbox engine mode.
+ * Defaults to secure "firecracker" mode.
  */
 export function getSandboxMode(): "firecracker" | "docker" | "process" {
-  if (process.env.SANDBOX_MODE === "firecracker" || process.env.FIRECRACKER_SANDBOX === "true") {
-    return "firecracker";
-  }
   if (process.env.SANDBOX_MODE === "docker" || process.env.DOCKER_SANDBOX === "true") {
     return "docker";
   }
-  return "process";
+  if (process.env.SANDBOX_MODE === "process") {
+    return "process";
+  }
+  return "firecracker";
 }
 
 /**

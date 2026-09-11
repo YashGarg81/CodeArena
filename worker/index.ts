@@ -27,21 +27,73 @@ interface TestResult {
     error?: string;
 }
 
+const PENDING_QUEUE = "problems";
+const PROCESSING_QUEUE = "problems:processing";
+const DLQ_QUEUE = "problems:dlq";
+const WORKER_HEARTBEAT_KEY = "worker:heartbeat:judge_node_1";
+const MAX_RETRY_ATTEMPTS = 3;
+
 redisClient.connect()
     .then(async () => {
-        console.log("⚡ CodeArena Sandbox Queue Worker connected to Redis list 'problems'...");
+        console.log("⚡ CodeArena Sandbox Queue Worker connected (Reliable Queue Mode)...");
+        
+        // 1. Worker Heartbeat registration (every 10s with 30s TTL)
+        setInterval(async () => {
+            try {
+                await redisClient.set(WORKER_HEARTBEAT_KEY, JSON.stringify({
+                    status: "alive",
+                    timestamp: new Date().toISOString(),
+                    pid: process.pid,
+                    memoryUsage: process.memoryUsage()
+                }), { EX: 30 });
+            } catch {}
+        }, 10000);
+
+        // 2. Recover any stranded tasks from previous crashes
+        try {
+            let stranded = await redisClient.rPopLPush(PROCESSING_QUEUE, PENDING_QUEUE);
+            while (stranded) {
+                console.warn(`[Queue Recovery] Restored unacknowledged task to pending queue: ${stranded}`);
+                stranded = await redisClient.rPopLPush(PROCESSING_QUEUE, PENDING_QUEUE);
+            }
+        } catch {}
+
         while (1) {
-            const response = await redisClient.rPop("problems");
+            // Atomically move submission from pending to processing list
+            let response: string | null = null;
+            try {
+                // Use rPopLPush for reliable queuing (retains item in PROCESSING_QUEUE until acknowledged)
+                response = await redisClient.rPopLPush(PENDING_QUEUE, PROCESSING_QUEUE);
+            } catch {
+                // Fallback to rPop if rPopLPush fails
+                response = await redisClient.rPop(PENDING_QUEUE);
+            }
+
             if (!response) {
                 await new Promise((r) => setTimeout(r, 600));
                 continue;
             }
 
-            const parsedResponse = JSON.parse(response);
-            const submissionId = parsedResponse.submissionId;
-            const problemId = parsedResponse.problemId;
-            const code = parsedResponse.code;
-            const language = parsedResponse.language || "js";
+            let parsedResponse: any;
+            try {
+                parsedResponse = JSON.parse(response);
+            } catch (jsonErr: any) {
+                console.error(`[Queue Error] Malformed Redis message payload (failed JSON.parse): ${response}`, jsonErr);
+                // Acknowledge by removing unparseable item from processing queue so it doesn't loop
+                await redisClient.lRem(PROCESSING_QUEUE, 1, response).catch(() => {});
+                continue;
+            }
+
+            const submissionId = parsedResponse?.submissionId;
+            const problemId = parsedResponse?.problemId;
+            const code = parsedResponse?.code;
+            const language = parsedResponse?.language || "js";
+
+            if (!submissionId || !problemId || typeof code !== "string") {
+                console.error(`[Queue Error] Submission payload missing required fields:`, parsedResponse);
+                await redisClient.lRem(PROCESSING_QUEUE, 1, response).catch(() => {});
+                continue;
+            }
 
             console.log(`\n[Queue] Evaluating submission ${submissionId} for [${problemId}] in (${language})...`);
 
@@ -55,6 +107,8 @@ redisClient.connect()
                         errorMessage: sandboxCheck.reason
                     }
                 });
+                // Acknowledge by removing from processing queue
+                await redisClient.lRem(PROCESSING_QUEUE, 1, response).catch(() => {});
                 continue;
             }
 
@@ -68,6 +122,8 @@ redisClient.connect()
                         errorMessage: secCheck.reason
                     }
                 });
+                // Acknowledge by removing from processing queue
+                await redisClient.lRem(PROCESSING_QUEUE, 1, response).catch(() => {});
                 continue;
             }
 
@@ -102,7 +158,20 @@ redisClient.connect()
                     testCases = (problem.testCases as unknown as TestCase[]) || [];
                 }
 
-                const driverCode = DRIVERS[problemId]?.[language] ?? "";
+                // Issue 13: Driver lookup validation
+                // Algorithmic problems need their problem-specific runner driver, whereas custom/script problems don't.
+                // Log when no problem-specific driver is registered.
+                const problemDrivers = DRIVERS[problemId];
+                let driverCode = "";
+                if (problemDrivers) {
+                    if (problemDrivers[language]) {
+                        driverCode = problemDrivers[language];
+                    } else {
+                        console.warn(`[Driver Warning] No driver found for language '${language}' under problem '${problemId}'. Running code directly.`);
+                    }
+                } else {
+                    console.log(`[Driver Info] No specific driver registered for problem '${problemId}'. Running as standalone script.`);
+                }
                 const codeWithDriver = code + driverCode;
 
                 const folderPath = __dirname + `/code_${submissionId.replace(/[^a-zA-Z0-9_-]/g, "")}`;
@@ -110,16 +179,60 @@ redisClient.connect()
                     fs.mkdirSync(folderPath, { recursive: true });
                 }
 
-                console.log(`Running code against ${testCases.length} test cases via Language Adapter [${language}]...`);
+                // Issue 14: Defense against unbounded test cases & workload amplification
+                const MAX_TEST_CASES = 50;
+                const MAX_TOTAL_INPUT_BYTES = 1024 * 1024; // 1 MB total input cap across all cases
+                const MAX_CUMULATIVE_TIMEOUT_MS = 60000; // 60s total execution budget per submission
+
+                const executableTestCases = testCases.slice(0, MAX_TEST_CASES);
+                if (testCases.length > MAX_TEST_CASES) {
+                    console.warn(`[Workload Protection] Problem ${problemId} has ${testCases.length} test cases; capping execution to ${MAX_TEST_CASES}.`);
+                }
+
+                console.log(`Running code against ${executableTestCases.length} test cases via Language Adapter [${language}]...`);
                 const results: TestResult[] = [];
                 let hasTle = false;
                 let hasFailure = false;
                 let isCompileFail = false;
                 let passedCount = 0;
+                let totalInputBytes = 0;
+                let cumulativeRuntimeMs = 0;
 
-                for (let i = 0; i < testCases.length; i++) {
-                    const tc = testCases[i];
+                for (let i = 0; i < executableTestCases.length; i++) {
+                    const tc = executableTestCases[i];
                     if (!tc) continue;
+
+                    // Check total input bytes
+                    const tcInputBytes = Buffer.byteLength(tc.input || "", "utf-8");
+                    totalInputBytes += tcInputBytes;
+                    if (totalInputBytes > MAX_TOTAL_INPUT_BYTES) {
+                        hasFailure = true;
+                        results.push({
+                            input: tc.input,
+                            expected: tc.output,
+                            got: "",
+                            passed: false,
+                            runtime: 0,
+                            isHidden: tc.isHidden,
+                            error: `Payload Limit Exceeded: Total test input exceeds ${MAX_TOTAL_INPUT_BYTES / 1024} KB limit.`
+                        });
+                        break;
+                    }
+
+                    // Check cumulative execution time budget
+                    if (cumulativeRuntimeMs >= MAX_CUMULATIVE_TIMEOUT_MS) {
+                        hasTle = true;
+                        results.push({
+                            input: tc.input,
+                            expected: tc.output,
+                            got: "",
+                            passed: false,
+                            runtime: 0,
+                            isHidden: tc.isHidden,
+                            error: `Cumulative Time Limit Exceeded: Total submission execution exceeded ${MAX_CUMULATIVE_TIMEOUT_MS / 1000}s limit.`
+                        });
+                        break;
+                    }
 
                     const execResult = await LanguageAdapterRegistry.executeCode(language, {
                         folderPath,
@@ -129,6 +242,8 @@ redisClient.connect()
                         timeoutMs: problem.timeLimit || 4000,
                         memoryLimitMb: problem.memoryLimit || 256
                     });
+
+                    cumulativeRuntimeMs += execResult.runtime || 0;
 
                     results.push({
                         input: tc.input,
@@ -176,7 +291,7 @@ redisClient.connect()
                     finalStatus = "RuntimeError";
                     const lastResult = results[results.length - 1];
                     finalOutput = lastResult?.error ?? "Runtime Error";
-                } else if (passedCount < testCases.length) {
+                } else if (passedCount < executableTestCases.length) {
                     finalStatus = "WrongAnswer";
                     const failedTc = results.find((r) => !r.passed);
                     if (failedTc) {
@@ -185,7 +300,7 @@ redisClient.connect()
                 } else {
                     finalStatus = "Success";
                     const totalRt = results.reduce((acc, r) => acc + r.runtime, 0);
-                    finalOutput = `Accepted! All ${testCases.length} test cases passed.\nTotal execution time: ${totalRt.toFixed(1)}ms`;
+                    finalOutput = `Accepted! All ${executableTestCases.length} test cases passed.\nTotal execution time: ${totalRt.toFixed(1)}ms`;
                 }
 
                 const completedTests = results.filter((r) => !r.error || !r.error.includes("TLE"));
@@ -194,13 +309,68 @@ redisClient.connect()
                     : (hasTle ? (problem.timeLimit || 4000) : 0);
                 runtime = Math.round(runtime * 100) / 100;
 
-                console.log(`Submission ${submissionId} => ${finalStatus} (${passedCount}/${testCases.length} tests passed, avg runtime: ${runtime}ms)`);
+                console.log(`Submission ${submissionId} => ${finalStatus} (${passedCount}/${executableTestCases.length} tests passed, avg runtime: ${runtime}ms)`);
+
+                // Check idempotency: avoid duplicate scoring if submission is already finished
+                const existingSubmission = await prisma.submissions.findUnique({
+                    where: { id: submissionId },
+                    select: { status: true, userId: true }
+                });
+                if (existingSubmission && existingSubmission.status !== "Processing") {
+                    console.log(`[Idempotency] Submission ${submissionId} already evaluated with status: ${existingSubmission.status}. Skipping.`);
+                    await redisClient.lRem(PROCESSING_QUEUE, 1, response).catch(() => {});
+                    continue;
+                }
 
                 if (finalStatus === "Success") {
+                    // 1. Increment problem solve count
                     await prisma.problems.update({
                         where: { id: problemId },
                         data: { solveCount: { increment: 1 } }
                     }).catch(() => {});
+
+                    // 2. Award XP, streak, and update user statistics
+                    if (existingSubmission?.userId) {
+                        try {
+                            const u = await prisma.user.findUnique({
+                                where: { id: existingSubmission.userId },
+                                select: { xp: true, streak: true, longestStreak: true, lastActiveDate: true }
+                            });
+                            if (u) {
+                                const xpGain = problem.difficulty === "Hard" ? 50 : problem.difficulty === "Medium" ? 30 : 15;
+                                const newXp = (u.xp || 0) + xpGain;
+                                const newLevel = Math.floor(newXp / 100) + 1;
+
+                                const now = new Date();
+                                const todayStr = now.toISOString().slice(0, 10);
+                                const lastActiveStr = u.lastActiveDate ? new Date(u.lastActiveDate).toISOString().slice(0, 10) : "";
+                                
+                                let newStreak = u.streak || 0;
+                                if (lastActiveStr !== todayStr) {
+                                    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+                                    if (lastActiveStr === yesterday) {
+                                        newStreak += 1;
+                                    } else {
+                                        newStreak = 1;
+                                    }
+                                }
+                                const newLongest = Math.max(u.longestStreak || 0, newStreak);
+
+                                await prisma.user.update({
+                                    where: { id: existingSubmission.userId },
+                                    data: {
+                                        xp: newXp,
+                                        level: newLevel,
+                                        streak: newStreak,
+                                        longestStreak: newLongest,
+                                        lastActiveDate: now
+                                    }
+                                });
+                            }
+                        } catch (uErr) {
+                            console.error("[Stats Error] Failed to update user XP & streaks:", uErr);
+                        }
+                    }
                 }
 
                 // Write results back to database
@@ -221,14 +391,32 @@ redisClient.connect()
 
             } catch (err: any) {
                 console.error("Worker processing failed:", err);
-                await prisma.submissions.update({
-                    where: { id: submissionId },
-                    data: {
-                        status: "Failure",
-                        output: err.message,
-                        errorMessage: "Internal Worker Error"
-                    }
-                }).catch(() => {});
+                
+                // Retry Policy & Dead-Letter Queue (DLQ)
+                const attempts = (parsedResponse?.attempts || 0) + 1;
+                if (attempts < MAX_RETRY_ATTEMPTS) {
+                    console.warn(`[Retry Policy] Retrying submission ${submissionId} (Attempt ${attempts + 1}/${MAX_RETRY_ATTEMPTS})...`);
+                    await redisClient.lPush(PENDING_QUEUE, JSON.stringify({ ...parsedResponse, attempts }));
+                } else {
+                    console.error(`[Dead Letter Queue] Submission ${submissionId} exceeded max retry limit. Forwarding to ${DLQ_QUEUE}.`);
+                    await redisClient.lPush(DLQ_QUEUE, JSON.stringify({
+                        ...parsedResponse,
+                        error: err.message,
+                        failedAt: new Date().toISOString()
+                    })).catch(() => {});
+
+                    await prisma.submissions.update({
+                        where: { id: submissionId },
+                        data: {
+                            status: "Failure",
+                            output: err.message,
+                            errorMessage: "Internal Worker Error: Max retries exceeded"
+                        }
+                    }).catch(() => {});
+                }
+            } finally {
+                // Acknowledge task completion by removing from the processing queue
+                await redisClient.lRem(PROCESSING_QUEUE, 1, response).catch(() => {});
             }
         }
     })

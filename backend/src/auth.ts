@@ -1,18 +1,49 @@
 import type { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { prisma } from "../db";
-import { getJwtSecret } from "./config";
+import { getJwtSecret, getRefreshTokenSecret } from "./config";
 import { getRedisClient } from "./redisClient";
 
-const revokedTokensMemory = new Set<string>();
+import crypto from "crypto";
+
+// In-memory revocation cache with TTL & size bound to prevent unbounded growth / memory leaks
+const MAX_REVOKED_TOKENS = 10_000;
+const REVOCATION_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days (matching max token lifetime)
+const revokedTokensMemory = new Map<string, number>(); // tokenHash -> expiresAt
+
+function hashToken(token: string): string {
+  return crypto.createHash("sha256").update(token).digest("hex");
+}
+
+function pruneRevocationCache(): void {
+  const now = Date.now();
+  for (const [key, expiresAt] of revokedTokensMemory.entries()) {
+    if (now > expiresAt) {
+      revokedTokensMemory.delete(key);
+    }
+  }
+  // If still above maximum capacity, evict oldest entries
+  if (revokedTokensMemory.size > MAX_REVOKED_TOKENS) {
+    const overflow = revokedTokensMemory.size - MAX_REVOKED_TOKENS;
+    let evicted = 0;
+    for (const key of revokedTokensMemory.keys()) {
+      revokedTokensMemory.delete(key);
+      evicted++;
+      if (evicted >= overflow) break;
+    }
+  }
+}
 
 export async function revokeToken(token: string): Promise<void> {
   if (!token) return;
-  revokedTokensMemory.add(token);
+  const hash = hashToken(token);
+  pruneRevocationCache();
+  revokedTokensMemory.set(hash, Date.now() + REVOCATION_TTL_MS);
+
   const redis = getRedisClient();
   if (redis) {
     try {
-      await redis.set(`revoked_token:${token}`, "1", { EX: 7 * 24 * 60 * 60 });
+      await redis.set(`revoked_token:${hash}`, "1", { EX: 7 * 24 * 60 * 60 });
     } catch {
       // Redis fallback
     }
@@ -21,17 +52,26 @@ export async function revokeToken(token: string): Promise<void> {
 
 export function isTokenRevoked(token: string): boolean {
   if (!token) return false;
-  return revokedTokensMemory.has(token);
+  const hash = hashToken(token);
+  const expiresAt = revokedTokensMemory.get(hash);
+  if (!expiresAt) return false;
+  if (Date.now() > expiresAt) {
+    revokedTokensMemory.delete(hash);
+    return false;
+  }
+  return true;
 }
 
 export async function checkTokenRevocation(token: string): Promise<boolean> {
+  if (!token) return false;
   if (isTokenRevoked(token)) return true;
   const redis = getRedisClient();
   if (redis) {
     try {
-      const val = await redis.get(`revoked_token:${token}`);
+      const hash = hashToken(token);
+      const val = await redis.get(`revoked_token:${hash}`);
       if (val) {
-        revokedTokensMemory.add(token);
+        revokedTokensMemory.set(hash, Date.now() + REVOCATION_TTL_MS);
         return true;
       }
     } catch {}
@@ -51,7 +91,7 @@ export function generateAccessToken(payload: { userId: string; role: string; ses
 }
 
 export function generateRefreshToken(payload: { userId: string; familyId: string; sessionId?: string }): string {
-  return jwt.sign(payload, getJwtSecret() + "_refresh", { expiresIn: "7d" });
+  return jwt.sign(payload, getRefreshTokenSecret(), { expiresIn: "7d" });
 }
 
 export function auth(req: AuthenticatedRequest, res: Response, next: NextFunction): void {

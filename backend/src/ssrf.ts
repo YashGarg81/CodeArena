@@ -31,8 +31,32 @@ export interface SSRFValidationResult {
   sanitizedUrl?: string;
 }
 
+export function isIpBlocked(ipAddress: string): boolean {
+  const isIP = net.isIP(ipAddress);
+  if (isIP === 4) {
+    for (const prefix of BLOCKED_IP_PREFIXES) {
+      if (ipAddress.startsWith(prefix)) return true;
+    }
+  } else if (isIP === 6) {
+    if (
+      ipAddress === "::1" ||
+      ipAddress === "::" ||
+      ipAddress.startsWith("fc") ||
+      ipAddress.startsWith("fd") ||
+      ipAddress.startsWith("fe80") ||
+      ipAddress.includes("127.0.0.1") ||
+      ipAddress.includes("169.254.")
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
+import dns from "dns/promises";
+
 /**
- * Validates a target URL against SSRF vulnerabilities (internal IPs, cloud metadata, loopback).
+ * Synchronous preliminary URL validation against SSRF vulnerabilities (internal IPs, cloud metadata, loopback).
  */
 export function validateUrlForSSRF(rawUrl: string): SSRFValidationResult {
   if (!rawUrl || typeof rawUrl !== "string") {
@@ -59,26 +83,8 @@ export function validateUrlForSSRF(rawUrl: string): SSRFValidationResult {
   }
 
   // If host is an IP address, check against banned ranges
-  const isIP = net.isIP(hostname);
-  if (isIP === 4) {
-    for (const prefix of BLOCKED_IP_PREFIXES) {
-      if (hostname.startsWith(prefix)) {
-        return { safe: false, reason: `Access to private/internal IP range '${hostname}' is forbidden` };
-      }
-    }
-  } else if (isIP === 6) {
-    // Block IPv6 loopback (::1) and private (fc00::/7, fe80::/10, ::ffff:127.0.0.1)
-    if (
-      hostname === "::1" ||
-      hostname === "::" ||
-      hostname.startsWith("fc") ||
-      hostname.startsWith("fd") ||
-      hostname.startsWith("fe80") ||
-      hostname.includes("127.0.0.1") ||
-      hostname.includes("169.254.")
-    ) {
-      return { safe: false, reason: `Access to private IPv6 address '${hostname}' is forbidden` };
-    }
+  if (isIpBlocked(hostname)) {
+    return { safe: false, reason: `Access to private/internal IP address '${hostname}' is forbidden` };
   }
 
   // Block credentials in URL (e.g. http://user:pass@host)
@@ -87,4 +93,39 @@ export function validateUrlForSSRF(rawUrl: string): SSRFValidationResult {
   }
 
   return { safe: true, sanitizedUrl: parsed.toString() };
+}
+
+/**
+ * Issue 21: Full DNS-resolved SSRF & DNS rebinding protection.
+ * Performs DNS resolution immediately prior to network connection and verifies
+ * that resolved IP addresses do not resolve to internal, private, loopback, or metadata networks.
+ */
+export async function validateResolvedUrlForSSRF(rawUrl: string): Promise<SSRFValidationResult> {
+  const preliminary = validateUrlForSSRF(rawUrl);
+  if (!preliminary.safe) return preliminary;
+
+  const parsed = new URL(rawUrl);
+  const hostname = parsed.hostname.toLowerCase();
+
+  // If already an IP address, preliminary check was sufficient
+  if (net.isIP(hostname)) {
+    return preliminary;
+  }
+
+  try {
+    // Resolve both IPv4 and IPv6 addresses for hostname
+    const lookupResults = await dns.lookup(hostname, { all: true });
+    for (const record of lookupResults) {
+      if (isIpBlocked(record.address)) {
+        return {
+          safe: false,
+          reason: `DNS resolution for '${hostname}' mapped to forbidden internal/private IP '${record.address}' (DNS rebinding prevention)`
+        };
+      }
+    }
+  } catch (err: any) {
+    return { safe: false, reason: `DNS resolution failed for '${hostname}': ${err.message}` };
+  }
+
+  return preliminary;
 }

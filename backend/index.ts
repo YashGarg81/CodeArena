@@ -3140,7 +3140,7 @@ app.get("/api/v1/developer/dashboard", developerAuth, async (req: any, res) => {
             console: {
                 version: "v1.2.0",
                 environment: process.env.NODE_ENV || "development",
-                sandboxMode: process.env.SANDBOX_MODE || "process",
+                sandboxMode: process.env.SANDBOX_MODE || "firecracker",
                 supportedLanguages: ["python", "javascript", "cpp", "java", "go"],
                 features: {
                     githubSync: true,
@@ -3170,7 +3170,7 @@ app.get("/api/v1/developer/telemetry", developerAuth, async (_req: any, res) => 
                 heapUsedMb: (mem.heapUsed / 1024 / 1024).toFixed(2),
                 heapTotalMb: (mem.heapTotal / 1024 / 1024).toFixed(2)
             },
-            sandboxMode: process.env.SANDBOX_MODE || "process"
+            sandboxMode: process.env.SANDBOX_MODE || "firecracker"
         });
     } catch (err: any) { res.status(500).json({ error: err.message }); }
 });
@@ -3179,7 +3179,7 @@ app.get("/api/v1/developer/telemetry", developerAuth, async (_req: any, res) => 
 app.get("/api/v1/developer/sandbox-health", developerAuth, async (_req: any, res) => {
     res.json({
         engine: "CodeArena-Sandbox",
-        mode: process.env.SANDBOX_MODE || "process",
+        mode: process.env.SANDBOX_MODE || "firecracker",
         adapters: ["python", "javascript", "cpp", "java", "go"],
         status: "operational"
     });

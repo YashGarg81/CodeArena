@@ -1,7 +1,7 @@
 // frontend/src/SystemDesignStudio.tsx
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
-import type { SDNode, SDConnection, SDTemplate, SimMetrics } from "./components/system-design/types";
+import type { SDNode, SDConnection, SDTemplate, SimMetrics, SDProject, SDProjectVersion } from "./components/system-design/types";
 import { DEFAULT_TEMPLATES, GUIDED_STEPS } from "./components/system-design/templates";
 import { StudioHeader } from "./components/system-design/StudioHeader";
 import { ComponentPalette } from "./components/system-design/ComponentPalette";
@@ -88,8 +88,185 @@ export function SystemDesignStudio({ onToast }: { onToast: (m: string, t: string
     { time: "10:12", action: "Integrated Kafka Clickstream & Asynchronous Queuing", impact: "Decoupled write spikes, guaranteed delivery", costChange: "+$220/mo" }
   ]);
 
+  // ─── PERSISTENCE & HISTORY STATE ──────────────────────────────────────────
+  const [currentProjectId, setCurrentProjectId] = useState<string | null>(() => {
+    return localStorage.getItem("ca_sd_active_project_id") || "proj_sample_url_shortener";
+  });
+  const [projectTitle, setProjectTitle] = useState("Production URL Shortener Architecture");
+  const [projectDescription, setProjectDescription] = useState("");
+  const [isPublicProject, setIsPublicProject] = useState(true);
+  const [projectVersion, setProjectVersion] = useState(1);
+  const [projectVersions, setProjectVersions] = useState<SDProjectVersion[]>([]);
+  const [userProjects, setUserProjects] = useState<SDProject[]>([]);
+  const [showProjectsModal, setShowProjectsModal] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareLink, setShareLink] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
+
+  // Undo / Redo Stacks
+  const [undoStack, setUndoStack] = useState<Array<{ nodes: SDNode[]; connections: SDConnection[] }>>([]);
+  const [redoStack, setRedoStack] = useState<Array<{ nodes: SDNode[]; connections: SDConnection[] }>>([]);
+
+  const pushState = (newNodes: SDNode[], newConns: SDConnection[]) => {
+    setUndoStack(prev => [...prev.slice(-25), { nodes, connections }]);
+    setRedoStack([]);
+  };
+
+  const handleUndo = () => {
+    if (undoStack.length === 0) return;
+    const prev = undoStack[undoStack.length - 1]!;
+    setUndoStack(undoStack.slice(0, -1));
+    setRedoStack(r => [{ nodes, connections }, ...r]);
+    setNodes(prev.nodes);
+    setConnections(prev.connections);
+    onToast("Action undone ↩", "info");
+  };
+
+  const handleRedo = () => {
+    if (redoStack.length === 0) return;
+    const next = redoStack[0]!;
+    setRedoStack(redoStack.slice(1));
+    setUndoStack(u => [...u, { nodes, connections }]);
+    setNodes(next.nodes);
+    setConnections(next.connections);
+    onToast("Action redone ↪", "info");
+  };
+
+  // Cloud Project Save
+  const handleSaveProject = async (commitMsg?: string) => {
+    setIsSaving(true);
+    try {
+      if (currentProjectId) {
+        // Update existing project
+        const res = await api.put(`/api/v1/system-design/projects/${currentProjectId}`, {
+          title: projectTitle,
+          description: projectDescription,
+          nodes,
+          connections,
+          isPublic: isPublicProject,
+          commitMessage: commitMsg || `Saved revision v${projectVersion + 1}`
+        });
+        if (res.data?.project) {
+          setProjectVersion(res.data.project.version);
+          setProjectVersions(res.data.project.versions || []);
+          const timeStr = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+          setLastSavedAt(timeStr);
+          onToast(`Project saved to cloud (v${res.data.project.version})! 💾`, "success");
+        }
+      } else {
+        // Create new project
+        const res = await api.post("/api/v1/system-design/projects", {
+          title: projectTitle || "Custom Architecture Project",
+          description: projectDescription,
+          templateId: activeTemplateId,
+          nodes,
+          connections,
+          isPublic: isPublicProject
+        });
+        if (res.data?.project) {
+          setCurrentProjectId(res.data.project.id);
+          localStorage.setItem("ca_sd_active_project_id", res.data.project.id);
+          setProjectVersion(res.data.project.version);
+          setProjectVersions(res.data.project.versions || []);
+          const timeStr = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+          setLastSavedAt(timeStr);
+          onToast("New project created and saved! 🚀", "success");
+        }
+      }
+    } catch {
+      onToast("Failed to save project to cloud", "error");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Rollback to specific version
+  const handleRollback = async (vNum: number) => {
+    if (!currentProjectId) return;
+    try {
+      const res = await api.post(`/api/v1/system-design/projects/${currentProjectId}/rollback/${vNum}`, {});
+      if (res.data?.project) {
+        setNodes(res.data.project.nodes);
+        setConnections(res.data.project.connections);
+        setProjectVersion(res.data.project.version);
+        setProjectVersions(res.data.project.versions || []);
+        setShowHistoryModal(false);
+        onToast(`Restored architecture to Revision v${vNum}! ⏪`, "success");
+      }
+    } catch {
+      onToast("Failed to rollback version", "error");
+    }
+  };
+
+  // Load project from cloud
+  const handleLoadProject = async (proj: SDProject) => {
+    setCurrentProjectId(proj.id);
+    localStorage.setItem("ca_sd_active_project_id", proj.id);
+    setProjectTitle(proj.title);
+    setProjectDescription(proj.description);
+    setNodes(proj.nodes);
+    setConnections(proj.connections);
+    setProjectVersion(proj.version);
+    setProjectVersions(proj.versions || []);
+    setIsPublicProject(proj.isPublic);
+    setShowProjectsModal(false);
+    onToast(`Loaded project: ${proj.title}`, "info");
+  };
+
+  // Fetch list of user projects
+  const fetchUserProjects = async () => {
+    try {
+      const res = await api.get("/api/v1/system-design/projects");
+      if (res.data?.projects) {
+        setUserProjects(res.data.projects);
+      }
+    } catch {}
+  };
+
+  // Fetch active project on mount
+  useEffect(() => {
+    if (currentProjectId) {
+      api.get(`/api/v1/system-design/projects/${currentProjectId}`)
+        .then(res => {
+          if (res.data?.project) {
+            const p = res.data.project;
+            setProjectTitle(p.title);
+            setProjectDescription(p.description);
+            setNodes(p.nodes);
+            setConnections(p.connections);
+            setProjectVersion(p.version);
+            setProjectVersions(p.versions || []);
+            setIsPublicProject(p.isPublic);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [currentProjectId]);
+
+  // Autosave periodically (every 45s) when modified
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (currentProjectId && nodes.length > 0) {
+        api.put(`/api/v1/system-design/projects/${currentProjectId}`, {
+          title: projectTitle,
+          nodes,
+          connections,
+          commitMessage: "Automated background autosave"
+        }).then(res => {
+          if (res.data?.project) {
+            setLastSavedAt(new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
+          }
+        }).catch(() => {});
+      }
+    }, 45000);
+    return () => clearInterval(timer);
+  }, [currentProjectId, projectTitle, nodes, connections]);
+
   // Load template on selection
   const handleSelectTemplate = (tmpl: SDTemplate) => {
+    pushState(nodes, connections);
     setActiveTemplateId(tmpl.id);
     setNodes(tmpl.nodes);
     setConnections(tmpl.connections);
@@ -285,6 +462,20 @@ export function SystemDesignStudio({ onToast }: { onToast: (m: string, t: string
         onOpenBrief={() => setShowBriefModal(true)}
         onOpenAnswerKey={() => setShowAnswerKeyModal(true)}
         onExport={() => onToast("Architecture specs exported (JSON & Diagram)", "success")}
+        onSaveProject={() => handleSaveProject()}
+        onOpenHistory={() => setShowHistoryModal(true)}
+        onOpenProjects={() => { fetchUserProjects(); setShowProjectsModal(true); }}
+        onShare={() => {
+          const url = `${window.location.origin}/system-design?project=${currentProjectId}`;
+          setShareLink(url);
+          setShowShareModal(true);
+        }}
+        onUndo={handleUndo}
+        onRedo={handleRedo}
+        canUndo={undoStack.length > 0}
+        canRedo={redoStack.length > 0}
+        isSaving={isSaving}
+        lastSavedAt={lastSavedAt}
       />
 
       {/* ─── TAB 1: ARCHITECTURE STUDIO ────────────────────────────────────── */}
@@ -611,13 +802,168 @@ export function SystemDesignStudio({ onToast }: { onToast: (m: string, t: string
         />
       )}
 
-      {/* Staff Engineer Reference Answer Key Modal (TheOnsite style) */}
-      {showAnswerKeyModal && currentTemplate && (
-        <ReferenceSolutionModal
-          templateId={currentTemplate.id}
-          templateTitle={currentTemplate.title}
-          onClose={() => setShowAnswerKeyModal(false)}
-        />
+      {/* Projects Modal */}
+      {showProjectsModal && (
+        <div className="modal-overlay" onClick={() => setShowProjectsModal(false)}>
+          <div className="modal" style={{ maxWidth: 650, width: "92vw" }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 20 }}>📁</span>
+                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>Persistent System Design Projects</h3>
+              </div>
+              <button onClick={() => setShowProjectsModal(false)} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "var(--text-muted)" }}>×</button>
+            </div>
+
+            <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 16 }}>
+              Cloud-persisted architecture blueprints saved to your account. Open any design to resume working or view its version history.
+            </p>
+
+            <div style={{ maxHeight: 360, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8 }}>
+              {userProjects.length === 0 ? (
+                <div style={{ textAlign: "center", padding: 24, color: "var(--text-muted)", fontSize: 13 }}>
+                  No saved cloud projects found. Click "Save Cloud" on your current canvas to create one.
+                </div>
+              ) : (
+                userProjects.map(p => (
+                  <div
+                    key={p.id}
+                    onClick={() => handleLoadProject(p)}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      padding: "12px 16px",
+                      borderRadius: 8,
+                      border: p.id === currentProjectId ? "1px solid var(--accent-primary)" : "1px solid var(--border)",
+                      background: p.id === currentProjectId ? "rgba(59,130,246,0.08)" : "var(--bg-tertiary)",
+                      cursor: "pointer"
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: 13.5, color: "var(--text-primary)" }}>{p.title}</div>
+                      <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>
+                        {p.nodes?.length || 0} Components · {p.connections?.length || 0} Connections · Revision v{p.version} · {new Date(p.updatedAt).toLocaleDateString()}
+                      </div>
+                    </div>
+                    <button className="btn btn-primary btn-sm" style={{ fontSize: 11 }}>Open</button>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div style={{ marginTop: 18, display: "flex", justifyContent: "flex-end" }}>
+              <button className="btn btn-secondary btn-sm" onClick={() => setShowProjectsModal(false)}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Version History Modal */}
+      {showHistoryModal && (
+        <div className="modal-overlay" onClick={() => setShowHistoryModal(false)}>
+          <div className="modal" style={{ maxWidth: 620, width: "92vw" }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 20 }}>🕒</span>
+                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>Immutable Version History & Revisions</h3>
+              </div>
+              <button onClick={() => setShowHistoryModal(false)} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "var(--text-muted)" }}>×</button>
+            </div>
+
+            <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 16 }}>
+              Every architecture checkpoint and manual save is tracked here. You can revert your active canvas to any prior revision without data loss.
+            </p>
+
+            <div style={{ maxHeight: 360, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8 }}>
+              {projectVersions.length === 0 ? (
+                <div style={{ textAlign: "center", padding: 24, color: "var(--text-muted)", fontSize: 13 }}>
+                  No revision checkpoints found yet. Save a version to begin tracking.
+                </div>
+              ) : (
+                projectVersions.map((v) => (
+                  <div
+                    key={v.id}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      padding: "10px 14px",
+                      borderRadius: 8,
+                      border: "1px solid var(--border)",
+                      background: "var(--bg-tertiary)"
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <span className="badge badge-purple" style={{ fontSize: 10 }}>v{v.versionNumber}</span>
+                        <span style={{ fontWeight: 600, fontSize: 13 }}>{v.message}</span>
+                      </div>
+                      <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4 }}>
+                        {v.nodes?.length || 0} nodes · {new Date(v.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} ({new Date(v.createdAt).toLocaleDateString()})
+                      </div>
+                    </div>
+                    <button
+                      className="btn btn-secondary btn-sm"
+                      onClick={() => handleRollback(v.versionNumber)}
+                      style={{ fontSize: 11, padding: "3px 8px" }}
+                    >
+                      Restore This Version
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div style={{ marginTop: 18, display: "flex", justifyContent: "flex-end" }}>
+              <button className="btn btn-secondary btn-sm" onClick={() => setShowHistoryModal(false)}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Share Modal */}
+      {showShareModal && (
+        <div className="modal-overlay" onClick={() => setShowShareModal(false)}>
+          <div className="modal" style={{ maxWidth: 520, width: "92vw" }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 20 }}>🔗</span>
+                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>Share Architecture Diagram</h3>
+              </div>
+              <button onClick={() => setShowShareModal(false)} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "var(--text-muted)" }}>×</button>
+            </div>
+
+            <p style={{ fontSize: 12.5, color: "var(--text-secondary)", marginBottom: 14 }}>
+              Anyone with this link can view this persistent system design diagram and explore the topology in real time.
+            </p>
+
+            <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+              <input
+                className="input"
+                readOnly
+                value={shareLink}
+                style={{ fontSize: 12, fontFamily: "var(--font-mono)" }}
+              />
+              <button
+                className="btn btn-primary"
+                onClick={() => {
+                  navigator.clipboard.writeText(shareLink);
+                  onToast("Share link copied to clipboard! 📋", "success");
+                }}
+              >
+                Copy
+              </button>
+            </div>
+
+            <div style={{ padding: "10px 14px", background: "rgba(59,130,246,0.08)", borderRadius: 6, border: "1px solid rgba(59,130,246,0.2)", fontSize: 12, color: "var(--text-muted)" }}>
+              🔒 Diagram ownership: <strong>{projectTitle}</strong> (Saved in cloud with immutable version history).
+            </div>
+
+            <div style={{ marginTop: 18, display: "flex", justifyContent: "flex-end" }}>
+              <button className="btn btn-secondary btn-sm" onClick={() => setShowShareModal(false)}>Done</button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

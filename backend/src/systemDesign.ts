@@ -1,4 +1,6 @@
 import { Router, type Request, type Response } from 'express';
+import crypto from 'crypto';
+import { auth, type AuthenticatedRequest } from './auth';
 
 export const systemDesignRouter = Router();
 
@@ -553,4 +555,253 @@ systemDesignRouter.post('/score', (req: Request, res: Response) => {
     }
   });
 });
+
+// ─── PERSISTENT SYSTEM DESIGN PROJECTS LIFECYCLE ─────────────────────────────
+
+export interface SDProjectVersion {
+  id: string;
+  versionNumber: number;
+  message: string;
+  nodes: any[];
+  connections: any[];
+  createdAt: string;
+}
+
+export interface SDProject {
+  id: string;
+  title: string;
+  description: string;
+  templateId?: string;
+  ownerId: string;
+  isPublic: boolean;
+  shareToken?: string;
+  nodes: any[];
+  connections: any[];
+  version: number;
+  versions: SDProjectVersion[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+const sdProjectsStore = new Map<string, SDProject>();
+
+// Seed default sample project for persistence verification
+const defaultProjectId = "proj_sample_url_shortener";
+sdProjectsStore.set(defaultProjectId, {
+  id: defaultProjectId,
+  title: "Production URL Shortener Architecture",
+  description: "Enterprise multi-tier URL shortener with distributed cache and read replicas",
+  templateId: "url-shortener",
+  ownerId: "system",
+  isPublic: true,
+  shareToken: "share_url_shortener_demo",
+  nodes: TEMPLATES[0]!.nodes,
+  connections: TEMPLATES[0]!.connections,
+  version: 1,
+  versions: [
+    {
+      id: "v1_init",
+      versionNumber: 1,
+      message: "Initial blueprint architecture",
+      nodes: TEMPLATES[0]!.nodes,
+      connections: TEMPLATES[0]!.connections,
+      createdAt: new Date().toISOString()
+    }
+  ],
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString()
+});
+
+// Helper for schema validation
+function validateDiagramPayload(nodes: any[], connections: any[]): { valid: boolean; error?: string } {
+  if (!Array.isArray(nodes)) return { valid: false, error: "'nodes' must be an array" };
+  if (!Array.isArray(connections)) return { valid: false, error: "'connections' must be an array" };
+  for (const n of nodes) {
+    if (!n.id || typeof n.id !== "string") return { valid: false, error: "Each node must have a valid string 'id'" };
+    if (!n.label || typeof n.label !== "string") return { valid: false, error: "Each node must have a valid string 'label'" };
+    if (typeof n.x !== "number" || typeof n.y !== "number") return { valid: false, error: `Node ${n.id} has invalid coordinates` };
+  }
+  for (const c of connections) {
+    if (!c.from || !c.to) return { valid: false, error: "Each connection must specify 'from' and 'to'" };
+  }
+  return { valid: true };
+}
+
+// GET /api/v1/system-design/projects (list user projects)
+systemDesignRouter.get('/projects', auth, (req: AuthenticatedRequest, res: Response) => {
+  const userId = req.userId || "anonymous";
+  const userProjects = Array.from(sdProjectsStore.values()).filter(p => p.ownerId === userId || p.ownerId === "system");
+  res.json({ projects: userProjects });
+});
+
+// POST /api/v1/system-design/projects (create project)
+systemDesignRouter.post('/projects', auth, (req: AuthenticatedRequest, res: Response) => {
+  const userId = req.userId || "anonymous";
+  const { title, description = "", templateId, nodes = [], connections = [], isPublic = false } = req.body;
+
+  if (!title || typeof title !== "string") {
+    return res.status(400).json({ error: "Project title is required" });
+  }
+
+  const validation = validateDiagramPayload(nodes, connections);
+  if (!validation.valid) {
+    return res.status(400).json({ error: validation.error });
+  }
+
+  const id = `proj_${crypto.randomBytes(8).toString("hex")}`;
+  const shareToken = crypto.randomBytes(12).toString("hex");
+
+  const newProject: SDProject = {
+    id,
+    title,
+    description,
+    templateId,
+    ownerId: userId,
+    isPublic: !!isPublic,
+    shareToken,
+    nodes,
+    connections,
+    version: 1,
+    versions: [
+      {
+        id: `v_${Date.now()}`,
+        versionNumber: 1,
+        message: "Project created",
+        nodes,
+        connections,
+        createdAt: new Date().toISOString()
+      }
+    ],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+
+  sdProjectsStore.set(id, newProject);
+  res.status(201).json({ project: newProject });
+});
+
+// GET /api/v1/system-design/projects/:id (get project by id or share token)
+systemDesignRouter.get('/projects/:id', (req: Request, res: Response) => {
+  const token = req.headers.authorization?.split(" ")[1];
+  let currentUserId: string | null = null;
+  if (token) {
+    try {
+      const decoded = (req as any).user || null;
+      if (decoded?.userId) currentUserId = decoded.userId;
+    } catch {}
+  }
+
+  const id = String(req.params.id);
+  const project = sdProjectsStore.get(id) || Array.from(sdProjectsStore.values()).find(p => p.shareToken === id);
+
+  if (!project) {
+    return res.status(404).json({ error: "Project not found" });
+  }
+
+  // Permissions check: must be public, accessed via shareToken, owner, or system
+  if (!project.isPublic && project.ownerId !== "system" && project.shareToken !== id && project.ownerId !== currentUserId) {
+    return res.status(403).json({ error: "Access denied. Private system design project." });
+  }
+
+  res.json({ project });
+});
+
+// PUT /api/v1/system-design/projects/:id (update/autosave project)
+systemDesignRouter.put('/projects/:id', auth, (req: AuthenticatedRequest, res: Response) => {
+  const userId = req.userId || "anonymous";
+  const id = String(req.params.id);
+  const project = sdProjectsStore.get(id);
+
+  if (!project) {
+    return res.status(404).json({ error: "Project not found" });
+  }
+
+  if (project.ownerId !== userId && project.ownerId !== "system") {
+    return res.status(403).json({ error: "Only the project owner can modify this architecture" });
+  }
+
+  const { title, description, nodes, connections, isPublic, commitMessage } = req.body;
+
+  if (nodes || connections) {
+    const validation = validateDiagramPayload(nodes || project.nodes, connections || project.connections);
+    if (!validation.valid) {
+      return res.status(400).json({ error: validation.error });
+    }
+  }
+
+  if (title) project.title = title;
+  if (description !== undefined) project.description = description;
+  if (isPublic !== undefined) project.isPublic = !!isPublic;
+
+  const nodesChanged = nodes && JSON.stringify(nodes) !== JSON.stringify(project.nodes);
+  const connsChanged = connections && JSON.stringify(connections) !== JSON.stringify(project.connections);
+
+  if (nodesChanged || connsChanged) {
+    project.nodes = nodes || project.nodes;
+    project.connections = connections || project.connections;
+    project.version += 1;
+
+    // Create immutable revision history entry
+    const newVersion: SDProjectVersion = {
+      id: `v_${Date.now()}`,
+      versionNumber: project.version,
+      message: commitMessage || `Revision v${project.version}`,
+      nodes: project.nodes,
+      connections: project.connections,
+      createdAt: new Date().toISOString()
+    };
+
+    project.versions.unshift(newVersion);
+    if (project.versions.length > 50) project.versions.pop(); // Keep 50 history entries
+  }
+
+  project.updatedAt = new Date().toISOString();
+  sdProjectsStore.set(id, project);
+
+  res.json({ project, version: project.version });
+});
+
+// POST /api/v1/system-design/projects/:id/rollback/:versionNumber (revert to version)
+systemDesignRouter.post('/projects/:id/rollback/:versionNumber', auth, (req: AuthenticatedRequest, res: Response) => {
+  const userId = req.userId || "anonymous";
+  const id = String(req.params.id);
+  const versionNum = parseInt(String(req.params.versionNumber), 10);
+  const project = sdProjectsStore.get(id);
+
+  if (!project) return res.status(404).json({ error: "Project not found" });
+  if (project.ownerId !== userId && project.ownerId !== "system") {
+    return res.status(403).json({ error: "Permission denied" });
+  }
+
+  const targetVer = project.versions.find(v => v.versionNumber === versionNum);
+  if (!targetVer) return res.status(404).json({ error: "Version not found in history" });
+
+  project.nodes = targetVer.nodes;
+  project.connections = targetVer.connections;
+  project.version += 1;
+  project.updatedAt = new Date().toISOString();
+
+  project.versions.unshift({
+    id: `v_${Date.now()}`,
+    versionNumber: project.version,
+    message: `Rolled back to revision v${versionNum}`,
+    nodes: project.nodes,
+    connections: project.connections,
+    createdAt: new Date().toISOString()
+  });
+
+  sdProjectsStore.set(id, project);
+  res.json({ project, restoredVersion: versionNum });
+});
+
+// POST /api/v1/system-design/validate (validate imported JSON spec)
+systemDesignRouter.post('/validate', (req: Request, res: Response) => {
+  const { nodes, connections } = req.body;
+  const validation = validateDiagramPayload(nodes, connections);
+  if (!validation.valid) {
+    return res.status(400).json({ valid: false, error: validation.error });
+  }
+  res.json({ valid: true, nodeCount: nodes.length, connectionCount: connections.length });
+});
+
 

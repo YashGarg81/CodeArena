@@ -17,7 +17,17 @@ export function StudioHeader({
   onResetView,
   onOpenBrief,
   onExport,
-  onOpenAnswerKey
+  onOpenAnswerKey,
+  onSaveProject,
+  onOpenHistory,
+  onOpenProjects,
+  onShare,
+  onUndo,
+  onRedo,
+  canUndo = false,
+  canRedo = false,
+  isSaving = false,
+  lastSavedAt
 }: {
   activeTab: string;
   onTabChange: (tab: any) => void;
@@ -33,6 +43,16 @@ export function StudioHeader({
   onOpenBrief: () => void;
   onExport: () => void;
   onOpenAnswerKey?: () => void;
+  onSaveProject?: () => void;
+  onOpenHistory?: () => void;
+  onOpenProjects?: () => void;
+  onShare?: () => void;
+  onUndo?: () => void;
+  onRedo?: () => void;
+  canUndo?: boolean;
+  canRedo?: boolean;
+  isSaving?: boolean;
+  lastSavedAt?: string | null;
 }) {
   const activeTemplate = templates.find(t => t.id === activeTemplateId) || templates[0];
 
@@ -173,10 +193,62 @@ export function StudioHeader({
             </button>
           </div>
 
-          {/* Scale Targets */}
+          {/* Scale Targets & Save Status */}
           <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
             <span className="badge badge-blue" style={{ fontSize: 10 }}>Target: {activeTemplate?.rps || "50K RPS"}</span>
             <span className="badge badge-purple" style={{ fontSize: 10 }}>P99: {activeTemplate?.latencyTarget || "< 20ms"}</span>
+            {lastSavedAt && (
+              <span style={{ fontSize: 11, color: "var(--accent-green)", display: "flex", alignItems: "center", gap: 4 }}>
+                <Icons.CheckCircle size={12} />
+                <span>Saved {lastSavedAt}</span>
+              </span>
+            )}
+          </div>
+
+          {/* Undo / Redo */}
+          <div style={{ display: "flex", gap: 3, alignItems: "center" }}>
+            <button
+              className="btn btn-secondary btn-sm"
+              onClick={onUndo}
+              disabled={!canUndo}
+              style={{ fontSize: 11, padding: "3px 8px" }}
+              title="Undo change (Ctrl+Z)"
+            >
+              ↩ Undo
+            </button>
+            <button
+              className="btn btn-secondary btn-sm"
+              onClick={onRedo}
+              disabled={!canRedo}
+              style={{ fontSize: 11, padding: "3px 8px" }}
+              title="Redo change (Ctrl+Y)"
+            >
+              ↪ Redo
+            </button>
+          </div>
+
+          {/* Projects & Version History */}
+          <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+            {onOpenProjects && (
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={onOpenProjects}
+                style={{ fontSize: 11, padding: "3px 8px" }}
+                title="Browse persistent saved projects"
+              >
+                📁 Projects
+              </button>
+            )}
+            {onOpenHistory && (
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={onOpenHistory}
+                style={{ fontSize: 11, padding: "3px 8px" }}
+                title="View immutable revision history & restore"
+              >
+                🕒 History
+              </button>
+            )}
           </div>
 
           {/* Canvas Controls */}
@@ -193,6 +265,30 @@ export function StudioHeader({
             <button className="btn btn-secondary btn-sm" onClick={onResetView} style={{ fontSize: 11, padding: "3px 8px" }}>
               Reset
             </button>
+
+            {onSaveProject && (
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={onSaveProject}
+                disabled={isSaving}
+                style={{ fontSize: 11.5, padding: "4px 10px", borderColor: "var(--accent-green)", color: "var(--accent-green)" }}
+                title="Save persistent project to cloud database"
+              >
+                {isSaving ? "Saving..." : "💾 Save Cloud"}
+              </button>
+            )}
+
+            {onShare && (
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={onShare}
+                style={{ fontSize: 11.5, padding: "4px 10px" }}
+                title="Generate sharable link with access permissions"
+              >
+                🔗 Share
+              </button>
+            )}
+
             <button className="btn btn-primary btn-sm" onClick={onExport} style={{ fontSize: 11.5, padding: "4px 10px" }}>
               <Icons.Share size={12} />
               <span>Export</span>

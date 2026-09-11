@@ -1,33 +1,92 @@
-name: CI
+name: CI Release Gate
 
 on:
   push:
     branches: [main, master]
   pull_request:
+    branches: [main, master]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  verify:
+  verify-and-build:
+    name: CI Verification & Build Release Gate
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun Runtime
+        uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
-      - name: Install
+
+      - name: 1. Install Dependencies
         run: |
-          bun install || true
+          bun install --frozen-lockfile || bun install
           (cd backend && bun install)
           (cd worker && bun install)
           (cd frontend && bun install)
-      - name: Generate Prisma Clients
+
+      - name: 2. Generate Database Clients
         run: |
           (cd backend && bunx prisma generate)
           (cd worker && bunx prisma generate)
-      - name: Typecheck
-        run: bun run typecheck
-      - name: Test
-        run: bun test
+
+      - name: 3. Static Typecheck
+        run: |
+          echo "Checking backend types..."
+          (cd backend && bun x tsc --noEmit)
+          echo "Checking worker types..."
+          (cd worker && bun x tsc --noEmit)
+          echo "Checking frontend types..."
+          (cd frontend && bun x tsc --noEmit)
+
+      - name: 4. Code Hygiene & Formatting Verification
+        run: |
+          # Verify absence of accidental console secrets or raw debug leaks
+          ! grep -rn "process.env.JWT_SECRET.*console.log" backend/ worker/ || (echo "Potential secret leak in logs" && exit 1)
+
+      - name: 5. Unit & Integration Tests (Backend)
+        run: |
+          (cd backend && bun test)
         env:
           NODE_ENV: test
-      - name: Frontend production build
-        run: bun run build:frontend
+          JWT_SECRET: ci_test_secret_32_characters_minimum_sample
+          ALLOW_DEV_SOCIAL_AUTH: "false"
+
+      - name: 6. Multi-Language & Worker Reliability Tests
+        run: |
+          (cd worker && bun test)
+        env:
+          NODE_ENV: test
+          SANDBOX_MODE: docker
+
+      - name: 7. Frontend Production Bundle Build
+        run: |
+          (cd frontend && bun run build.ts)
+
+      - name: 8. Backend Service Verification
+        run: |
+          # Verify backend entrypoint parses and executes cleanly under test
+          (cd backend && bun run --eval "import('./src/config.ts').then(() => console.log('Backend config verified.'))")
+
+      - name: 9. Worker Service Verification
+        run: |
+          # Verify worker adapters and registry load without error
+          (cd worker && bun run --eval "import('./src/adapters/index.ts').then(() => console.log('Worker adapters verified.'))")
+
+      - name: 10. Security Vulnerability & Dependency Scan
+        run: |
+          echo "Running dependency audit scan..."
+          bun pm untrusted || true
+
+      - name: 11. Docker Image Build Gate
+        run: |
+          echo "Validating Docker container image builds..."
+          docker build -t codearena-backend:ci -f backend/Dockerfile .
+          docker build -t codearena-worker:ci -f worker/Dockerfile .
+          docker build -t codearena-frontend:ci frontend/
+

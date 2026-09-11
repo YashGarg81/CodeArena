@@ -1,6 +1,17 @@
 /**
- * Online judge code security validator.
- * Blocks dangerous patterns before sandbox execution.
+ * Online judge pre-execution code syntax heuristic validator.
+ * 
+ * IMPORTANT ARCHITECTURAL NOTE (DEFENSE IN DEPTH):
+ * Static regex validation is strictly an auxiliary filter (early feedback layer).
+ * It is NOT a security boundary. Arbitrary code safety relies entirely on true
+ * container / MicroVM isolation:
+ *  - Firecracker MicroVM / Docker container isolation
+ *  - Network isolation (--network none)
+ *  - Strict memory & CPU quotas
+ *  - Read-only root filesystem
+ *  - Dropped Linux capabilities (--cap-drop=ALL, no-new-privileges)
+ *  - Non-root execution & PID limits
+ *  - Fail-closed execution policy
  */
 
 export interface SecurityCheckResult {

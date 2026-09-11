@@ -4,7 +4,8 @@ export function publishedProblemWhere(extra: Record<string, unknown> = {}) {
 
 export function isPublishedProblem(problem: { status?: string } | null | undefined): boolean {
   if (!problem) return false;
-  return !problem.status || problem.status === "Published";
+  // Issue 20: Secure default — only problems explicitly marked "Published" are public
+  return problem.status === "Published";
 }
 
 export function publicTestCases(testCases: unknown): unknown[] {

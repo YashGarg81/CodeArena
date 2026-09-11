@@ -16,6 +16,13 @@ export interface AdvancedJudgeConfig {
   floatEpsilon?: number;
   timeLimitMs: number;
   memoryLimitMb: number;
+  /**
+   * Hardware & sandbox isolation limits (cpuLimitCores, maxProcesses, networkIsolated).
+   * NOTE (Issue 16): AdvancedJudgeEngine is an evaluation and scoring layer that grades test outputs.
+   * Actual OS-level enforcement of cpuLimitCores, memoryLimitMb, maxProcesses, and network isolation
+   * is strictly executed at the virtualization boundary (Docker / Firecracker MicroVM execution runners),
+   * NOT by JavaScript runtime logic in this class.
+   */
   cpuLimitCores?: number;
   maxProcesses?: number;
   networkIsolated: boolean;
@@ -90,7 +97,9 @@ export class AdvancedJudgeEngine {
     let peakMemory = 0;
 
     for (const run of testRuns) {
-      const memoryMb = run.memory || Math.round(12 + Math.random() * 18);
+      // Use actual measured memory in MB, or 0 if telemetry/cgroup measurement was unavailable.
+      // Never invent randomized fake memory metrics, which causes false MLEs or inaccurate telemetry.
+      const memoryMb = typeof run.memory === "number" && !isNaN(run.memory) ? Math.max(0, run.memory) : 0;
       peakMemory = Math.max(peakMemory, memoryMb);
       totalRuntime += run.runtime;
 
@@ -103,7 +112,7 @@ export class AdvancedJudgeEngine {
         testVerdict = "CE";
       } else if (run.isTLE || run.runtime > timeLimit) {
         testVerdict = "TLE";
-      } else if (run.isMLE || memoryMb > memoryLimit) {
+      } else if (run.isMLE || (memoryMb > 0 && memoryMb > memoryLimit)) {
         testVerdict = "MLE";
       } else if (run.error) {
         testVerdict = "RE";

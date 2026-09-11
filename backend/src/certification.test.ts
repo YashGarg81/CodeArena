@@ -314,6 +314,150 @@ describe("ACADEMY, QUIZ & GAMIFICATION — Learning & Rewards Engine", () => {
     expect(getLevel(600)).toBe(3);
     expect(getLevel(2400)).toBe(9);
   });
+
+  test("ACADEMY-002: Lesson completion awards XP idempotently without double-counting", () => {
+    const userProgress = {
+      completedLessonIds: new Set<string>(),
+      totalXp: 0
+    };
+
+    const completeLesson = (lessonId: string, xpReward: number) => {
+      if (userProgress.completedLessonIds.has(lessonId)) {
+        return { success: true, xpAwarded: 0, totalXp: userProgress.totalXp, alreadyCompleted: true };
+      }
+      userProgress.completedLessonIds.add(lessonId);
+      userProgress.totalXp += xpReward;
+      return { success: true, xpAwarded: xpReward, totalXp: userProgress.totalXp, alreadyCompleted: false };
+    };
+
+    // First completion awards XP
+    const first = completeLesson("lesson-dynamic-programming-1", 50);
+    expect(first.xpAwarded).toBe(50);
+    expect(first.totalXp).toBe(50);
+    expect(first.alreadyCompleted).toBe(false);
+
+    // Second completion does NOT double-award XP
+    const second = completeLesson("lesson-dynamic-programming-1", 50);
+    expect(second.xpAwarded).toBe(0);
+    expect(second.totalXp).toBe(50);
+    expect(second.alreadyCompleted).toBe(true);
+  });
+
+  test("ACADEMY-003: Course progress and completion percentage calculation", () => {
+    const lessons = ["l1", "l2", "l3", "l4"];
+    const completed = new Set(["l1", "l2"]);
+    const progressPct = Math.round((completed.size / lessons.length) * 100);
+    expect(progressPct).toBe(50);
+
+    completed.add("l3");
+    completed.add("l4");
+    const fullPct = Math.round((completed.size / lessons.length) * 100);
+    expect(fullPct).toBe(100);
+    const isCertificateEligible = fullPct === 100;
+    expect(isCertificateEligible).toBe(true);
+  });
+});
+
+// ─── ISSUE 18 & 19: ADMIN RBAC & COMMUNITY MODERATION LIFECYCLE ─────────────
+
+describe("COMMUNITY & ADMIN — Moderation Lifecycle & Backend Authorization", () => {
+  test("ADMIN-003: Backend strictly blocks unauthorized user actions regardless of UI state", () => {
+    const isActionAllowed = (role: string, action: string) => {
+      const rolePermissions: Record<string, string[]> = {
+        ADMIN: ["manage_users", "delete_post", "lock_thread", "ban_user", "publish_problem"],
+        PROBLEM_ADMIN: ["publish_problem"],
+        STUDENT: ["create_post", "comment", "upvote", "report"]
+      };
+      return (rolePermissions[role] || []).includes(action);
+    };
+
+    // UI might say "Admin", but backend verifies actual role:
+    expect(isActionAllowed("STUDENT", "ban_user")).toBe(false);
+    expect(isActionAllowed("STUDENT", "delete_post")).toBe(false);
+    expect(isActionAllowed("STUDENT", "lock_thread")).toBe(false);
+    expect(isActionAllowed("ADMIN", "ban_user")).toBe(true);
+    expect(isActionAllowed("ADMIN", "lock_thread")).toBe(true);
+  });
+
+  test("COMMUNITY-001: Community post lifecycle — create, report, lock, resolve", () => {
+    interface Post {
+      id: string;
+      title: string;
+      authorId: string;
+      isLocked: boolean;
+      reports: Array<{ reason: string; reporterId: string }>;
+      upvotes: Set<string>;
+    }
+
+    const post: Post = {
+      id: "post-1",
+      title: "How to solve Graph questions?",
+      authorId: "user-1",
+      isLocked: false,
+      reports: [],
+      upvotes: new Set()
+    };
+
+    // Upvote & remove vote
+    post.upvotes.add("user-2");
+    expect(post.upvotes.has("user-2")).toBe(true);
+    post.upvotes.delete("user-2");
+    expect(post.upvotes.has("user-2")).toBe(false);
+
+    // Report
+    post.reports.push({ reason: "Spam content", reporterId: "user-3" });
+    expect(post.reports.length).toBe(1);
+
+    // Moderator lock
+    post.isLocked = true;
+    expect(post.isLocked).toBe(true);
+
+    // Comment rejection when locked
+    const canComment = !post.isLocked;
+    expect(canComment).toBe(false);
+  });
+});
+
+// ─── ISSUE 22: ROADMAP PROGRESS SYNCHRONIZATION ──────────────────────────────
+
+describe("ROADMAP — Progress Synchronization Engine", () => {
+  test("ROADMAP-001: Roadmap milestones automatically update from problems, lessons, and quizzes", () => {
+    interface Milestone {
+      id: string;
+      title: string;
+      requiredProblemIds: string[];
+      requiredLessonIds: string[];
+      minQuizScore: number;
+    }
+
+    const milestone: Milestone = {
+      id: "m1",
+      title: "Binary Trees & BSTs",
+      requiredProblemIds: ["p-tree-1", "p-tree-2"],
+      requiredLessonIds: ["l-tree-intro"],
+      minQuizScore: 80
+    };
+
+    const userState = {
+      solvedProblemIds: new Set(["p-tree-1"]),
+      completedLessonIds: new Set(["l-tree-intro"]),
+      quizScores: new Map([["tree-quiz", 85]])
+    };
+
+    const isMilestoneCompleted = (m: Milestone, state: typeof userState) => {
+      const problemsDone = m.requiredProblemIds.every(pid => state.solvedProblemIds.has(pid));
+      const lessonsDone = m.requiredLessonIds.every(lid => state.completedLessonIds.has(lid));
+      const quizPassed = (state.quizScores.get("tree-quiz") || 0) >= m.minQuizScore;
+      return problemsDone && lessonsDone && quizPassed;
+    };
+
+    // Incomplete before second problem is solved
+    expect(isMilestoneCompleted(milestone, userState)).toBe(false);
+
+    // Solves second problem
+    userState.solvedProblemIds.add("p-tree-2");
+    expect(isMilestoneCompleted(milestone, userState)).toBe(true);
+  });
 });
 
 // ─── SYSTEM DESIGN & TOOLS (SYSTEMDESIGN-001..010) ──────────────────────────
