@@ -46,6 +46,7 @@ export async function runProcessSafely(
         let isTimedOut = false;
         let isBufferExceeded = false;
         let child: any;
+        let hasResolved = false;
 
         const env = customEnv || getSanitizedEnv();
 
@@ -68,16 +69,6 @@ export async function runProcessSafely(
         let stdout = "";
         let stderr = "";
 
-        const tleResult: ExecutionResult = {
-            passed: false,
-            got: "",
-            expected: expectedOutput,
-            runtime: timeoutMs,
-            verdict: "TLE",
-            isTLE: true,
-            error: "Time Limit Exceeded (TLE)"
-        };
-
         const timer = setTimeout(() => {
             isTimedOut = true;
             try {
@@ -87,20 +78,40 @@ export async function runProcessSafely(
                     child.kill("SIGKILL");
                 }
             } catch {}
-            // Resolve immediately — don't wait for exit event which may never fire
-            // after an external kill (especially on CI Linux runners)
-            resolve(tleResult);
+            
+            // Ensure we resolve if the exit event doesn't fire quickly
+            const fallbackTimer = setTimeout(() => {
+                if (!hasResolved) {
+                    hasResolved = true;
+                    resolve({
+                        passed: false,
+                        got: "",
+                        expected: expectedOutput,
+                        runtime: timeoutMs,
+                        verdict: "TLE",
+                        isTLE: true,
+                        error: "Time Limit Exceeded (TLE)"
+                    });
+                }
+            }, 100);
+            
+            // Clear fallback timer if exit event fires
+            const originalKill = child.kill;
+            child.once("exit", () => clearTimeout(fallbackTimer));
         }, timeoutMs);
 
         child.on("error", (err: any) => {
             clearTimeout(timer);
-            resolve({
-                passed: false,
-                got: "",
-                expected: expectedOutput,
-                runtime: 0,
-                error: `Process error: ${err.message}`
-            });
+            if (!hasResolved) {
+                hasResolved = true;
+                resolve({
+                    passed: false,
+                    got: "",
+                    expected: expectedOutput,
+                    runtime: 0,
+                    error: `Process error: ${err.message}`
+                });
+            }
         });
 
         if (child.stdout) {
@@ -132,8 +143,9 @@ export async function runProcessSafely(
 
         child.on("exit", (code: number) => {
             clearTimeout(timer);
-            // Already resolved via TLE timeout — skip
-            if (isTimedOut) return;
+            if (hasResolved) return;
+            hasResolved = true;
+            
             const endTime = performance.now();
             const runtime = Math.max(1, Math.round((endTime - startTime) * 100) / 100);
 
