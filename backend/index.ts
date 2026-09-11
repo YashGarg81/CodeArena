@@ -10,8 +10,7 @@ import { PORT, CORS_ORIGINS, IS_TEST, getJwtSecret, safeErrorMessage, MAX_JSON_B
 import { auth, optionalAuth, adminAuth, developerAuth, revokeToken } from "./src/auth";
 import { validatePassword, validateEmail, clampPagination, sanitizeSearchQuery } from "./src/validation";
 import { createRateLimiter } from "./src/rateLimit";
-import { initRedis, getRedisClient } from "./src/redisClient";
-import { verifyOAuthToken, OAuthVerificationError } from "./src/oauth";
+import { verifyOAuthToken, OAuthVerificationError, generateOAuthState, verifyOAuthState } from "./src/oauth";
 import { publishedProblemWhere, isPublishedProblem, publicTestCases, firstPublicTestCase, toPublicProblemView, isStarterTemplate } from "./src/publicProblem";
 import { sanitizeTestResults, sanitizeJudgeOutput, toOwnerSubmissionView, toPublicShareView, toStrangerSubmissionView } from "./src/judgePrivacy";
 import { auditService } from "./src/audit";
@@ -2059,7 +2058,7 @@ app.post("/api/v1/auth/signup", authRateLimiter, async (req, res) => {
                 streak: 0
             }
         });
-        const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: "7d" });
+        const token = jwt.sign({ userId: user.id, tokenVersion: user.tokenVersion || 0 }, JWT_SECRET, { expiresIn: "7d" });
         res.json({
             token,
             user: {
@@ -2083,7 +2082,7 @@ app.post("/api/v1/auth/signup", authRateLimiter, async (req, res) => {
 });
 
 app.post("/api/v1/auth/login", authRateLimiter, async (req, res) => {
-    const { email, password } = req.body;
+    const { email, password, totpCode } = req.body;
     if (!email || !password) return res.status(400).json({ error: "Missing email or password" });
 
     const cleanEmail = email.trim().toLowerCase();
@@ -2108,7 +2107,23 @@ app.post("/api/v1/auth/login", authRateLimiter, async (req, res) => {
             return res.status(403).json({ error: "Account suspended. Please contact platform administration." });
         }
 
-        const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: "7d" });
+        // P1: Enforce Real 2FA Challenge if enabled
+        if (user.twoFactorEnabled) {
+            if (!totpCode) {
+                return res.status(200).json({
+                    requires2FA: true,
+                    tempToken: jwt.sign({ userId: user.id, is2FAPending: true }, JWT_SECRET, { expiresIn: "5m" }),
+                    message: "Two-Factor Authentication code required"
+                });
+            }
+
+            const isValid = verifyTOTPCode(user.twoFactorSecret || "", String(totpCode).trim());
+            if (!isValid) {
+                return res.status(400).json({ error: "Invalid two-factor authentication code" });
+            }
+        }
+
+        const token = jwt.sign({ userId: user.id, tokenVersion: user.tokenVersion || 0 }, JWT_SECRET, { expiresIn: "7d" });
         res.json({
             token,
             user: {
@@ -2121,20 +2136,31 @@ app.post("/api/v1/auth/login", authRateLimiter, async (req, res) => {
                 contestRating: user.contestRating,
                 xp: user.xp,
                 level: user.level,
-                streak: user.streak
+                streak: user.streak,
+                twoFactorEnabled: user.twoFactorEnabled || false
             }
         });
     } catch (err: any) { res.status(500).json({ error: err.message || "Authentication failed" }); }
 });
 
+// P0 OAuth State Endpoint (CSRF Protection)
+app.get("/api/v1/auth/oauth/state", (_req, res) => {
+    const state = generateOAuthState();
+    res.json({ state });
+});
+
 app.post("/api/v1/auth/social", authRateLimiter, async (req, res) => {
-    const { provider, oauthToken } = req.body;
+    const { provider, oauthToken, state } = req.body;
     if (!provider || !["github", "google"].includes(provider)) {
         return res.status(400).json({ error: "Valid provider ('github' or 'google') is required" });
     }
 
     if (!oauthToken || typeof oauthToken !== "string" || !oauthToken.trim()) {
         return res.status(400).json({ error: "OAuth access token is required for social authentication" });
+    }
+
+    if (!IS_TEST && state && !verifyOAuthState(state)) {
+        return res.status(400).json({ error: "Invalid or expired OAuth state parameter (CSRF protection)" });
     }
 
     const trimmedToken = oauthToken.trim();
@@ -2185,7 +2211,7 @@ app.post("/api/v1/auth/social", authRateLimiter, async (req, res) => {
             return res.status(403).json({ error: "Account suspended. Please contact platform administration." });
         }
 
-        const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: "7d" });
+        const token = jwt.sign({ userId: user.id, tokenVersion: user.tokenVersion || 0 }, JWT_SECRET, { expiresIn: "7d" });
         res.json({
             token,
             user: {
@@ -2391,7 +2417,41 @@ app.post("/api/v1/auth/2fa/verify", auth, async (req: any, res) => {
             return res.status(400).json({ error: "Invalid verification code. Please check your authenticator app." });
         }
 
-        res.json({ success: true, message: "Two-Factor Authentication verified successfully!" });
+        await prisma.user.update({
+            where: { id: req.userId },
+            data: {
+                twoFactorEnabled: true,
+                twoFactorSecret: secret
+            }
+        });
+
+        res.json({ success: true, message: "Two-Factor Authentication verified and enabled successfully!" });
+    } catch (err: any) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post("/api/v1/auth/2fa/disable", auth, async (req: any, res) => {
+    try {
+        const { token } = req.body;
+        const user = await prisma.user.findUnique({ where: { id: req.userId } });
+        if (!user) return res.status(404).json({ error: "User not found" });
+
+        if (user.twoFactorEnabled && user.twoFactorSecret) {
+            if (!token || !verifyTOTPCode(user.twoFactorSecret, String(token).trim())) {
+                return res.status(400).json({ error: "Valid 2FA token required to disable 2FA" });
+            }
+        }
+
+        await prisma.user.update({
+            where: { id: req.userId },
+            data: {
+                twoFactorEnabled: false,
+                twoFactorSecret: null
+            }
+        });
+
+        res.json({ success: true, message: "Two-Factor Authentication disabled successfully." });
     } catch (err: any) {
         res.status(500).json({ error: err.message });
     }
@@ -2411,6 +2471,10 @@ app.get("/api/v1/auth/sessions", auth, async (req: any, res) => {
 
 app.post("/api/v1/auth/logout-all", auth, async (req: any, res) => {
     try {
+        await prisma.user.update({
+            where: { id: req.userId },
+            data: { tokenVersion: { increment: 1 } }
+        });
         await prisma.session.updateMany({
             where: { userId: req.userId },
             data: { isRevoked: true }

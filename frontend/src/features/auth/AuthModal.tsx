@@ -132,13 +132,23 @@ export function AuthModal({ mode, onClose, onSuccess }: {
       return;
     }
 
-    // Build standard OAuth authorization redirect URL
+    // Fetch cryptographic CSRF state from backend
+    let state = "";
+    try {
+      const stateRes = await axios.get(`${API}/api/v1/auth/oauth/state?provider=${provider}`);
+      state = stateRes.data?.state || "";
+    } catch {
+      // Fallback state if offline
+      state = Math.random().toString(36).substring(2) + Date.now().toString(36);
+    }
+
+    // Build standard OAuth authorization redirect URL with state protection
     const redirectUri = window.location.origin;
     let authUrl = "";
     if (provider === "github") {
-      authUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=user:email`;
+      authUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=user:email&state=${encodeURIComponent(state)}`;
     } else {
-      authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=openid%20email%20profile`;
+      authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=openid%20email%20profile&state=${encodeURIComponent(state)}`;
     }
 
     // Open real provider OAuth popup
@@ -157,7 +167,8 @@ export function AuthModal({ mode, onClose, onSuccess }: {
         try {
           const { data } = await axios.post(`${API}/api/v1/auth/social`, {
             provider,
-            oauthToken: event.data.token
+            oauthToken: event.data.token,
+            state: event.data.state || state
           });
           if (data?.user && data?.token) {
             onSuccess(data.user, data.token);

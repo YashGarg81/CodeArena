@@ -1,5 +1,5 @@
 // worker/src/sandbox/index.ts
-export { isDockerSandboxEnabled, isDockerAvailable, runInDocker } from "./dockerRunner";
+export { isDockerSandboxEnabled, isDockerAvailable, runInDocker, compileInDocker } from "./dockerRunner";
 export { isFirecrackerAvailable, runInFirecrackerMicroVM } from "./firecrackerRunner";
 
 export interface SandboxPolicy {
@@ -28,7 +28,6 @@ let cachedFirecrackerAvailable: boolean | null = null;
 export async function shouldUseDockerSandbox(): Promise<boolean> {
   const mode = getSandboxMode();
   if (mode === "process") return false;
-  if (mode === "firecracker") return false;
 
   if (cachedDockerAvailable === null) {
     const { isDockerAvailable, isDockerSandboxEnabled } = await import("./dockerRunner");
@@ -39,16 +38,16 @@ export async function shouldUseDockerSandbox(): Promise<boolean> {
 
 /**
  * Returns the currently active execution sandbox engine mode.
- * Defaults to secure "firecracker" mode.
+ * Defaults to secure "docker" container mode for verified production isolation.
  */
 export function getSandboxMode(): "firecracker" | "docker" | "process" {
-  if (process.env.SANDBOX_MODE === "docker" || process.env.DOCKER_SANDBOX === "true") {
-    return "docker";
-  }
-  if (process.env.SANDBOX_MODE === "process") {
+  if (process.env.SANDBOX_MODE === "process" || (process.env.NODE_ENV !== "production" && process.env.ALLOW_PROCESS_SANDBOX === "true")) {
     return "process";
   }
-  return "firecracker";
+  if (process.env.SANDBOX_MODE === "firecracker") {
+    return "firecracker";
+  }
+  return "docker";
 }
 
 /**
@@ -89,7 +88,7 @@ export async function validateSandboxSafety(overrideMode?: "firecracker" | "dock
   if (isProd && mode === "process" && process.env.ALLOW_PROCESS_SANDBOX !== "true") {
     return {
       safe: false,
-      reason: "Production Security Policy Violation: Process sandbox is unsafe for production environments. Container isolation (Docker) or MicroVM (Firecracker) required.",
+      reason: "Production Security Policy Violation: Process sandbox is unsafe for production environments. Container isolation (Docker) required.",
       policy
     };
   }
@@ -109,7 +108,6 @@ export async function validateSandboxSafety(overrideMode?: "firecracker" | "dock
     }
 
     if (mode === "docker") {
-      // Docker mode check
       const { isDockerAvailable } = await import("./dockerRunner");
       const dockerOk = await isDockerAvailable();
       if (!dockerOk) {

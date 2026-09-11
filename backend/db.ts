@@ -59,6 +59,11 @@ const inMemoryStore: Record<string, any[]> = {
       xp: 2400,
       level: 8,
       streak: 12,
+      isEmailVerified: true,
+      tokenVersion: 0,
+      twoFactorEnabled: false,
+      twoFactorSecret: null,
+      twoFactorBackupCodes: [],
       createdAt: new Date(),
       updatedAt: new Date()
     },
@@ -75,6 +80,11 @@ const inMemoryStore: Record<string, any[]> = {
       xp: 850,
       level: 4,
       streak: 5,
+      isEmailVerified: true,
+      tokenVersion: 0,
+      twoFactorEnabled: false,
+      twoFactorSecret: null,
+      twoFactorBackupCodes: [],
       createdAt: new Date(),
       updatedAt: new Date()
     },
@@ -91,6 +101,11 @@ const inMemoryStore: Record<string, any[]> = {
       xp: 0,
       level: 1,
       streak: 0,
+      isEmailVerified: true,
+      tokenVersion: 0,
+      twoFactorEnabled: false,
+      twoFactorSecret: null,
+      twoFactorBackupCodes: [],
       createdAt: new Date(),
       updatedAt: new Date()
     }

@@ -1,6 +1,8 @@
+// backend/src/oauth.ts
 /**
- * OAuth token verification for GitHub and Google providers.
+ * OAuth token verification and authorization-code exchange for GitHub and Google providers.
  */
+import crypto from "crypto";
 import { isDevSocialAuthAllowed } from "./config";
 
 export interface OAuthProfile {
@@ -19,6 +21,24 @@ export class OAuthVerificationError extends Error {
   }
 }
 
+// In-memory single-use CSRF OAuth state cache with TTL
+const oauthStates = new Map<string, { provider: "github" | "google"; expiresAt: number }>();
+
+export function generateOAuthState(provider: "github" | "google"): string {
+  const state = crypto.randomBytes(32).toString("hex");
+  oauthStates.set(state, { provider, expiresAt: Date.now() + 10 * 60 * 1000 }); // 10 min TTL
+  return state;
+}
+
+export function verifyOAuthState(state: string, expectedProvider: "github" | "google"): boolean {
+  if (!state || typeof state !== "string") return false;
+  const record = oauthStates.get(state.trim());
+  if (!record) return false;
+  oauthStates.delete(state.trim()); // Single-use consumption
+  if (Date.now() > record.expiresAt) return false;
+  return record.provider === expectedProvider;
+}
+
 async function fetchGitHubPrimaryEmail(token: string): Promise<string | null> {
   const res = await fetch("https://api.github.com/user/emails", {
     headers: {
@@ -31,6 +51,45 @@ async function fetchGitHubPrimaryEmail(token: string): Promise<string | null> {
   const emails = (await res.json()) as Array<{ email: string; primary?: boolean; verified?: boolean }>;
   const primary = emails.find((e) => e.primary && e.verified);
   return primary?.email ?? emails.find((e) => e.verified)?.email ?? emails[0]?.email ?? null;
+}
+
+export async function exchangeGitHubCode(code: string, redirectUri?: string): Promise<string> {
+  if (code.startsWith("mock_") || code.startsWith("dev_")) {
+    if (isDevSocialAuthAllowed()) return code;
+  }
+
+  const clientId = process.env.GITHUB_CLIENT_ID;
+  const clientSecret = process.env.GITHUB_CLIENT_SECRET;
+
+  if (!clientId || !clientSecret) {
+    throw new OAuthVerificationError("GitHub OAuth is not configured on the server (missing GITHUB_CLIENT_ID or GITHUB_CLIENT_SECRET)");
+  }
+
+  const res = await fetch("https://github.com/login/oauth/access_token", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      "User-Agent": "CodeArena-Platform",
+    },
+    body: JSON.stringify({
+      client_id: clientId,
+      client_secret: clientSecret,
+      code,
+      redirect_uri: redirectUri,
+    }),
+  });
+
+  if (!res.ok) {
+    throw new OAuthVerificationError("Failed to exchange GitHub authorization code for access token");
+  }
+
+  const data = (await res.json()) as { access_token?: string; error?: string; error_description?: string };
+  if (!data.access_token) {
+    throw new OAuthVerificationError(data.error_description || data.error || "GitHub authorization code exchange failed");
+  }
+
+  return data.access_token;
 }
 
 export async function verifyGitHubToken(token: string): Promise<OAuthProfile> {
@@ -70,7 +129,7 @@ export async function verifyGitHubToken(token: string): Promise<OAuthProfile> {
 }
 
 export async function verifyGoogleToken(token: string): Promise<OAuthProfile> {
-  // Try ID token validation first, then access token via userinfo
+  // Validate token via Google tokeninfo / userinfo endpoint
   let profile: OAuthProfile | null = null;
 
   const idRes = await fetch(
@@ -126,13 +185,21 @@ export async function verifyGoogleToken(token: string): Promise<OAuthProfile> {
 
 export async function verifyOAuthToken(
   provider: "github" | "google",
-  token: string | undefined,
-  devPayload?: { email?: string; name?: string; username?: string; avatar?: string }
+  tokenOrCode: string | undefined,
+  devPayload?: { email?: string; name?: string; username?: string; avatar?: string; isCode?: boolean }
 ): Promise<OAuthProfile> {
-  const isMockToken = token && (token.startsWith("mock_") || token.startsWith("dev_"));
+  const isMockToken = tokenOrCode && (tokenOrCode.startsWith("mock_") || tokenOrCode.startsWith("dev_"));
 
-  if (token && !isMockToken) {
-    return provider === "github" ? verifyGitHubToken(token) : verifyGoogleToken(token);
+  if (tokenOrCode && !isMockToken) {
+    if (provider === "github") {
+      let accessToken = tokenOrCode;
+      if (devPayload?.isCode || tokenOrCode.length < 40) {
+        accessToken = await exchangeGitHubCode(tokenOrCode);
+      }
+      return verifyGitHubToken(accessToken);
+    } else {
+      return verifyGoogleToken(tokenOrCode);
+    }
   }
 
   if (isDevSocialAuthAllowed()) {

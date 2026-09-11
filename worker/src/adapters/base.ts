@@ -24,7 +24,7 @@ export function getSanitizedEnv(): Record<string, string> {
 }
 
 /**
- * Executes a process with time limits, output quotas, and error handling.
+ * Executes a process with time limits, output quotas, and fail-closed sandbox isolation.
  */
 export async function runProcessSafely(
     cmd: string,
@@ -35,10 +35,22 @@ export async function runProcessSafely(
     const { inputData, expectedOutput = "", timeoutMs, maxOutputBytes = DEFAULT_MAX_OUTPUT_BYTES, languageKey } = options;
 
     if (languageKey && (await shouldUseDockerSandbox())) {
-        const dockerLanguages = new Set(["js", "ts", "py", "python", "python3", "go", "golang"]);
-        if (dockerLanguages.has(languageKey.toLowerCase())) {
-            return runInDocker(languageKey, [cmd, ...args], options);
-        }
+        return runInDocker(languageKey, [cmd, ...args], options);
+    }
+
+    const isProd = process.env.NODE_ENV === "production";
+    const isStrict = process.env.STRICT_SANDBOX === "true" || process.env.REQUIRE_DOCKER === "true";
+    const allowProcess = process.env.ALLOW_PROCESS_SANDBOX === "true" || (process.env.NODE_ENV === "test" && process.env.STRICT_SANDBOX !== "true");
+
+    if ((isProd || isStrict) && !allowProcess) {
+        return {
+            passed: false,
+            got: "",
+            expected: expectedOutput,
+            runtime: 0,
+            verdict: "RE",
+            error: "Security Violation: Host process execution is strictly prohibited. Docker sandbox isolation is required."
+        };
     }
 
     return new Promise((resolve) => {

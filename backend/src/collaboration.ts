@@ -26,6 +26,8 @@ export interface RoomState {
 
 class CollaborationEngine {
   private rooms: Map<string, RoomState> = new Map();
+  private roomOwners: Map<string, string> = new Map(); // roomId -> ownerId
+  private roomCollaborators: Map<string, Set<string>> = new Map(); // roomId -> Set of userIds
 
   getOrCreateRoom(roomId: string, initialCode = "", language = "javascript"): RoomState {
     let room = this.rooms.get(roomId);
@@ -48,6 +50,49 @@ class CollaborationEngine {
       this.rooms.set(roomId, room);
     }
     return room;
+  }
+
+  setRoomOwner(roomId: string, ownerId: string): void {
+    this.roomOwners.set(roomId, ownerId);
+    if (!this.roomCollaborators.has(roomId)) {
+      this.roomCollaborators.set(roomId, new Set([ownerId]));
+    }
+  }
+
+  createAuthorizedRoom(roomId: string, ownerId: string, initialCode = "", language = "javascript"): RoomState {
+    this.setRoomOwner(roomId, ownerId);
+    return this.getOrCreateRoom(roomId, initialCode, language);
+  }
+
+  addCollaborator(roomId: string, ownerOrCollab: string, maybeCollabId?: string): boolean {
+    const collabId = maybeCollabId || ownerOrCollab;
+    const owner = this.roomOwners.get(roomId);
+    if (maybeCollabId && owner && owner !== ownerOrCollab) return false;
+    if (!this.roomCollaborators.has(roomId)) {
+      this.roomCollaborators.set(roomId, new Set(owner ? [owner] : []));
+    }
+    this.roomCollaborators.get(roomId)!.add(collabId);
+    return true;
+  }
+
+  removeCollaborator(roomId: string, ownerId: string, collaboratorUserId: string): boolean {
+    const owner = this.roomOwners.get(roomId);
+    if (owner && owner !== ownerId) return false;
+    const collabs = this.roomCollaborators.get(roomId);
+    if (collabs) {
+      collabs.delete(collaboratorUserId);
+      return true;
+    }
+    return false;
+  }
+
+  isAuthorized(roomId: string, userId: string): boolean {
+    if (!roomId || !userId) return false;
+    const owner = this.roomOwners.get(roomId);
+    if (!owner) return false; // Fail closed: unowned rooms require explicit creation/ownership
+    if (owner === userId) return true;
+    const collabs = this.roomCollaborators.get(roomId);
+    return Boolean(collabs && collabs.has(userId));
   }
 
   joinRoom(roomId: string, socketId: string, user: { userId: string; username: string }): RoomUser {

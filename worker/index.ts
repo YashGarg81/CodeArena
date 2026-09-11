@@ -49,14 +49,27 @@ redisClient.connect()
             } catch {}
         }, 10000);
 
-        // 2. Recover any stranded tasks from previous crashes
-        try {
-            let stranded = await redisClient.rPopLPush(PROCESSING_QUEUE, PENDING_QUEUE);
-            while (stranded) {
-                console.warn(`[Queue Recovery] Restored unacknowledged task to pending queue: ${stranded}`);
-                stranded = await redisClient.rPopLPush(PROCESSING_QUEUE, PENDING_QUEUE);
-            }
-        } catch {}
+        // 2. Lease-aware recovery: Reclaim ONLY stranded tasks whose lease has expired (>60s)
+        const VISIBILITY_TIMEOUT_MS = 60000;
+        const checkExpiredLeases = async () => {
+            try {
+                const processingItems = await redisClient.lRange(PROCESSING_QUEUE, 0, -1);
+                const now = Date.now();
+                for (const item of processingItems) {
+                    try {
+                        const parsed = JSON.parse(item);
+                        const claimedAt = parsed._claimedAt || 0;
+                        if (claimedAt > 0 && now - claimedAt > VISIBILITY_TIMEOUT_MS) {
+                            console.warn(`[Queue Recovery] Lease expired for stranded submission ${parsed.submissionId}. Reclaiming to pending queue.`);
+                            await redisClient.lRem(PROCESSING_QUEUE, 1, item);
+                            await redisClient.lPush(PENDING_QUEUE, JSON.stringify({ ...parsed, _claimedAt: undefined }));
+                        }
+                    } catch {}
+                }
+            } catch {}
+        };
+        await checkExpiredLeases();
+        setInterval(checkExpiredLeases, 30000);
 
         while (1) {
             // Atomically move submission from pending to processing list

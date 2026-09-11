@@ -14,8 +14,6 @@ export interface SAMLUserIdentity {
   groups?: string[];
 }
 
-import crypto from "crypto";
-
 import { DOMParser } from "@xmldom/xmldom";
 import { SignedXml } from "xml-crypto";
 
@@ -27,16 +25,53 @@ export interface SAMLConfig {
 
 /**
  * Validates XML Signature (ds:Signature) against IdP X.509 Certificate using XML-DSig canonicalization.
+ * Enforces strict cryptographic signature and reference digest validation without regex fallbacks.
  */
 export function verifySAMLSignature(xml: string, certPem: string): boolean {
+  if (!xml || typeof xml !== "string" || !certPem) {
+    return false;
+  }
+
+  // Prevent XXE & DTD processing
+  if (/<!DOCTYPE|<!ENTITY/i.test(xml)) {
+    return false;
+  }
+
   try {
-    const doc = new DOMParser().parseFromString(xml, "text/xml");
-    const signatureNode = doc.getElementsByTagNameNS("http://www.w3.org/2000/09/xmldsig#", "Signature")[0] ||
-                          doc.getElementsByTagName("Signature")[0] ||
-                          doc.getElementsByTagName("ds:Signature")[0];
+    const doc = new DOMParser({
+      errorHandler: {
+        warning: () => {},
+        error: () => {},
+        fatalError: () => {}
+      }
+    }).parseFromString(xml, "text/xml");
+
+    if (!doc || !doc.documentElement) {
+      return false;
+    }
+
+    const signatureNodes = doc.getElementsByTagNameNS("http://www.w3.org/2000/09/xmldsig#", "Signature");
+    const signatureNode = signatureNodes.length > 0 ? signatureNodes[0] : (
+      doc.getElementsByTagName("ds:Signature")[0] || doc.getElementsByTagName("Signature")[0]
+    );
 
     if (!signatureNode) {
       return false;
+    }
+
+    // Protection against XML Signature Wrapping (XSW) with multiple assertions
+    const assertions = Array.from(doc.getElementsByTagNameNS("urn:oasis:names:tc:SAML:2.0:assertion", "Assertion"))
+      .concat(Array.from(doc.getElementsByTagName("saml2:Assertion")))
+      .concat(Array.from(doc.getElementsByTagName("saml:Assertion")))
+      .concat(Array.from(doc.getElementsByTagName("Assertion")));
+
+    if (assertions.length > 1) {
+      // Check for duplicate assertions or duplicate IDs
+      const ids = assertions.map(a => a.getAttribute("ID") || a.getAttribute("id")).filter(Boolean);
+      const uniqueIds = new Set(ids);
+      if (ids.length !== uniqueIds.size) {
+        return false; // Duplicate Assertion ID detected
+      }
     }
 
     let formattedCert = certPem.trim();
@@ -44,31 +79,18 @@ export function verifySAMLSignature(xml: string, certPem: string): boolean {
       formattedCert = `-----BEGIN CERTIFICATE-----\n${formattedCert}\n-----END CERTIFICATE-----`;
     }
 
-    const sig: any = new SignedXml();
+    const sig = new SignedXml();
     sig.keyInfoProvider = {
       getKeyInfo: () => "<X509Data></X509Data>",
       getKey: () => formattedCert
     };
+
     sig.loadSignature(signatureNode as any);
-    return sig.checkSignature(xml);
+    const isValid = sig.checkSignature(xml);
+    return Boolean(isValid);
   } catch {
-    // Fallback: If xml-crypto encounters non-standard XML, test basic digest
-    try {
-      const sigValueMatch = xml.match(/<(?:ds:)?SignatureValue[^>]*>([^<]+)<\/(?:ds:)?SignatureValue>/i);
-      const signedInfoMatch = xml.match(/<(?:ds:)?SignedInfo[\s\S]*?<\/(?:ds:)?SignedInfo>/i);
-      if (!sigValueMatch || !sigValueMatch[1] || !signedInfoMatch || !signedInfoMatch[0]) return false;
-      const signatureBase64 = sigValueMatch[1].replace(/\s+/g, "");
-      const signedInfoXml = signedInfoMatch[0];
-      let formattedCert = certPem.trim();
-      if (!formattedCert.includes("BEGIN CERTIFICATE")) {
-        formattedCert = `-----BEGIN CERTIFICATE-----\n${formattedCert}\n-----END CERTIFICATE-----`;
-      }
-      const verifier = crypto.createVerify("RSA-SHA256");
-      verifier.update(signedInfoXml);
-      return verifier.verify(formattedCert, signatureBase64, "base64");
-    } catch {
-      return false;
-    }
+    // Fail closed: Never fall back to unvalidated regex signatures
+    return false;
   }
 }
 
@@ -87,36 +109,43 @@ export function parseSAMLAssertion(samlResponseBase64: string, config?: SAMLConf
     throw new Error("Invalid base64 encoding for SAMLResponse");
   }
 
+  // Prevent XXE & DTD processing
+  if (/<!DOCTYPE|<!ENTITY/i.test(xml)) {
+    throw new Error("Security Violation: DTD and external entities are forbidden in SAML assertions");
+  }
+
   // Ensure root element has standard SAML namespace declarations if parsing loose mock payloads
   let normalizedXml = xml;
   if (!normalizedXml.includes("xmlns:saml2") && !normalizedXml.includes("xmlns:saml")) {
     normalizedXml = normalizedXml.replace(
-      /<([a-zA-Z0-9_-]+:)?(Assertion|Response|Envelope)/,
-      '<$1$2 xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion" xmlns:saml2="urn:oasis:names:tc:SAML:2.0:assertion" xmlns:ds="http://www.w3.org/2000/09/xmldsig#"'
+      /<([a-zA-Z0-9_-]+:)?(Assertion|Response|Envelope)(\s|>)/,
+      '<$1$2 xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion" xmlns:saml2="urn:oasis:names:tc:SAML:2.0:assertion" xmlns:ds="http://www.w3.org/2000/09/xmldsig#"$3'
     );
   }
 
   // Parse XML using standard DOMParser
   let doc: any = null;
   try {
-    doc = new DOMParser({
-      onError: (level, msg) => {
-        if (level === "fatalError") {
-          // Warning/fatal suppressed for loose xml, handled in try/catch fallback
-        }
-      }
-    }).parseFromString(normalizedXml, "text/xml");
+    doc = new DOMParser().parseFromString(normalizedXml, "text/xml");
   } catch {
-    // If strict namespace parser errors on raw snippets, parse without xmlns prefix enforcement
-    try {
-      doc = new DOMParser().parseFromString(normalizedXml, "text/xml");
-    } catch {
-      doc = null;
-    }
+    doc = null;
   }
 
-  if (!doc || !doc.documentElement) {
+  if (!doc || !doc.documentElement || doc.documentElement.tagName === "parsererror") {
     throw new Error("Invalid or malformed SAML XML document");
+  }
+
+  // Check for XML Signature Wrapping / Duplicate Assertion IDs
+  const assertionElements: any[] = Array.from(doc.getElementsByTagName("Assertion")).concat(
+    Array.from(doc.getElementsByTagName("saml2:Assertion")),
+    Array.from(doc.getElementsByTagName("saml:Assertion"))
+  );
+  if (assertionElements.length > 1) {
+    const idList = assertionElements.map(el => el?.getAttribute?.("ID") || el?.getAttribute?.("id")).filter(Boolean);
+    const uniqueIds = new Set(idList);
+    if (idList.length !== uniqueIds.size) {
+      throw new Error("Security Violation: Duplicate Assertion ID detected in SAML response");
+    }
   }
 
   // 1. Validate Time-Window Conditions (NotBefore / NotOnOrAfter)
@@ -211,7 +240,6 @@ export function parseSAMLAssertion(samlResponseBase64: string, config?: SAMLConf
   }
 
   if (!email || !email.includes("@")) {
-    // Regex safety fallback for loosely formatted mock assertions
     const fallbackMatch = xml.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/)?.[0];
     if (fallbackMatch) {
       email = fallbackMatch.toLowerCase();
@@ -232,4 +260,28 @@ export function parseSAMLAssertion(samlResponseBase64: string, config?: SAMLConf
     email,
     displayName
   };
+}
+
+/**
+ * High-level SAML response verification and identity extraction
+ */
+export async function verifySamlResponse(
+  samlResponseBase64: string,
+  certPem?: string
+): Promise<{ valid: boolean; error?: string; identity?: SAMLUserIdentity }> {
+  try {
+    if (!samlResponseBase64) return { valid: false, error: "Empty SAML response" };
+    const xml = Buffer.from(samlResponseBase64, "base64").toString("utf-8");
+    if (/<!DOCTYPE|<!ENTITY/i.test(xml)) {
+      return { valid: false, error: "Security Violation: DOCTYPE or external entity declarations are prohibited" };
+    }
+    if (certPem) {
+      const validSig = verifySAMLSignature(xml, certPem);
+      if (!validSig) return { valid: false, error: "Invalid SAML signature or certificate mismatch" };
+    }
+    const identity = parseSAMLAssertion(samlResponseBase64);
+    return { valid: true, identity };
+  } catch (err: any) {
+    return { valid: false, error: err.message || "SAML verification failed" };
+  }
 }

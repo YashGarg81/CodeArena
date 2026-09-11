@@ -81,11 +81,11 @@ describe("Rate Limiter Module", () => {
 });
 
 describe("Sandbox Module", () => {
-  test("default sandbox mode is firecracker", () => {
+  test("default sandbox mode is docker (hardened production default)", () => {
     const original = process.env.SANDBOX_MODE;
     delete process.env.SANDBOX_MODE;
     delete process.env.DOCKER_SANDBOX;
-    expect(getSandboxMode()).toBe("firecracker");
+    expect(getSandboxMode()).toBe("docker");
     if (original) process.env.SANDBOX_MODE = original;
   });
 

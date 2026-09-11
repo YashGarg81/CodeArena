@@ -78,6 +78,12 @@ model User {
   lastActiveDate  DateTime?
   isPublic        Boolean  @default(true)
   isSuspended     Boolean  @default(false)
+  isEmailVerified Boolean  @default(false)
+  emailVerifiedAt DateTime?
+  tokenVersion    Int      @default(0)
+  twoFactorEnabled Boolean  @default(false)
+  twoFactorSecret String?
+  twoFactorBackupCodes String[] @default([])
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 

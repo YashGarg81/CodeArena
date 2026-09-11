@@ -4,6 +4,8 @@ import path from "path";
 import { spawn } from "child_process";
 import type { ILanguageAdapter, ExecutionOptions, ExecutionResult, CompilationResult, SupportedLanguage } from "./types";
 import { runProcessSafely, getSanitizedEnv } from "./base";
+import { shouldUseDockerSandbox } from "../sandbox";
+import { compileInDocker, runInDocker } from "../sandbox/dockerRunner";
 
 export class JavaAdapter implements ILanguageAdapter {
     readonly key: SupportedLanguage = "java";
@@ -17,6 +19,24 @@ export class JavaAdapter implements ILanguageAdapter {
     }
 
     async compile(folderPath: string, sourceFilePath: string): Promise<CompilationResult> {
+        if (await shouldUseDockerSandbox()) {
+            return compileInDocker("java", [
+                "javac",
+                "Solution.java"
+            ], { folderPath, outputBinaryName: "Solution.class" });
+        }
+
+        const isProd = process.env.NODE_ENV === "production";
+        const isStrict = process.env.STRICT_SANDBOX === "true" || process.env.REQUIRE_DOCKER === "true";
+        const allowProcess = process.env.ALLOW_PROCESS_SANDBOX === "true" || (process.env.NODE_ENV === "test" && process.env.STRICT_SANDBOX !== "true");
+
+        if ((isProd || isStrict) && !allowProcess) {
+            return {
+                success: false,
+                errorMessage: "Security Violation: Host compiler execution is strictly prohibited. Docker sandbox required."
+            };
+        }
+
         const compilerCmd = "javac";
         const compilerArgs = [sourceFilePath];
 
@@ -41,7 +61,7 @@ export class JavaAdapter implements ILanguageAdapter {
 
                 child.on("exit", (code: number) => {
                     if (code === 0) {
-                        resolve({ success: true });
+                        resolve({ success: true, executablePath: path.join(folderPath, "Solution.class") });
                     } else {
                         resolve({
                             success: false,
@@ -59,7 +79,6 @@ export class JavaAdapter implements ILanguageAdapter {
     }
 
     async execute(options: ExecutionOptions): Promise<ExecutionResult> {
-        // Find main class name or default to Solution / Main
         const sourcePath = path.join(options.folderPath, `Solution${this.fileExtension}`);
         fs.writeFileSync(sourcePath, options.codeWithDriver);
 
@@ -71,8 +90,19 @@ export class JavaAdapter implements ILanguageAdapter {
                 expected: options.expectedOutput || "",
                 runtime: 0,
                 isCompileError: true,
+                verdict: "CE",
                 error: compilation.errorMessage || "Java Compilation Failed"
             };
+        }
+
+        if (await shouldUseDockerSandbox()) {
+            return runInDocker("java", [
+                "java",
+                `-Xmx${options.memoryLimitMb || 256}m`,
+                "-cp",
+                "/sandbox",
+                "Solution"
+            ], { ...options, languageKey: this.key });
         }
 
         const cmd = "java";

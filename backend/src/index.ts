@@ -61,10 +61,16 @@ io.on('connection', (socket: any) => {
   const userId = socket.userId;
   console.log(`[Socket] Authenticated client connected: ${socket.id} (user: ${userId})`);
 
+import { collaborationEngine } from './collaboration';
+
   // Room authorization & join
   socket.on('canvas:join', (roomId: string) => {
     if (typeof roomId !== 'string' || !/^[a-zA-Z0-9_-]{1,64}$/.test(roomId)) {
       socket.emit('error', { message: 'Invalid room ID' });
+      return;
+    }
+    if (!collaborationEngine.isAuthorized(roomId, userId)) {
+      socket.emit('error', { message: 'Unauthorized: Access to this canvas room is restricted' });
       return;
     }
     socket.join(`canvas:${roomId}`);

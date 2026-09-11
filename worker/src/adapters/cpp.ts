@@ -4,6 +4,8 @@ import path from "path";
 import { spawn } from "child_process";
 import type { ILanguageAdapter, ExecutionOptions, ExecutionResult, CompilationResult, SupportedLanguage } from "./types";
 import { runProcessSafely, getSanitizedEnv } from "./base";
+import { shouldUseDockerSandbox } from "../sandbox";
+import { compileInDocker, runInDocker } from "../sandbox/dockerRunner";
 
 export class CppAdapter implements ILanguageAdapter {
     readonly key: SupportedLanguage = "cpp";
@@ -17,7 +19,33 @@ export class CppAdapter implements ILanguageAdapter {
     }
 
     async compile(folderPath: string, sourceFilePath: string): Promise<CompilationResult> {
-        const outBinary = path.join(folderPath, process.platform === "win32" ? "solution.exe" : "solution");
+        const outBinaryName = process.platform === "win32" ? "solution.exe" : "solution";
+        const outBinary = path.join(folderPath, outBinaryName);
+
+        if (await shouldUseDockerSandbox()) {
+            return compileInDocker("cpp", [
+                "g++",
+                "-O2",
+                "-std=c++17",
+                "-Wall",
+                "-Wextra",
+                "solution.cpp",
+                "-o",
+                "solution"
+            ], { folderPath, outputBinaryName: "solution" });
+        }
+
+        const isProd = process.env.NODE_ENV === "production";
+        const isStrict = process.env.STRICT_SANDBOX === "true" || process.env.REQUIRE_DOCKER === "true";
+        const allowProcess = process.env.ALLOW_PROCESS_SANDBOX === "true" || (process.env.NODE_ENV === "test" && process.env.STRICT_SANDBOX !== "true");
+
+        if ((isProd || isStrict) && !allowProcess) {
+            return {
+                success: false,
+                errorMessage: "Security Violation: Host compiler execution is strictly prohibited. Docker sandbox required."
+            };
+        }
+
         const compilerCmd = "g++";
         const compilerArgs = [
             "-O2",
@@ -82,8 +110,13 @@ export class CppAdapter implements ILanguageAdapter {
                 expected: options.expectedOutput || "",
                 runtime: 0,
                 isCompileError: true,
+                verdict: "CE",
                 error: compilation.errorMessage || "C++ Compilation Failed"
             };
+        }
+
+        if (await shouldUseDockerSandbox()) {
+            return runInDocker("cpp", ["./solution"], { ...options, languageKey: this.key });
         }
 
         return runProcessSafely(compilation.executablePath, [], { ...options, languageKey: this.key });

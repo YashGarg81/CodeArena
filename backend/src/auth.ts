@@ -1,3 +1,4 @@
+// backend/src/auth.ts
 import type { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { prisma } from "../db";
@@ -86,11 +87,11 @@ export interface AuthenticatedRequest extends Request {
   sessionId?: string;
 }
 
-export function generateAccessToken(payload: { userId: string; role: string; sessionId?: string }): string {
+export function generateAccessToken(payload: { userId: string; role: string; tokenVersion?: number; sessionId?: string }): string {
   return jwt.sign(payload, getJwtSecret(), { expiresIn: "15m" });
 }
 
-export function generateRefreshToken(payload: { userId: string; familyId: string; sessionId?: string }): string {
+export function generateRefreshToken(payload: { userId: string; familyId: string; tokenVersion?: number; sessionId?: string }): string {
   return jwt.sign(payload, getRefreshTokenSecret(), { expiresIn: "7d" });
 }
 
@@ -113,12 +114,12 @@ export function auth(req: AuthenticatedRequest, res: Response, next: NextFunctio
       res.status(401).json({ error: "Token has been revoked" });
       return;
     }
-    const dec = decoded as { userId: string; role?: string; sessionId?: string };
+    const dec = decoded as { userId: string; role?: string; tokenVersion?: number; sessionId?: string };
     const userId = dec.userId;
     try {
       const user = await prisma.user.findUnique({
         where: { id: userId },
-        select: { id: true, role: true, email: true, isSuspended: true }
+        select: { id: true, role: true, email: true, isSuspended: true, tokenVersion: true }
       });
       if (!user) {
         res.status(401).json({ error: "User not found" });
@@ -128,6 +129,12 @@ export function auth(req: AuthenticatedRequest, res: Response, next: NextFunctio
         res.status(403).json({ error: "Account suspended. Please contact platform administration." });
         return;
       }
+      // Check if token was issued prior to a global session revocation (tokenVersion mismatch)
+      if (dec.tokenVersion !== undefined && user.tokenVersion !== undefined && dec.tokenVersion < user.tokenVersion) {
+        res.status(401).json({ error: "Session has expired or was revoked. Please sign in again." });
+        return;
+      }
+
       req.userId = user.id;
       req.userRole = user.role;
       req.user = { id: user.id, role: user.role, email: user.email };
@@ -147,7 +154,7 @@ export function optionalAuth(req: AuthenticatedRequest, _res: Response, next: Ne
       return;
     }
     try {
-      const decoded = jwt.verify(token, getJwtSecret()) as { userId: string; role?: string };
+      const decoded = jwt.verify(token, getJwtSecret()) as { userId: string; role?: string; tokenVersion?: number };
       req.userId = decoded.userId;
       req.userRole = decoded.role || "STUDENT";
     } catch {
@@ -157,6 +164,10 @@ export function optionalAuth(req: AuthenticatedRequest, _res: Response, next: Ne
   next();
 }
 
+/**
+ * Strict Core Administration authorization: Only ADMIN and PLATFORM_ADMIN.
+ * Prevents privilege escalation from Developer / Instructor roles.
+ */
 export async function adminAuth(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
   const token = req.headers.authorization?.split(" ")[1];
   if (!token) {
@@ -169,9 +180,53 @@ export async function adminAuth(req: AuthenticatedRequest, res: Response, next: 
   }
 
   try {
-    const decoded = jwt.verify(token, getJwtSecret()) as { userId: string; role?: string };
-    req.userId = decoded.userId;
+    const decoded = jwt.verify(token, getJwtSecret()) as { userId: string; role?: string; tokenVersion?: number };
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+      select: { id: true, role: true, email: true, isSuspended: true, tokenVersion: true },
+    });
 
+    if (!user || user.isSuspended) {
+      res.status(403).json({ error: "Access denied" });
+      return;
+    }
+
+    if (decoded.tokenVersion !== undefined && user.tokenVersion !== undefined && decoded.tokenVersion < user.tokenVersion) {
+      res.status(401).json({ error: "Session has expired or was revoked. Please sign in again." });
+      return;
+    }
+
+    const adminRoles = ["ADMIN", "PLATFORM_ADMIN"];
+    if (!adminRoles.includes(user.role)) {
+      res.status(403).json({ error: "Administrative privileges required (ADMIN or PLATFORM_ADMIN)" });
+      return;
+    }
+
+    req.userId = user.id;
+    req.userRole = user.role;
+    req.user = { id: user.id, role: user.role, email: user.email };
+    next();
+  } catch {
+    res.status(403).json({ error: "Invalid or expired token" });
+  }
+}
+
+/**
+ * Problem Management authorization: ADMIN, PLATFORM_ADMIN, PROBLEM_ADMIN, INSTRUCTOR.
+ */
+export async function problemAdminAuth(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) {
+    res.status(401).json({ error: "Access token required" });
+    return;
+  }
+  if (await checkTokenRevocation(token)) {
+    res.status(401).json({ error: "Token has been revoked" });
+    return;
+  }
+
+  try {
+    const decoded = jwt.verify(token, getJwtSecret()) as { userId: string; role?: string };
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
       select: { id: true, role: true, email: true, isSuspended: true },
@@ -182,12 +237,13 @@ export async function adminAuth(req: AuthenticatedRequest, res: Response, next: 
       return;
     }
 
-    const adminRoles = ["ADMIN", "PLATFORM_ADMIN", "PROBLEM_ADMIN", "CONTEST_ADMIN", "INSTRUCTOR", "DEVELOPER"];
-    if (!adminRoles.includes(user.role)) {
-      res.status(403).json({ error: "Administrative privileges required" });
+    const problemRoles = ["ADMIN", "PLATFORM_ADMIN", "PROBLEM_ADMIN", "INSTRUCTOR"];
+    if (!problemRoles.includes(user.role)) {
+      res.status(403).json({ error: "Problem authoring privileges required" });
       return;
     }
 
+    req.userId = user.id;
     req.userRole = user.role;
     req.user = { id: user.id, role: user.role, email: user.email };
     next();
@@ -196,6 +252,9 @@ export async function adminAuth(req: AuthenticatedRequest, res: Response, next: 
   }
 }
 
+/**
+ * Developer Tooling authorization: DEVELOPER, ADMIN, PLATFORM_ADMIN.
+ */
 export async function developerAuth(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
   const token = req.headers.authorization?.split(" ")[1];
   if (!token) {
@@ -209,8 +268,6 @@ export async function developerAuth(req: AuthenticatedRequest, res: Response, ne
 
   try {
     const decoded = jwt.verify(token, getJwtSecret()) as { userId: string; role?: string };
-    req.userId = decoded.userId;
-
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
       select: { id: true, role: true, email: true, isSuspended: true },
@@ -227,6 +284,7 @@ export async function developerAuth(req: AuthenticatedRequest, res: Response, ne
       return;
     }
 
+    req.userId = user.id;
     req.userRole = user.role;
     req.user = { id: user.id, role: user.role, email: user.email };
     next();
@@ -234,4 +292,3 @@ export async function developerAuth(req: AuthenticatedRequest, res: Response, ne
     res.status(403).json({ error: "Invalid or expired token" });
   }
 }
-

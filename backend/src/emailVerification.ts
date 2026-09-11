@@ -2,7 +2,6 @@
 import crypto from "crypto";
 import { prisma } from "../db";
 import { getRedisClient } from "./redisClient";
-import { safeErrorMessage } from "./config";
 import { sendTransactionalEmail } from "./emailService";
 
 export interface EmailVerificationTokenPayload {
@@ -26,10 +25,21 @@ export function generateVerificationToken(): { rawToken: string; tokenHash: stri
 }
 
 /**
- * Check if a user's email is verified.
+ * Check if a user's email is verified from persistent database with cache fallback.
  */
 export async function isUserEmailVerified(userId: string): Promise<boolean> {
   if (VERIFIED_USERS_CACHE.has(userId)) return true;
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { isEmailVerified: true }
+    });
+    if (user?.isEmailVerified) {
+      VERIFIED_USERS_CACHE.add(userId);
+      return true;
+    }
+  } catch {}
 
   const redis = getRedisClient();
   if (redis) {
@@ -39,27 +49,34 @@ export async function isUserEmailVerified(userId: string): Promise<boolean> {
         VERIFIED_USERS_CACHE.add(userId);
         return true;
       }
-    } catch {
-      // Fallback
-    }
+    } catch {}
   }
 
   return VERIFIED_USERS_CACHE.has(userId);
 }
 
 /**
- * Mark a user as verified.
+ * Mark a user as verified in persistent database.
  */
 export async function setUserEmailVerified(userId: string, email: string): Promise<void> {
   VERIFIED_USERS_CACHE.add(userId);
+
+  try {
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        isEmailVerified: true,
+        emailVerifiedAt: new Date()
+      }
+    });
+  } catch {}
+
   const redis = getRedisClient();
   if (redis) {
     try {
       await redis.set(`email_verified:${userId}`, "true");
       await redis.set(`email_verified_by_email:${email.toLowerCase()}`, "true");
-    } catch {
-      // Cache locally
-    }
+    } catch {}
   }
 }
 
@@ -165,7 +182,7 @@ export async function verifyEmailToken(rawToken: string): Promise<{ success: boo
     return { success: false, message: "Verification token has expired. Please request a new verification email." };
   }
 
-  // Mark user as verified
+  // Mark user as verified in database
   await setUserEmailVerified(payload.userId, payload.email);
 
   // Invalidate consumed token
