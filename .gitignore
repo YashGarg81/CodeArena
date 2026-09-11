@@ -10,13 +10,27 @@ out/
 generated/
 *.tsbuildinfo
 
-# Environment files
+# Environment files — never commit real secrets
 .env
 .env.local
+.env.development
 .env.development.local
+.env.test
 .env.test.local
+.env.production
 .env.production.local
+.env.staging
 *.env
+**/.env
+**/.env.*
+!**/.env.example
+
+# Private keys & certificates
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
 
 # Database data & logs
 db_data/

@@ -57,6 +57,33 @@ export default function App() {
   const [snippetsOpen, setSnippetsOpen] = useState(false);
   const [toast, setToast] = useState<{ msg: string; type: string } | null>(null);
 
+  // Handle OAuth popup callback response if this window was opened as an OAuth popup
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    // Check URL hash for OAuth implicit tokens (e.g., #access_token=... or #id_token=...)
+    const hash = window.location.hash;
+    if (hash && (hash.includes("access_token=") || hash.includes("id_token="))) {
+      const params = new URLSearchParams(hash.replace(/^#/, ""));
+      const token = params.get("access_token") || params.get("id_token");
+      if (token && window.opener) {
+        window.opener.postMessage({ provider: "google", token }, window.location.origin);
+        window.close();
+        return;
+      }
+    }
+
+    // Check query params for OAuth code / token (e.g. ?code=... or ?token=...)
+    const searchParams = new URLSearchParams(window.location.search);
+    const oauthToken = searchParams.get("token") || searchParams.get("code");
+    const oauthProvider = searchParams.get("provider") || "github";
+    if (oauthToken && window.opener) {
+      window.opener.postMessage({ provider: oauthProvider, token: oauthToken }, window.location.origin);
+      window.close();
+      return;
+    }
+  }, []);
+
   // Fetch actual database problem list for global search and dynamic platform counts
   useEffect(() => {
     axios.get(`${API}/api/v1/problems?limit=1000`)

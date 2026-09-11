@@ -193,7 +193,7 @@ Your goal is to evaluate their logic, ask probing questions on edge cases, discu
       { role: "user", content: userApproach || "I am starting to think about my approach." }
     ];
 
-    const apiKey = process.env.AI_API_KEY || "sk-j4onf13BJn4OvVpweRt6FjzIbzRrAzDAN9Q420CVFGepmEBX";
+    const apiKey = process.env.AI_API_KEY || "";
     const apiEndpoint = process.env.AI_API_ENDPOINT || "https://gorouter.app/v1/chat/completions";
     const model = process.env.AI_MODEL || "claude-opus-5-thinking";
 
@@ -295,7 +295,7 @@ Provide an objective JSON assessment (scores from 1 to 10):
   "detailedFeedback": "<2-3 sentence personalized summary citing their specific logic>"
 }`;
 
-    const apiKey = process.env.AI_API_KEY || "sk-j4onf13BJn4OvVpweRt6FjzIbzRrAzDAN9Q420CVFGepmEBX";
+    const apiKey = process.env.AI_API_KEY || "";
     const apiEndpoint = process.env.AI_API_ENDPOINT || "https://gorouter.app/v1/chat/completions";
     const model = process.env.AI_MODEL || "claude-opus-5-thinking";
 

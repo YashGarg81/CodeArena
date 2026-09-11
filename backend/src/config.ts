@@ -12,10 +12,10 @@ export const IS_PROD = process.env.NODE_ENV === "production";
 
 const INSECURE_DEFAULT_SECRETS = [
   "codearena-dev-secret-change-in-production",
-  "codearena-super-secret-production-key-2025",
   "secret",
   "jwt-secret",
   "change-me",
+  "replace-with-long-random-secret",
 ];
 
 export function isInsecureSecret(secret: string | undefined): boolean {
