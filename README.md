@@ -36,28 +36,137 @@
 
 ---
 
-## 📁 Repository Layout
+## 📁 Repository Layout & Architecture
 
 ```
 .
-├── backend/                  # REST API server & database migration seeds
-│   ├── generated/            # Generated Prisma client
-│   ├── prisma/               # Prisma relational schema
-│   ├── index.ts              # Core Express API router
-│   └── package.json          # Backend dependencies
-├── frontend/                 # React SPA & Monaco editor client
-│   ├── src/                  # Application source (App.tsx, components, styling)
-│   ├── build.ts              # High-performance Bun bundler script
-│   └── package.json          # Frontend dependencies
-├── worker/                   # Sandboxed execution daemon & multi-language runner
-│   ├── src/                  # Execution adapters & Docker/Firecracker isolation
-│   ├── generated/            # Generated Prisma client
-│   ├── prisma/               # Worker database schema
-│   ├── index.ts              # Reliable queue consumer daemon (rPopLPush)
-│   └── package.json          # Worker dependencies
-├── .github/workflows/        # Automated CI Release Gate pipeline
-├── docker-compose.yml        # Multi-container production deployment manifest
-└── package.json              # Unified monorepo scripts
+├── backend/                              # Modular REST & WebSocket API Server (Bun + Express)
+│   ├── prisma/                           # PostgreSQL relational schema & database migrations
+│   │   └── schema.prisma                 # Core domain models (User, Problem, Submission, Contest, etc.)
+│   ├── generated/                        # Generated Prisma ORM client
+│   ├── src/                              # Core backend architecture & modular domain services
+│   │   ├── aiMentor.ts                   # Socratic AI hints & code complexity analysis engine
+│   │   ├── aiService.ts                  # AI router & progressive prompt engineering pipeline
+│   │   ├── antiCheat.ts                  # Keystroke anomaly, paste frequency & submission heuristics
+│   │   ├── audit.ts                      # Immutable compliance audit logging service
+│   │   ├── auth.ts                       # JWT token issuance, verification & in-memory revocation cache
+│   │   ├── battleArena.ts                # Real-time 1v1 Elo matchmaking & room state synchronization
+│   │   ├── collaboration.ts              # Operational transform & multi-cursor WebSocket rooms
+│   │   ├── config.ts                     # Environment configuration & strict secret validation
+│   │   ├── debuggerEngine.ts             # Interactive step-by-step AST execution tracer
+│   │   ├── emailService.ts               # Transactional email dispatcher (verification, alerts)
+│   │   ├── emailVerification.ts          # Email verification tokens & account lifecycle
+│   │   ├── githubSync.ts                 # Automated repository solution sync & commit builder
+│   │   ├── infra.ts                      # System health, telemetry & infrastructure metrics
+│   │   ├── interviewRoutes.ts            # Scheduled technical interviews, calendar & private rubrics
+│   │   ├── judgeEngine.ts                # Subtask evaluator, partial scoring & verdict aggregator
+│   │   ├── judgePrivacy.ts               # Test case output masking & hidden test privacy filters
+│   │   ├── notifications.ts              # Real-time event notifications & user activity feed
+│   │   ├── oauth.ts                      # GitHub & Google OAuth2 token exchange & verification
+│   │   ├── outputCheckers.ts             # Floating-point epsilon, whitespace & tokenized checkers
+│   │   ├── passwordReset.ts              # Secure hashed password reset tokens & expiry rules
+│   │   ├── plagiarism.ts                 # Token-based AST normalization & winnowing similarity
+│   │   ├── platformServices.ts           # Failure-driven recommendation engine & benchmark percentiles
+│   │   ├── pluginEngine.ts               # Extensible webhook & plugin lifecycle dispatcher
+│   │   ├── publicProblem.ts              # Published problem visibility sanitizers & views
+│   │   ├── queue.ts                      # Reliable Redis queue consumer & producer abstractions
+│   │   ├── rateLimit.ts                  # Redis-backed distributed token bucket rate limiters
+│   │   ├── ratingEngine.ts               # Contest performance Elo rating recalculation engine
+│   │   ├── rbac.ts                       # 6-tier Granular Role-Based Access Control matrix
+│   │   ├── redis.ts / redisClient.ts     # Redis client connection pool & caching layer
+│   │   ├── roadmapRoutes.ts              # Topic mastery tracks, skill trees & milestone sync
+│   │   ├── saml.ts                       # Enterprise SAML 2.0 SSO identity provider parsing
+│   │   ├── sandboxSecurity.ts            # Pre-flight code inspection & dangerous pattern detector
+│   │   ├── security.ts                   # AST security validator & system call filter
+│   │   ├── socialEngine.ts               # User follow graphs, social feeds & tournament brackets
+│   │   ├── ssrf.ts                       # Server-Side Request Forgery & private IP blocklist
+│   │   ├── storageService.ts             # Problem assets & solution file persistence
+│   │   ├── systemDesign.ts               # Distributed system whiteboard canvas state API
+│   │   ├── totp.ts                       # RFC 6238 TOTP two-factor authentication & backup codes
+│   │   ├── validation.ts                 # Zod/custom input sanitation & pagination clamping
+│   │   └── *.test.ts                     # Integration & security test suites (e2e, security, gaps, etc.)
+│   ├── db.ts                             # Singleton Prisma database client
+│   ├── drivers.ts                        # Solution harness runner wrappers & stdin/stdout drivers
+│   ├── index.ts                          # Main Express application entrypoint & route registration
+│   ├── Dockerfile                        # Multi-stage production container manifest
+│   └── package.json                      # Backend dependencies & scripts
+│
+├── frontend/                             # Single-Page Application (React 19 + Monaco Editor)
+│   ├── src/                              # Frontend source code
+│   │   ├── components/                   # Reusable UI component library
+│   │   │   ├── common/                   # Shared UI primitives (Buttons, Badges, Modals, Inputs)
+│   │   │   ├── navigation/               # Navbar, sidebar, breadcrumbs & command palette
+│   │   │   ├── system-design/            # Architecture canvas nodes, connections & toolbars
+│   │   │   └── ui/                       # Layout containers, cards, dialogs & toasts
+│   │   ├── features/                     # Domain-driven feature modules
+│   │   │   ├── academy/                  # Interactive tutorial lessons, quizzes & interactive run
+│   │   │   ├── admin/                    # Administrative dashboard, problem & contest management
+│   │   │   ├── arena/                    # 1v1 Real-time live code battle arena & matchmaking
+│   │   │   ├── auth/                     # Login, signup, OAuth buttons, TOTP 2FA modals
+│   │   │   ├── collab/                   # Live pair programming editor with shared cursors
+│   │   │   ├── community/                # Developer discussion forums, comments & tagging
+│   │   │   ├── contests/                 # Timed programming contests, standings & countdowns
+│   │   │   ├── interviews/               # Technical interview studio, shared notes & scorecards
+│   │   │   ├── leaderboard/              # Global rating leaderboards & user rank badges
+│   │   │   ├── notes/                    # Rich markdown personal scratchpad & problem notes
+│   │   │   ├── playground/               # Freeform scratchpad multi-language code runner
+│   │   │   ├── problems/                 # Problem explorer, description tabs & submission history
+│   │   │   ├── profile/                  # Heatmaps, solved statistics, activity timeline & badges
+│   │   │   ├── roadmap/                  # Visual career roadmaps & interactive milestone tracking
+│   │   │   ├── submissions/              # Live submission progress, execution telemetry & results
+│   │   │   └── system-design/            # System design studio, capacity estimator & canvas
+│   │   ├── services/                     # Centralized API service & HTTP/WebSocket clients
+│   │   ├── types/                        # Global TypeScript interfaces & data contracts
+│   │   ├── lib/ & utils/                 # Formatting, date parsing, Monaco helpers & storage
+│   │   ├── App.tsx                       # Main application routing & root layout
+│   │   ├── SystemDesignStudio.tsx        # System design workspace standalone view
+│   │   ├── index.css                     # Design system tokens, Tailwind directives & dark theme
+│   │   ├── index.html                    # HTML5 shell & font preloading
+│   │   └── index.ts                      # Client hydration entrypoint
+│   ├── build.ts                          # Bun bundler script for optimized production packaging
+│   ├── nginx.conf                        # Production reverse proxy & static asset cache config
+│   ├── Dockerfile                        # Nginx static deployment container manifest
+│   └── package.json                      # Frontend dependencies & scripts
+│
+├── worker/                               # Isolated Code Execution Engine & Judge Worker Daemon
+│   ├── prisma/                           # Worker database relational schema
+│   │   └── schema.prisma                 # Worker-specific database models & client configuration
+│   ├── generated/                        # Generated Prisma ORM client
+│   ├── src/
+│   │   ├── adapters/                     # Multi-language execution adapters
+│   │   │   ├── base.ts                   # Process execution lifecycle, TLE enforcement & output bounds
+│   │   │   ├── javascript.ts             # Node.js / Bun runtime adapter
+│   │   │   ├── python.ts                 # Python 3 execution adapter
+│   │   │   ├── cpp.ts                    # GCC 14 C++ compilation & runner adapter
+│   │   │   ├── java.ts                   # OpenJDK 21 Java compiler & JVM runner adapter
+│   │   │   ├── go.ts                     # Golang compiler & runner adapter
+│   │   │   ├── rust.ts                   # Rustc compilation & execution adapter
+│   │   │   ├── cs.ts                     # C# / .NET compilation & execution adapter
+│   │   │   ├── kt.ts                     # Kotlin compiler & execution adapter
+│   │   │   ├── php.ts                    # PHP CLI runtime adapter
+│   │   │   ├── ruby.ts                   # Ruby 3 interpreter adapter
+│   │   │   ├── swift.ts                  # Swift compiler & execution adapter
+│   │   │   ├── index.ts                  # Language adapter registry & alias resolver
+│   │   │   └── types.ts                  # Execution options, limits & verdict interfaces
+│   │   └── sandbox/                      # Multi-tier virtualization & container isolation
+│   │       ├── firecrackerRunner.ts      # Tier 1: Hardware-virtualized KVM MicroVM execution
+│   │       ├── dockerRunner.ts           # Tier 2: Hardened rootless OCI container isolation
+│   │       └── index.ts                  # Sandbox policy validator & fail-closed security gate
+│   ├── db.ts                             # Worker database client connection
+│   ├── drivers.ts                        # Solution harnesses & standard I/O driver matrices
+│   ├── index.ts                          # Reliable Redis queue consumer daemon (`rPopLPush`)
+│   ├── index.test.ts                     # Verdict evaluation & test harness unit tests
+│   ├── test_matrix.test.ts               # Multi-language compatibility & adapter validation matrix
+│   ├── sandbox_security.test.ts          # Isolation boundary & sandbox security verification suite
+│   ├── Dockerfile                        # Worker container deployment manifest
+│   └── package.json                      # Worker dependencies & scripts
+│
+├── .github/                              # CI/CD automation & release pipelines
+│   └── workflows/
+│       └── ci.yml                        # 12-stage automated CI Release Gate pipeline
+├── docker-compose.yml                    # Multi-container orchestration (API, Worker, Frontend, PG, Redis)
+├── .env.example                          # Comprehensive environment variables template
+└── package.json                          # Monorepo workspace scripts & commands
 ```
 
 ---
