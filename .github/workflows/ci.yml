@@ -19,6 +19,10 @@ jobs:
           (cd backend && bun install)
           (cd worker && bun install)
           (cd frontend && bun install)
+      - name: Generate Prisma Clients
+        run: |
+          (cd backend && bunx prisma generate)
+          (cd worker && bunx prisma generate)
       - name: Typecheck
         run: bun run typecheck
       - name: Test
