@@ -532,13 +532,22 @@ describe("Phase 6 — Secure Code Execution Engine & Language Adapters", () => {
 
     test("Sanitized environment strips sensitive database and authentication variables", () => {
         const { getSanitizedEnv } = require("../worker/src/adapters");
-        process.env.DATABASE_URL = "postgres://user:secret@localhost:5432/db";
-        process.env.JWT_SECRET = "super_secret_jwt_key";
-        
-        const cleanEnv = getSanitizedEnv();
-        expect(cleanEnv.DATABASE_URL).toBeUndefined();
-        expect(cleanEnv.JWT_SECRET).toBeUndefined();
-        expect(cleanEnv.PATH).toBeDefined();
+        const origDb = process.env.DATABASE_URL;
+        const origJwt = process.env.JWT_SECRET;
+        try {
+            process.env.DATABASE_URL = "postgres://user:secret@localhost:5432/db";
+            process.env.JWT_SECRET = "super_secret_jwt_key";
+            
+            const cleanEnv = getSanitizedEnv();
+            expect(cleanEnv.DATABASE_URL).toBeUndefined();
+            expect(cleanEnv.JWT_SECRET).toBeUndefined();
+            expect(cleanEnv.PATH).toBeDefined();
+        } finally {
+            if (origDb !== undefined) process.env.DATABASE_URL = origDb;
+            else delete process.env.DATABASE_URL;
+            if (origJwt !== undefined) process.env.JWT_SECRET = origJwt;
+            else delete process.env.JWT_SECRET;
+        }
     });
 
     test("Unsupported language request returns clear error verdict", async () => {

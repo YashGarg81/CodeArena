@@ -69,6 +69,7 @@ export async function runInDocker(
     let stdout = "";
     let stderr = "";
     let isTimedOut = false;
+    let hasResolved = false;
     let child: ReturnType<typeof spawn>;
 
     try {
@@ -90,8 +91,26 @@ export async function runInDocker(
     let totalStderrBytes = 0;
 
     const timer = setTimeout(() => {
+      if (hasResolved) return;
+      hasResolved = true;
       isTimedOut = true;
-      try { child.kill(); } catch {}
+      try {
+        if (process.platform === "win32") {
+          spawn("taskkill", ["/pid", String(child.pid), "/T", "/F"]);
+        } else {
+          child.kill("SIGKILL");
+        }
+      } catch {}
+
+      resolve({
+        passed: false,
+        got: "",
+        expected: expectedOutput,
+        runtime: timeoutMs,
+        verdict: "TLE",
+        isTLE: true,
+        error: "Time Limit Exceeded (TLE)",
+      });
     }, timeoutMs);
 
     child.stdout?.on("data", (chunk: Buffer | string) => {
@@ -101,7 +120,13 @@ export async function runInDocker(
         const allowedBytes = Math.max(0, maxOutputBytes - totalOutputBytes);
         stdout += (Buffer.isBuffer(chunk) ? chunk.toString("utf8") : chunk).slice(0, allowedBytes);
         totalOutputBytes = maxOutputBytes;
-        try { child.kill(); } catch {}
+        try {
+          if (process.platform === "win32") {
+            spawn("taskkill", ["/pid", String(child.pid), "/T", "/F"]);
+          } else {
+            child.kill("SIGKILL");
+          }
+        } catch {}
       } else {
         totalOutputBytes += chunkBytes;
         stdout += chunk.toString();
@@ -115,7 +140,13 @@ export async function runInDocker(
         const allowedBytes = Math.max(0, maxStderrBytes - totalStderrBytes);
         stderr += (Buffer.isBuffer(chunk) ? chunk.toString("utf8") : chunk).slice(0, allowedBytes);
         totalStderrBytes = maxStderrBytes;
-        try { child.kill(); } catch {}
+        try {
+          if (process.platform === "win32") {
+            spawn("taskkill", ["/pid", String(child.pid), "/T", "/F"]);
+          } else {
+            child.kill("SIGKILL");
+          }
+        } catch {}
       } else {
         totalStderrBytes += chunkBytes;
         stderr += chunk.toString();
@@ -129,6 +160,8 @@ export async function runInDocker(
 
     child.on("error", (err) => {
       clearTimeout(timer);
+      if (hasResolved) return;
+      hasResolved = true;
       resolve({
         passed: false,
         got: "",
@@ -140,6 +173,8 @@ export async function runInDocker(
 
     child.on("exit", (code) => {
       clearTimeout(timer);
+      if (hasResolved) return;
+      hasResolved = true;
       const runtime = Math.max(1, Math.round((performance.now() - startTime) * 100) / 100);
 
       if (isTimedOut) {

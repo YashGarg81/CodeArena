@@ -216,11 +216,20 @@ describe("JUDGE & SANDBOX — Execution Safety & Multi-Language Adapters", () =>
   });
 
   test("SANDBOX-005: Sanitized environment removes DATABASE_URL and JWT_SECRET", () => {
-    process.env.DATABASE_URL = "postgresql://user:pass@localhost/db";
-    process.env.JWT_SECRET = "secret";
-    const cleanEnv = getSanitizedEnv();
-    expect(cleanEnv.DATABASE_URL).toBeUndefined();
-    expect(cleanEnv.JWT_SECRET).toBeUndefined();
+    const origDb = process.env.DATABASE_URL;
+    const origJwt = process.env.JWT_SECRET;
+    try {
+      process.env.DATABASE_URL = "postgresql://user:pass@localhost/db";
+      process.env.JWT_SECRET = "secret";
+      const cleanEnv = getSanitizedEnv();
+      expect(cleanEnv.DATABASE_URL).toBeUndefined();
+      expect(cleanEnv.JWT_SECRET).toBeUndefined();
+    } finally {
+      if (origDb !== undefined) process.env.DATABASE_URL = origDb;
+      else delete process.env.DATABASE_URL;
+      if (origJwt !== undefined) process.env.JWT_SECRET = origJwt;
+      else delete process.env.JWT_SECRET;
+    }
   });
 
   test("SANDBOX-008: Strict sandbox mode checks Docker availability", async () => {

@@ -70,6 +70,8 @@ export async function runProcessSafely(
         let stderr = "";
 
         const timer = setTimeout(() => {
+            if (hasResolved) return;
+            hasResolved = true;
             isTimedOut = true;
             try {
                 if (process.platform === "win32") {
@@ -79,24 +81,15 @@ export async function runProcessSafely(
                 }
             } catch {}
             
-            // Ensure we resolve if the exit event doesn't fire quickly
-            const fallbackTimer = setTimeout(() => {
-                if (!hasResolved) {
-                    hasResolved = true;
-                    resolve({
-                        passed: false,
-                        got: "",
-                        expected: expectedOutput,
-                        runtime: timeoutMs,
-                        verdict: "TLE",
-                        isTLE: true,
-                        error: "Time Limit Exceeded (TLE)"
-                    });
-                }
-            }, 500); // Increased from 100ms to 500ms to allow process termination
-            
-            // Clear fallback timer if exit event fires
-            child.once("exit", () => clearTimeout(fallbackTimer));
+            resolve({
+                passed: false,
+                got: "",
+                expected: expectedOutput,
+                runtime: timeoutMs,
+                verdict: "TLE",
+                isTLE: true,
+                error: "Time Limit Exceeded (TLE)"
+            });
         }, timeoutMs);
 
         child.on("error", (err: any) => {
