@@ -383,9 +383,16 @@ describe("PHASE 4 — MicroVM Sandbox, SAML 2.0 & GitHub Auto-Sync", () => {
   });
 
   test("MICROVM-002: runInFirecrackerMicroVM executes code with isolated telemetry", async () => {
-    const res = await runInFirecrackerMicroVM("console.log('microvm_ok');", "js", "");
-    expect(typeof res.durationMs).toBe("number");
-    expect(res.isolatedVia).toBe("firecracker-microvm");
+    const orig = process.env.MOCK_FIRECRACKER;
+    process.env.MOCK_FIRECRACKER = "true";
+    try {
+      const res = await runInFirecrackerMicroVM("console.log('microvm_ok');", "js", "");
+      expect(typeof res.durationMs).toBe("number");
+      expect(res.isolatedVia).toBe("firecracker-microvm");
+    } finally {
+      if (orig) process.env.MOCK_FIRECRACKER = orig;
+      else delete process.env.MOCK_FIRECRACKER;
+    }
   });
 
   test("SAML-001: parseSAMLAssertion decodes valid base64 payload", () => {

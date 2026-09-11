@@ -24,13 +24,15 @@ let firecrackerAvailable: boolean | null = null;
  * Checks whether Firecracker binary and /dev/kvm virtualization device are present.
  */
 export async function isFirecrackerAvailable(): Promise<boolean> {
+  if (process.env.MOCK_FIRECRACKER === "true") return true;
+  if (process.env.MOCK_FIRECRACKER === "false") return false;
   if (firecrackerAvailable !== null) return firecrackerAvailable;
 
   const isLinux = process.platform === "linux";
   const hasKvm = fs.existsSync("/dev/kvm");
   const hasBinary = Boolean(process.env.FIRECRACKER_BIN_PATH && fs.existsSync(process.env.FIRECRACKER_BIN_PATH));
 
-  firecrackerAvailable = (isLinux && hasKvm && hasBinary) || process.env.MOCK_FIRECRACKER === "true";
+  firecrackerAvailable = isLinux && hasKvm && hasBinary;
   return firecrackerAvailable;
 }
 
@@ -49,44 +51,7 @@ export async function runInFirecrackerMicroVM(
   const isAvailable = await isFirecrackerAvailable();
 
   if (!isAvailable) {
-    return new Promise((resolve) => {
-      const runnerCmd = language === "py" || language === "python" ? "python" : language === "cpp" ? "g++" : "node";
-      const child = spawn(runnerCmd, language === "py" || language === "python" ? ["-c", code] : ["-e", code], {
-        timeout,
-        env: { PATH: process.env.PATH, NODE_ENV: "sandbox" }
-      });
-
-      let stdout = "";
-      let stderr = "";
-
-      if (stdinInput) {
-        child.stdin.write(stdinInput);
-        child.stdin.end();
-      }
-
-      child.stdout.on("data", (d) => { stdout += d.toString(); });
-      child.stderr.on("data", (d) => { stderr += d.toString(); });
-
-      child.on("close", (code) => {
-        resolve({
-          stdout: stdout.trim(),
-          stderr: stderr.trim(),
-          exitCode: code ?? 0,
-          durationMs: +(performance.now() - startTime).toFixed(2),
-          isolatedVia: "firecracker-microvm"
-        });
-      });
-
-      child.on("error", (err) => {
-        resolve({
-          stdout: "",
-          stderr: err.message,
-          exitCode: 1,
-          durationMs: +(performance.now() - startTime).toFixed(2),
-          isolatedVia: "firecracker-microvm"
-        });
-      });
-    });
+    throw new Error("Security Violation: Firecracker MicroVM sandbox is unavailable. Host process fallback execution is strictly prohibited.");
   }
 
   return {
