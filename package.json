@@ -1,0 +1,30 @@
+{
+  "name": "codearena-platform",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CodeArena — Production-Grade Coding Education, Practice, Collaboration & Online Judge Platform",
+  "scripts": {
+    "dev:backend": "cd backend && bun run index.ts",
+    "dev:worker": "cd worker && bun run index.ts",
+    "dev:frontend": "cd frontend && bun dev",
+    "dev:local": "bun run dev:backend & bun run dev:worker & bun run dev:frontend",
+    "docker:up": "docker-compose up -d --build",
+    "docker:down": "docker-compose down",
+    "docker:scale-workers": "docker-compose up -d --scale worker=3",
+    "build:frontend": "cd frontend && bun run build.ts",
+    "typecheck": "(cd backend && bun x tsc --noEmit) && (cd worker && bun x tsc --noEmit) && (cd frontend && bun x tsc --noEmit)",
+    "test": "bun test"
+  },
+  "keywords": [
+    "coding-platform",
+    "online-judge",
+    "react",
+    "bun",
+    "monaco-editor",
+    "prisma",
+    "redis",
+    "postgresql"
+  ],
+  "author": "CodeArena Engineering",
+  "license": "MIT"
+}

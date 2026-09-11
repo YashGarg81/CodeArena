@@ -1,0 +1,143 @@
+// Worker schema — must stay in sync with backend schema
+// Only includes models the worker needs to read/write
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── ENUMS ────────────────────────────────────────────────────────────────────
+
+enum Difficulty {
+  Easy
+  Medium
+  Hard
+}
+
+enum ProblemStatus {
+  Draft
+  Review
+  Published
+  Archived
+}
+
+enum SubmissionStatus {
+  Processing
+  Success
+  WrongAnswer
+  TLE
+  MLE
+  RuntimeError
+  CompileError
+  Failure
+}
+
+// ─── PROBLEMS ─────────────────────────────────────────────────────────────────
+
+model Problems {
+  id           String        @id
+  title        String
+  slug         String        @default("")
+  difficulty   Difficulty
+  category     String
+  tags         String[]      @default([])
+  companies    String[]      @default([])
+  description  String
+  constraints  String?
+  inputFormat  String?
+  outputFormat String?
+  hints        String[]      @default([])
+  editorial    String?
+  solutions    Json          @default("[]")
+  templates    Json
+  testCases    Json          @default("[]")
+  // Supported language keys (e.g. ["py","js","cpp","java"])
+  languages    String[]      @default([])
+  timeLimit    Int           @default(5000)
+  memoryLimit  Int           @default(256)
+  status       ProblemStatus @default(Draft)
+  isPremium    Boolean       @default(false)
+  order        Int           @default(0)
+  version      Int           @default(1)
+  authorId     String?
+  solveCount   Int           @default(0)
+  attemptCount Int           @default(0)
+  likeCount    Int           @default(0)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @default(now()) @updatedAt
+
+  testCasesRel TestCases[]
+  submissions  Submissions[]
+  revisions    ProblemRevisions[]
+
+  @@index([status])
+  @@index([difficulty])
+  @@index([category])
+  @@index([slug])
+}
+
+// ─── TEST CASES ───────────────────────────────────────────────────────────────
+
+model TestCases {
+  id           String   @id @default(uuid())
+  problemId    String
+  input        String
+  expectedOutput String
+  isHidden     Boolean  @default(false)
+  order        Int      @default(0)
+  explanation  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  problem Problems @relation(fields: [problemId], references: [id], onDelete: Cascade)
+
+  @@index([problemId])
+}
+
+// ─── PROBLEM REVISIONS ────────────────────────────────────────────────────────
+
+model ProblemRevisions {
+  id        String   @id @default(uuid())
+  problemId String
+  version   Int
+  snapshot  Json     // Full problem state at this version
+  authorId  String?
+  message   String?  // Optional commit message
+  createdAt DateTime @default(now())
+
+  problem Problems @relation(fields: [problemId], references: [id], onDelete: Cascade)
+
+  @@unique([problemId, version])
+  @@index([problemId])
+}
+
+// ─── SUBMISSIONS ──────────────────────────────────────────────────────────────
+
+model Submissions {
+  id              String           @id @default(uuid())
+  problemId       String
+  userId          String?
+  code            String
+  language        String
+  status          SubmissionStatus @default(Processing)
+  output          String?
+  testResults     Json?
+  runtime         Float?
+  memory          Float?
+  testCasesPassed Int              @default(0)
+  testCasesTotal  Int              @default(0)
+  errorMessage    String?
+  isPublic        Boolean          @default(true)
+  createdAt       DateTime         @default(now())
+
+  problem Problems @relation(fields: [problemId], references: [id], onDelete: Cascade)
+
+  @@index([problemId])
+  @@index([userId])
+  @@index([createdAt])
+}

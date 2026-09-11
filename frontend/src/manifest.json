@@ -1,0 +1,18 @@
+{
+  "name": "CodeArena — Master DSA & Competitive Programming",
+  "short_name": "CodeArena",
+  "description": "Master DSA, practice algorithms, compete in 1v1 arenas & contests, and ace your technical interviews.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0d1117",
+  "theme_color": "#6366f1",
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "developer", "productivity"]
+}
