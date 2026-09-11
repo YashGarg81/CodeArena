@@ -99,11 +99,12 @@ export async function requestPasswordReset(email: string): Promise<{ success: bo
     };
   }
 
-  const isDev = process.env.NODE_ENV !== "production";
+  // Only expose resetToken in response when explicitly opted-in via DEV_RESET_TOKEN=true
+  const isExplicitDevTokenAllowed = process.env.DEV_RESET_TOKEN === "true";
   return {
     success: true,
     message: "If an account with that email exists, a password reset link has been dispatched.",
-    ...(isDev ? { resetToken: rawToken, resetUrl } : {})
+    ...(isExplicitDevTokenAllowed ? { resetToken: rawToken, resetUrl } : {})
   };
 }
 

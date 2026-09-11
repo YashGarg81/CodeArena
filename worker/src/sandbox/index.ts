@@ -81,11 +81,21 @@ export function getSandboxPolicy(): SandboxPolicy {
  * Production Fail-Closed Sandbox Validator:
  * In production or strict mode, rejects unisolated in-process execution with a fail-closed policy.
  */
-export async function validateSandboxSafety(): Promise<{ safe: boolean; reason?: string; policy?: SandboxPolicy }> {
+export async function validateSandboxSafety(overrideMode?: "firecracker" | "docker" | "process"): Promise<{ safe: boolean; reason?: string; policy?: SandboxPolicy }> {
   const policy = getSandboxPolicy();
+  const mode = overrideMode || policy.mode;
 
-  if (policy.strictMode) {
-    if (policy.mode === "firecracker") {
+  const isProd = process.env.NODE_ENV === "production";
+  if (isProd && mode === "process" && process.env.ALLOW_PROCESS_SANDBOX !== "true") {
+    return {
+      safe: false,
+      reason: "Production Security Policy Violation: Process sandbox is unsafe for production environments. Container isolation (Docker) or MicroVM (Firecracker) required.",
+      policy
+    };
+  }
+
+  if (policy.strictMode || isProd) {
+    if (mode === "firecracker") {
       const { isFirecrackerAvailable } = await import("./firecrackerRunner");
       const available = await isFirecrackerAvailable();
       if (!available) {
@@ -98,15 +108,17 @@ export async function validateSandboxSafety(): Promise<{ safe: boolean; reason?:
       return { safe: true, policy };
     }
 
-    // Docker mode check
-    const { isDockerAvailable } = await import("./dockerRunner");
-    const dockerOk = await isDockerAvailable();
-    if (!dockerOk) {
-      return {
-        safe: false,
-        reason: "Strict sandbox mode: Docker container isolation is required but unavailable.",
-        policy
-      };
+    if (mode === "docker") {
+      // Docker mode check
+      const { isDockerAvailable } = await import("./dockerRunner");
+      const dockerOk = await isDockerAvailable();
+      if (!dockerOk) {
+        return {
+          safe: false,
+          reason: "Strict sandbox mode: Docker container isolation is required but unavailable.",
+          policy
+        };
+      }
     }
   }
 

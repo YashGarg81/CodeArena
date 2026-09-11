@@ -84,9 +84,12 @@ axiosInstance.interceptors.response.use(
       friendlyMessage = "Network error: unable to reach the server. Please check your connection.";
     } else if (isAuthError) {
       friendlyMessage = "Session expired or unauthorized. Please sign in again.";
-      // Clean stale token on 401 if running in browser
+      // Clean stale token on 401 if running in browser and dispatch notification
       if (typeof window !== "undefined") {
-        // localStorage.removeItem("ca_token");
+        localStorage.removeItem("ca_token");
+        try {
+          window.dispatchEvent(new CustomEvent("codearena:auth_expired", { detail: { status: 401 } }));
+        } catch {}
       }
     } else if (isForbidden) {
       friendlyMessage = rawMessage || "Access denied: You don't have permission to perform this action.";

@@ -86,28 +86,38 @@ export async function runInDocker(
     const maxOutputBytes = options.maxOutputBytes || 1024 * 1024; // 1MB stdout cap
     const maxStderrBytes = 1024 * 1024; // 1MB stderr cap
     let isOutputExceeded = false;
+    let totalOutputBytes = 0;
+    let totalStderrBytes = 0;
 
     const timer = setTimeout(() => {
       isTimedOut = true;
       try { child.kill(); } catch {}
     }, timeoutMs);
 
-    child.stdout?.on("data", (chunk) => {
-      if (stdout.length + chunk.length > maxOutputBytes) {
+    child.stdout?.on("data", (chunk: Buffer | string) => {
+      const chunkBytes = Buffer.isBuffer(chunk) ? chunk.byteLength : Buffer.byteLength(chunk, "utf8");
+      if (totalOutputBytes + chunkBytes > maxOutputBytes) {
         isOutputExceeded = true;
-        stdout += chunk.toString().slice(0, maxOutputBytes - stdout.length);
+        const allowedBytes = Math.max(0, maxOutputBytes - totalOutputBytes);
+        stdout += (Buffer.isBuffer(chunk) ? chunk.toString("utf8") : chunk).slice(0, allowedBytes);
+        totalOutputBytes = maxOutputBytes;
         try { child.kill(); } catch {}
       } else {
+        totalOutputBytes += chunkBytes;
         stdout += chunk.toString();
       }
     });
 
-    child.stderr?.on("data", (chunk) => {
-      if (stderr.length + chunk.length > maxStderrBytes) {
+    child.stderr?.on("data", (chunk: Buffer | string) => {
+      const chunkBytes = Buffer.isBuffer(chunk) ? chunk.byteLength : Buffer.byteLength(chunk, "utf8");
+      if (totalStderrBytes + chunkBytes > maxStderrBytes) {
         isOutputExceeded = true;
-        stderr += chunk.toString().slice(0, maxStderrBytes - stderr.length);
+        const allowedBytes = Math.max(0, maxStderrBytes - totalStderrBytes);
+        stderr += (Buffer.isBuffer(chunk) ? chunk.toString("utf8") : chunk).slice(0, allowedBytes);
+        totalStderrBytes = maxStderrBytes;
         try { child.kill(); } catch {}
       } else {
+        totalStderrBytes += chunkBytes;
         stderr += chunk.toString();
       }
     });
@@ -138,6 +148,7 @@ export async function runInDocker(
           got: "",
           expected: expectedOutput,
           runtime: timeoutMs,
+          verdict: "TLE",
           isTLE: true,
           error: "Time Limit Exceeded (TLE)",
         });
@@ -150,6 +161,8 @@ export async function runInDocker(
           got: stdout.trim(),
           expected: expectedOutput,
           runtime,
+          verdict: "OLE",
+          isOLE: true,
           error: "Output Limit Exceeded (OLE) — standard output or error stream exceeded 1MB quota",
         });
         return;
@@ -161,6 +174,7 @@ export async function runInDocker(
           got: stdout.trim(),
           expected: expectedOutput,
           runtime,
+          verdict: "RE",
           error: `Runtime Error (code ${code}): ${stderr.trim() || stdout.trim()}`,
         });
         return;
@@ -168,10 +182,12 @@ export async function runInDocker(
 
       const got = stdout.trim();
       const exp = expectedOutput.trim();
+      const passed = exp ? got === exp : true;
       resolve({
-        passed: exp ? got === exp : true,
+        passed,
         got,
         expected: exp,
+        verdict: passed ? "AC" : "WA",
         runtime,
       });
     });

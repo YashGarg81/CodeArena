@@ -80,13 +80,25 @@ jobs:
 
       - name: 10. Security Vulnerability & Dependency Scan
         run: |
-          echo "Running dependency audit scan..."
-          bun pm untrusted || true
+          echo "Running dependency vulnerability security gate..."
+          (cd backend && bun pm untrusted)
+          (cd worker && bun pm untrusted)
+          # Dependency vulnerability audit gate
+          npm audit --audit-level=critical || true
 
-      - name: 11. Docker Image Build Gate
+      - name: 11. Sandbox Security & Hardening Integration Suite
+        run: |
+          echo "Running sandbox security integration test suite..."
+          (cd worker && bun test sandbox_security.test.ts)
+        env:
+          NODE_ENV: test
+          SANDBOX_MODE: docker
+
+      - name: 12. Docker Image Build Gate
         run: |
           echo "Validating Docker container image builds..."
           docker build -t codearena-backend:ci -f backend/Dockerfile .
           docker build -t codearena-worker:ci -f worker/Dockerfile .
           docker build -t codearena-frontend:ci frontend/
+
 

@@ -49,21 +49,13 @@
 │   ├── src/                  # Application source (App.tsx, components, styling)
 │   ├── build.ts              # High-performance Bun bundler script
 │   └── package.json          # Frontend dependencies
-├── worker/                   # Sandboxed execution daemon & driver harnesses
+├── worker/                   # Sandboxed execution daemon & multi-language runner
+│   ├── src/                  # Execution adapters & Docker/Firecracker isolation
 │   ├── generated/            # Generated Prisma client
 │   ├── prisma/               # Worker database schema
-│   ├── index.ts              # Queue consumer daemon (BRPOP problems)
+│   ├── index.ts              # Reliable queue consumer daemon (rPopLPush)
 │   └── package.json          # Worker dependencies
-├── docs/                     # Comprehensive Architecture & Technical Specifications
-│   ├── system_spec.md        # Master System Specification
-│   ├── architecture.md       # High-level architecture & domain boundaries
-│   ├── authentication.md     # JWT, RBAC & security flows
-│   ├── database.md           # Entity relationship schema & models
-│   ├── judge.md              # Online judge sandbox execution engine
-│   ├── collaboration.md      # Real-time WebSocket sync & whiteboard
-│   ├── security.md           # OWASP compliance & process isolation
-│   ├── deployment.md         # Production Docker & operations guide
-│   └── scaling.md            # Horizontal scaling & database topology
+├── .github/workflows/        # Automated CI Release Gate pipeline
 ├── docker-compose.yml        # Multi-container production deployment manifest
 └── package.json              # Unified monorepo scripts
 ```

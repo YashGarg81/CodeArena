@@ -128,6 +128,7 @@ export async function runProcessSafely(
                     got: "",
                     expected: expectedOutput,
                     runtime: timeoutMs,
+                    verdict: "TLE",
                     isTLE: true,
                     error: "Time Limit Exceeded (TLE)"
                 });
@@ -137,6 +138,8 @@ export async function runProcessSafely(
                     got: stdout.trim(),
                     expected: expectedOutput,
                     runtime,
+                    verdict: "OLE",
+                    isOLE: true,
                     error: "Output Limit Exceeded (OLE) — standard output exceeded 64KB quota"
                 });
             } else if (code !== 0 && code !== null) {
@@ -145,6 +148,7 @@ export async function runProcessSafely(
                     got: stdout.trim(),
                     expected: expectedOutput,
                     runtime,
+                    verdict: "RE",
                     error: `Runtime Error (code ${code}): ${stderr.trim() || stdout.trim()}`
                 });
             } else {
@@ -155,6 +159,7 @@ export async function runProcessSafely(
                     passed,
                     got,
                     expected: exp,
+                    verdict: passed ? "AC" : "WA",
                     runtime
                 });
             }

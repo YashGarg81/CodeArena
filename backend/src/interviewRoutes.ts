@@ -17,12 +17,20 @@ interviewRouter.post("/", auth, async (req: AuthenticatedRequest, res) => {
       candidateUser = await prisma.user.findUnique({ where: { email: candidateEmail } });
     }
 
+    const metaPayload = JSON.stringify({
+      problemId: problemId || "two-sum",
+      language: language || "javascript",
+      durationMinutes: Number(durationMinutes) || 45,
+      candidateName: candidateName || undefined,
+      notes: notes || undefined
+    });
+
     const interview = await prisma.interview.create({
       data: {
         title: sessionTitle,
         interviewerId: req.userId!,
         scheduledAt: sessionDate,
-        notes: notes || (candidateName ? `Candidate: ${candidateName}` : null),
+        notes: metaPayload,
         status: "Scheduled",
         participants: candidateUser
           ? {
@@ -44,15 +52,16 @@ interviewRouter.post("/", auth, async (req: AuthenticatedRequest, res) => {
       },
     });
 
+    const state = getOrCreateSessionState(interview.id, Number(durationMinutes) || 45, language || "javascript");
     const enrichedInterview = {
       ...interview,
       problemId: problemId || "two-sum",
       language: language || "javascript",
-      durationMinutes: durationMinutes || 45,
-      timerSecondsLeft: (durationMinutes || 45) * 60,
+      durationMinutes: Number(durationMinutes) || 45,
+      timerSecondsLeft: state.secondsLeft,
       timerRunning: false,
-      code: "// Write your solution here\n",
-      messages: []
+      code: state.code,
+      messages: state.messages
     };
 
     res.json({ success: true, interview: enrichedInterview });
@@ -89,32 +98,103 @@ interviewRouter.get("/", auth, async (req: AuthenticatedRequest, res) => {
   }
 });
 
-// In-memory active interview session state store (sync buffer, timer state, hints)
+// Active interview session state store with server-authoritative timestamps & countdown
 interface ActiveInterviewState {
   code: string;
   language: string;
   secondsLeft: number;
   timerRunning: boolean;
+  lastTickTimestamp: number;
   messages: Array<{ sender: string; text: string; time: string }>;
   hintLevel: number;
+  durationMinutes: number;
+  problemId: string;
 }
 
 const activeInterviewStates = new Map<string, ActiveInterviewState>();
 
-function getOrCreateSessionState(interviewId: string, durationMinutes = 45): ActiveInterviewState {
+function parseInterviewNotes(notes: string | null): { problemId: string; language: string; durationMinutes: number; code?: string; messages?: any[]; hintLevel?: number; secondsLeft?: number; timerRunning?: boolean } {
+  if (!notes) return { problemId: "two-sum", language: "javascript", durationMinutes: 45 };
+  try {
+    const parsed = JSON.parse(notes);
+    return {
+      problemId: parsed.problemId || "two-sum",
+      language: parsed.language || "javascript",
+      durationMinutes: Number(parsed.durationMinutes) || 45,
+      code: parsed.code,
+      messages: parsed.messages,
+      hintLevel: parsed.hintLevel,
+      secondsLeft: parsed.secondsLeft,
+      timerRunning: parsed.timerRunning
+    };
+  } catch {
+    return { problemId: "two-sum", language: "javascript", durationMinutes: 45 };
+  }
+}
+
+function getOrCreateSessionState(
+  interviewId: string,
+  durationMinutes = 45,
+  language = "javascript",
+  problemId = "two-sum",
+  initialState?: Partial<ActiveInterviewState>
+): ActiveInterviewState {
   let state = activeInterviewStates.get(interviewId);
+  const now = Date.now();
   if (!state) {
     state = {
-      code: "// Write your solution here\n",
-      language: "javascript",
-      secondsLeft: durationMinutes * 60,
-      timerRunning: false,
-      messages: [],
-      hintLevel: 0
+      code: initialState?.code || "// Write your solution here\n",
+      language: initialState?.language || language,
+      secondsLeft: typeof initialState?.secondsLeft === "number" ? initialState.secondsLeft : durationMinutes * 60,
+      timerRunning: Boolean(initialState?.timerRunning),
+      lastTickTimestamp: now,
+      messages: initialState?.messages || [],
+      hintLevel: initialState?.hintLevel || 0,
+      durationMinutes,
+      problemId
     };
     activeInterviewStates.set(interviewId, state);
+  } else {
+    state.durationMinutes = durationMinutes;
+    state.problemId = problemId;
+    if (state.timerRunning) {
+      // Server-authoritative countdown based on elapsed physical milliseconds
+      const elapsedSeconds = Math.floor((now - state.lastTickTimestamp) / 1000);
+      if (elapsedSeconds > 0) {
+        state.secondsLeft = Math.max(0, state.secondsLeft - elapsedSeconds);
+        state.lastTickTimestamp = now;
+        if (state.secondsLeft === 0) {
+          state.timerRunning = false;
+        }
+      }
+    } else {
+      state.lastTickTimestamp = now;
+    }
   }
   return state;
+}
+
+// Persist interview session state to database notes so state survives server restarts
+async function persistInterviewSessionState(interviewId: string, state: ActiveInterviewState, interview: any) {
+  try {
+    const existingNotes = parseInterviewNotes(interview.notes);
+    const updatedNotes = JSON.stringify({
+      ...existingNotes,
+      problemId: state.problemId || existingNotes.problemId,
+      language: state.language || existingNotes.language,
+      durationMinutes: state.durationMinutes || existingNotes.durationMinutes,
+      code: state.code,
+      messages: state.messages.slice(-50), // persist recent 50 messages
+      hintLevel: state.hintLevel,
+      secondsLeft: state.secondsLeft,
+      timerRunning: state.timerRunning,
+      lastPersistedAt: new Date().toISOString()
+    });
+    await prisma.interview.update({
+      where: { id: interviewId },
+      data: { notes: updatedNotes }
+    }).catch(() => {});
+  } catch {}
 }
 
 // Helper: Verify user belongs to interview and get their role
@@ -167,13 +247,15 @@ interviewRouter.get("/:id", auth, async (req: AuthenticatedRequest, res) => {
     }
 
     const { interview } = authContext;
-    const state = getOrCreateSessionState(id);
+    const meta = parseInterviewNotes(interview.notes);
+    const state = getOrCreateSessionState(id, meta.durationMinutes, meta.language);
+
     const enrichedInterview = {
       ...interview,
-      problemId: "two-sum",
-      problemTitle: interview.title || "Two Sum",
-      difficulty: "Easy",
-      durationMinutes: 45,
+      problemId: meta.problemId,
+      problemTitle: interview.title || `Technical Interview: ${meta.problemId}`,
+      difficulty: "Medium",
+      durationMinutes: meta.durationMinutes,
       timerSecondsLeft: state.secondsLeft,
       timerRunning: state.timerRunning,
       code: state.code,
@@ -206,9 +288,23 @@ interviewRouter.post("/:id/start", auth, async (req: AuthenticatedRequest, res) 
       where: { id },
       data: { status: "InProgress", startedAt: new Date() },
     });
-    const state = getOrCreateSessionState(id);
+    const meta = parseInterviewNotes(interview.notes);
+    const state = getOrCreateSessionState(id, meta.durationMinutes, meta.language, meta.problemId);
     state.timerRunning = true;
-    res.json({ success: true, interview: { ...interview, timerRunning: true, timerSecondsLeft: state.secondsLeft } });
+    await persistInterviewSessionState(id, state, interview);
+    res.json({
+      success: true,
+      interview: {
+        ...interview,
+        problemId: meta.problemId,
+        durationMinutes: meta.durationMinutes,
+        timerRunning: true,
+        timerSecondsLeft: state.secondsLeft,
+        code: state.code,
+        language: state.language,
+        messages: state.messages
+      }
+    });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -232,9 +328,23 @@ interviewRouter.post("/:id/end", auth, async (req: AuthenticatedRequest, res) =>
       where: { id },
       data: { status: "Completed", endedAt: new Date() },
     });
-    const state = getOrCreateSessionState(id);
+    const meta = parseInterviewNotes(interview.notes);
+    const state = getOrCreateSessionState(id, meta.durationMinutes, meta.language, meta.problemId);
     state.timerRunning = false;
-    res.json({ success: true, interview: { ...interview, timerRunning: false } });
+    await persistInterviewSessionState(id, state, interview);
+    res.json({
+      success: true,
+      interview: {
+        ...interview,
+        problemId: meta.problemId,
+        durationMinutes: meta.durationMinutes,
+        timerRunning: false,
+        timerSecondsLeft: state.secondsLeft,
+        code: state.code,
+        language: state.language,
+        messages: state.messages
+      }
+    });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -256,7 +366,8 @@ interviewRouter.post("/:id/timer", auth, async (req: AuthenticatedRequest, res) 
       return res.status(403).json({ error: "Forbidden: Only the interviewer can control the interview timer" });
     }
 
-    const state = getOrCreateSessionState(id);
+    const meta = parseInterviewNotes(authContext.interview.notes);
+    const state = getOrCreateSessionState(id, meta.durationMinutes, meta.language, meta.problemId);
     if (typeof secondsLeft === "number") {
       state.secondsLeft = secondsLeft;
     }
@@ -267,18 +378,22 @@ interviewRouter.post("/:id/timer", auth, async (req: AuthenticatedRequest, res) 
       state.timerRunning = false;
     } else if (action === "reset") {
       state.timerRunning = false;
-      state.secondsLeft = 45 * 60;
+      state.secondsLeft = meta.durationMinutes * 60;
     }
 
     const interview = authContext.interview;
+    await persistInterviewSessionState(id, state, interview);
+
     const enrichedInterview = {
       ...interview,
+      problemId: meta.problemId,
+      problemTitle: interview.title || `Technical Interview: ${meta.problemId}`,
+      durationMinutes: meta.durationMinutes,
       timerSecondsLeft: state.secondsLeft,
       timerRunning: state.timerRunning,
       code: state.code,
       language: state.language,
-      messages: state.messages,
-      durationMinutes: 45
+      messages: state.messages
     };
 
     res.json({ success: true, interview: enrichedInterview });
@@ -303,7 +418,8 @@ interviewRouter.post("/:id/sync", auth, async (req: AuthenticatedRequest, res) =
       return res.status(403).json({ error: "Forbidden: You are not a participant in this interview session" });
     }
 
-    const state = getOrCreateSessionState(id);
+    const meta = parseInterviewNotes(authContext.interview.notes);
+    const state = getOrCreateSessionState(id, meta.durationMinutes, meta.language, meta.problemId);
     if (typeof code === "string") {
       state.code = code;
     }
@@ -321,14 +437,18 @@ interviewRouter.post("/:id/sync", auth, async (req: AuthenticatedRequest, res) =
     }
 
     const interview = authContext.interview;
+    await persistInterviewSessionState(id, state, interview);
+
     const enrichedInterview = {
       ...interview,
+      problemId: meta.problemId,
+      problemTitle: interview.title || `Technical Interview: ${meta.problemId}`,
+      durationMinutes: meta.durationMinutes,
       timerSecondsLeft: state.secondsLeft,
       timerRunning: state.timerRunning,
       code: state.code,
       language: state.language,
-      messages: state.messages,
-      durationMinutes: 45
+      messages: state.messages
     };
 
     res.json({ success: true, interview: enrichedInterview });
@@ -354,10 +474,11 @@ interviewRouter.post("/:id/hints", auth, async (req: AuthenticatedRequest, res) 
       return res.status(403).json({ error: "Forbidden: You are not a participant in this interview session" });
     }
 
-    const state = getOrCreateSessionState(id);
+    const meta = parseInterviewNotes(authContext.interview.notes);
+    const state = getOrCreateSessionState(id, meta.durationMinutes, meta.language, meta.problemId);
     state.hintLevel = Math.min(5, state.hintLevel + 1);
 
-    const hintNode = aiMentorEngine.getHintTree("two-sum", state.hintLevel);
+    const hintNode = aiMentorEngine.getHintTree(meta.problemId, state.hintLevel);
     const hintText = `[Stage ${hintNode.level}: ${hintNode.stage}] ${hintNode.title} — ${hintNode.content}`;
 
     state.messages.push({
@@ -367,14 +488,18 @@ interviewRouter.post("/:id/hints", auth, async (req: AuthenticatedRequest, res) 
     });
 
     const interview = authContext.interview;
+    await persistInterviewSessionState(id, state, interview);
+
     const enrichedInterview = {
       ...interview,
+      problemId: meta.problemId,
+      problemTitle: interview.title || `Technical Interview: ${meta.problemId}`,
+      durationMinutes: meta.durationMinutes,
       timerSecondsLeft: state.secondsLeft,
       timerRunning: state.timerRunning,
       code: state.code,
       language: state.language,
-      messages: state.messages,
-      durationMinutes: 45
+      messages: state.messages
     };
 
     res.json({

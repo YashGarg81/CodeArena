@@ -13,6 +13,8 @@ export interface ExecutionOptions {
     languageKey?: string;
 }
 
+export type ExecutionVerdict = "AC" | "WA" | "TLE" | "MLE" | "OLE" | "RE" | "CE";
+
 export interface ExecutionResult {
     passed: boolean;
     got: string;
@@ -20,8 +22,10 @@ export interface ExecutionResult {
     runtime: number; // milliseconds
     memoryMb?: number;
     error?: string;
+    verdict?: ExecutionVerdict;
     isTLE?: boolean;
     isMLE?: boolean;
+    isOLE?: boolean;
     isCompileError?: boolean;
 }
 

@@ -7,6 +7,21 @@ import { TRUST_PROXY } from "./config";
 
 const memoryStore = new Map<string, { count: number; resetTime: number }>();
 
+// Periodic in-memory store eviction for expired keys (every 60 seconds)
+if (typeof setInterval !== "undefined") {
+  const cleanupTimer = setInterval(() => {
+    const now = Date.now();
+    for (const [k, v] of memoryStore.entries()) {
+      if (now > v.resetTime) {
+        memoryStore.delete(k);
+      }
+    }
+  }, 60000);
+  if (typeof cleanupTimer.unref === "function") {
+    cleanupTimer.unref();
+  }
+}
+
 /**
  * Resolves the client's network IP address for rate limiting.
  *

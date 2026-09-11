@@ -13,6 +13,8 @@ export function AuthModal({ mode, onClose, onSuccess }: {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const submit = async () => {
     if (tab === "forgot") {
@@ -38,8 +40,8 @@ export function AuthModal({ mode, onClose, onSuccess }: {
         setError("Please enter the security reset token.");
         return;
       }
-      if (!form.password || form.password.length < 6) {
-        setError("New password must be at least 6 characters long.");
+      if (!form.password || form.password.length < 8) {
+        setError("New password must be at least 8 characters long.");
         return;
       }
       if (form.password !== form.confirmPassword) {
@@ -68,15 +70,35 @@ export function AuthModal({ mode, onClose, onSuccess }: {
       setError("Please enter your email and password.");
       return;
     }
-    if (tab === "signup" && !form.name.trim()) {
-      setError("Please enter your name.");
-      return;
+    if (tab === "signup") {
+      if (!form.name.trim()) {
+        setError("Please enter your name.");
+        return;
+      }
+      if (form.password.length < 8) {
+        setError("Password must be at least 8 characters long.");
+        return;
+      }
+      if (form.confirmPassword && form.password !== form.confirmPassword) {
+        setError("Passwords do not match.");
+        return;
+      }
     }
 
     setLoading(true); setError(""); setSuccessMsg("");
     try {
       const endpoint = tab === "signup" ? "/api/v1/auth/signup" : "/api/v1/auth/login";
-      const payload = tab === "signup" ? form : { email: form.email, password: form.password };
+      const payload = tab === "signup"
+        ? {
+            name: form.name.trim(),
+            email: form.email.trim().toLowerCase(),
+            password: form.password,
+            username: form.username.trim() || undefined
+          }
+        : {
+            email: form.email.trim().toLowerCase(),
+            password: form.password
+          };
       const { data } = await axios.post(`${API}${endpoint}`, payload);
       if (data?.user && data?.token) {
         onSuccess(data.user, data.token);
@@ -145,6 +167,7 @@ export function AuthModal({ mode, onClose, onSuccess }: {
         }
       }
     };
+
     window.addEventListener("message", messageHandler);
 
     // Timeout watchdog for popup closure without completion
@@ -227,16 +250,78 @@ export function AuthModal({ mode, onClose, onSuccess }: {
                 </button>
               )}
             </div>
-            <input id="auth-password" className="input" type="password" placeholder="••••••••" value={form.password} onChange={e => { setForm(f => ({ ...f, password: e.target.value })); setError(""); }}
-              onKeyDown={e => e.key === "Enter" && submit()} />
+            <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+              <input
+                id="auth-password"
+                className="input"
+                type={showPassword ? "text" : "password"}
+                placeholder={tab === "signup" ? "At least 8 characters" : "••••••••"}
+                value={form.password}
+                onChange={e => { setForm(f => ({ ...f, password: e.target.value })); setError(""); }}
+                onKeyDown={e => e.key === "Enter" && submit()}
+                style={{ paddingRight: 40 }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(p => !p)}
+                style={{
+                  position: "absolute",
+                  right: 10,
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  color: "var(--text-muted)",
+                  padding: "4px",
+                  fontSize: 16,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center"
+                }}
+                title={showPassword ? "Hide password" : "Show password"}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? "👁️" : "👁️‍🗨️"}
+              </button>
+            </div>
           </div>
         )}
 
-        {tab === "reset" && (
+        {(tab === "signup" || tab === "reset") && (
           <div className="form-group">
-            <label className="label" htmlFor="auth-confirm-password">Confirm New Password</label>
-            <input id="auth-confirm-password" className="input" type="password" placeholder="••••••••" value={form.confirmPassword} onChange={e => { setForm(f => ({ ...f, confirmPassword: e.target.value })); setError(""); }}
-              onKeyDown={e => e.key === "Enter" && submit()} />
+            <label className="label" htmlFor="auth-confirm-password">Confirm Password</label>
+            <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+              <input
+                id="auth-confirm-password"
+                className="input"
+                type={showConfirmPassword ? "text" : "password"}
+                placeholder="Repeat password"
+                value={form.confirmPassword}
+                onChange={e => { setForm(f => ({ ...f, confirmPassword: e.target.value })); setError(""); }}
+                onKeyDown={e => e.key === "Enter" && submit()}
+                style={{ paddingRight: 40 }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(p => !p)}
+                style={{
+                  position: "absolute",
+                  right: 10,
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  color: "var(--text-muted)",
+                  padding: "4px",
+                  fontSize: 16,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center"
+                }}
+                title={showConfirmPassword ? "Hide password" : "Show password"}
+                aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+              >
+                {showConfirmPassword ? "👁️" : "👁️‍🗨️"}
+              </button>
+            </div>
           </div>
         )}
 

@@ -185,6 +185,21 @@ redisClient.connect()
                 const MAX_CUMULATIVE_TIMEOUT_MS = 60000; // 60s total execution budget per submission
 
                 const executableTestCases = testCases.slice(0, MAX_TEST_CASES);
+
+                // Validation: A problem with 0 executable test cases cannot be accepted
+                if (executableTestCases.length === 0) {
+                    console.error(`Problem ${problemId} has no executable test cases configured. Failing submission.`);
+                    await prisma.submissions.update({
+                        where: { id: submissionId },
+                        data: {
+                            status: "Failure",
+                            errorMessage: "Configuration Error: Problem contains no executable test cases."
+                        }
+                    });
+                    await redisClient.lRem(PROCESSING_QUEUE, 1, response).catch(() => {});
+                    continue;
+                }
+
                 if (testCases.length > MAX_TEST_CASES) {
                     console.warn(`[Workload Protection] Problem ${problemId} has ${testCases.length} test cases; capping execution to ${MAX_TEST_CASES}.`);
                 }
@@ -192,6 +207,8 @@ redisClient.connect()
                 console.log(`Running code against ${executableTestCases.length} test cases via Language Adapter [${language}]...`);
                 const results: TestResult[] = [];
                 let hasTle = false;
+                let hasOle = false;
+                let hasMle = false;
                 let hasFailure = false;
                 let isCompileFail = false;
                 let passedCount = 0;
@@ -255,13 +272,23 @@ redisClient.connect()
                         error: execResult.error
                     });
 
-                    if (execResult.isCompileError) {
+                    if (execResult.isCompileError || execResult.verdict === "CE") {
                         isCompileFail = true;
                         break;
                     }
 
-                    if (execResult.isTLE) {
+                    if (execResult.isTLE || execResult.verdict === "TLE") {
                         hasTle = true;
+                        break;
+                    }
+
+                    if (execResult.isOLE || execResult.verdict === "OLE" || (execResult.error && execResult.error.includes("Output Limit Exceeded"))) {
+                        hasOle = true;
+                        break;
+                    }
+
+                    if (execResult.isMLE || execResult.verdict === "MLE") {
+                        hasMle = true;
                         break;
                     }
 
@@ -275,18 +302,24 @@ redisClient.connect()
                     }
                 }
 
-                // Calculate final metrics
+                // Calculate final metrics using structured verdicts
                 let finalStatus = "Success";
                 let finalOutput = "";
                 let runtime = 0;
 
                 if (isCompileFail) {
                     finalStatus = "CompileError";
-                    finalOutput = results[0]?.error || "Compilation Error";
+                    finalOutput = results[results.length - 1]?.error || "Compilation Error";
                 } else if (hasTle) {
                     finalStatus = "TLE";
                     finalOutput = "Time Limit Exceeded (TLE)";
                     runtime = problem.timeLimit || 4000;
+                } else if (hasOle) {
+                    finalStatus = "RuntimeError";
+                    finalOutput = "Output Limit Exceeded (OLE) — standard output exceeded quota";
+                } else if (hasMle) {
+                    finalStatus = "RuntimeError";
+                    finalOutput = "Memory Limit Exceeded (MLE) — allocated memory exceeded limit";
                 } else if (hasFailure) {
                     finalStatus = "RuntimeError";
                     const lastResult = results[results.length - 1];
@@ -323,14 +356,34 @@ redisClient.connect()
                 }
 
                 if (finalStatus === "Success") {
-                    // 1. Increment problem solve count
-                    await prisma.problems.update({
-                        where: { id: problemId },
-                        data: { solveCount: { increment: 1 } }
-                    }).catch(() => {});
+                    // 1. Idempotently increment problem solveCount: only if this user hasn't already solved this problem
+                    let alreadySolvedByUser = false;
+                    if (existingSubmission?.userId) {
+                        const previousAccepted = await prisma.submissions.findFirst({
+                            where: {
+                                userId: existingSubmission.userId,
+                                problemId: problemId,
+                                status: "Success",
+                                id: { not: submissionId }
+                            },
+                            select: { id: true }
+                        });
+                        alreadySolvedByUser = Boolean(previousAccepted);
+                    }
+
+                    if (!alreadySolvedByUser) {
+                        try {
+                            await prisma.problems.update({
+                                where: { id: problemId },
+                                data: { solveCount: { increment: 1 } }
+                            });
+                        } catch (pErr) {
+                            console.error(`[DB Error] Failed to increment solveCount for problem ${problemId}:`, pErr);
+                        }
+                    }
 
                     // 2. Award XP, streak, and update user statistics
-                    if (existingSubmission?.userId) {
+                    if (existingSubmission?.userId && !alreadySolvedByUser) {
                         try {
                             const u = await prisma.user.findUnique({
                                 where: { id: existingSubmission.userId },
@@ -405,14 +458,18 @@ redisClient.connect()
                         failedAt: new Date().toISOString()
                     })).catch(() => {});
 
-                    await prisma.submissions.update({
-                        where: { id: submissionId },
-                        data: {
-                            status: "Failure",
-                            output: err.message,
-                            errorMessage: "Internal Worker Error: Max retries exceeded"
-                        }
-                    }).catch(() => {});
+                    try {
+                        await prisma.submissions.update({
+                            where: { id: submissionId },
+                            data: {
+                                status: "Failure",
+                                output: err.message,
+                                errorMessage: "Internal Worker Error: Max retries exceeded"
+                            }
+                        });
+                    } catch (dbErr) {
+                        console.error(`[DB Critical] Failed to persist DLQ failure status for submission ${submissionId}:`, dbErr);
+                    }
                 }
             } finally {
                 // Acknowledge task completion by removing from the processing queue
