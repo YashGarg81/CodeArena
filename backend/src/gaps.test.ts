@@ -93,7 +93,9 @@ describe("Sandbox Module", () => {
 
   test("validateSandboxSafety flags missing docker in strict mode", async () => {
     const origSandbox = process.env.STRICT_SANDBOX;
+    const origMockDocker = process.env.MOCK_DOCKER;
     process.env.STRICT_SANDBOX = "true";
+    process.env.MOCK_DOCKER = "false";
     try {
       const res = await validateSandboxSafety();
       expect(res.safe).toBe(false);
@@ -101,6 +103,8 @@ describe("Sandbox Module", () => {
     } finally {
       if (origSandbox) process.env.STRICT_SANDBOX = origSandbox;
       else delete process.env.STRICT_SANDBOX;
+      if (origMockDocker) process.env.MOCK_DOCKER = origMockDocker;
+      else delete process.env.MOCK_DOCKER;
     }
   });
 });

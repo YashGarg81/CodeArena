@@ -17,6 +17,8 @@ export function isDockerSandboxEnabled(): boolean {
 }
 
 export async function isDockerAvailable(): Promise<boolean> {
+  if (process.env.MOCK_DOCKER === "true") return true;
+  if (process.env.MOCK_DOCKER === "false") return false;
   return new Promise((resolve) => {
     const proc = spawn("docker", ["info"], { stdio: "ignore" });
     proc.on("error", () => resolve(false));
