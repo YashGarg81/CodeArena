@@ -115,7 +115,9 @@ export function AuthModal({ mode, onClose, onSuccess }: {
 
     // Real OAuth UI Flow:
     // 1. Check for configured client IDs in environment or build define
-    const GITHUB_CLIENT_ID = (typeof process !== "undefined" && process.env?.GITHUB_CLIENT_ID) || "";
+    const GITHUB_CLIENT_ID = (typeof process !== "undefined" && process.env?.GITHUB_CLIENT_ID) ||
+      (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_GITHUB_CLIENT_ID) ||
+      "";
     const GOOGLE_CLIENT_ID = (typeof process !== "undefined" && process.env?.GOOGLE_CLIENT_ID) || 
       (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID) ||
       "";
