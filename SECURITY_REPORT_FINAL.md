@@ -1,7 +1,7 @@
 # CodeArena Security Verification & Adversarial Release Gate Report
 
 **Evaluation Date**: September 12, 2026  
-**Commit Evaluated**: `0a859dbb9b2de320a26c479f1e2180e70a081d62`  
+**Evaluated Branch**: `main`  
 **Status**: All Known P0/P1 Security Vulnerabilities Remediated & Verified
 
 ---
