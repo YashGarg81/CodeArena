@@ -93,10 +93,9 @@ export async function runProcessSafely(
                         error: "Time Limit Exceeded (TLE)"
                     });
                 }
-            }, 100);
+            }, 500); // Increased from 100ms to 500ms to allow process termination
             
             // Clear fallback timer if exit event fires
-            const originalKill = child.kill;
             child.once("exit", () => clearTimeout(fallbackTimer));
         }, timeoutMs);
 
