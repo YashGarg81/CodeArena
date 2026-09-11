@@ -60,7 +60,9 @@ describe("AUTH — Authentication & Token Security Suite", () => {
 
   test("AUTH-035: Dev social authentication without token fallback", async () => {
     const origEnv = process.env.NODE_ENV;
+    const origAllowDev = process.env.ALLOW_DEV_SOCIAL_AUTH;
     process.env.NODE_ENV = "development";
+    process.env.ALLOW_DEV_SOCIAL_AUTH = "true";
     try {
       const profile = await verifyOAuthToken("github", undefined, {
         email: "dev@codearena.dev",
@@ -71,6 +73,11 @@ describe("AUTH — Authentication & Token Security Suite", () => {
       expect(profile.email).toContain("@codearena.dev");
     } finally {
       process.env.NODE_ENV = origEnv;
+      if (origAllowDev) {
+        process.env.ALLOW_DEV_SOCIAL_AUTH = origAllowDev;
+      } else {
+        delete process.env.ALLOW_DEV_SOCIAL_AUTH;
+      }
     }
   });
 
@@ -544,7 +551,7 @@ describe("PHASE 4 — MicroVM Sandbox, SAML 2.0 & GitHub Auto-Sync", () => {
   });
 
   test("SAML-001: parseSAMLAssertion decodes valid base64 payload", () => {
-    const mockXml = `<saml2:Assertion><saml2:NameID>enterprise.dev@corp.com</saml2:NameID><saml2:Attribute Name="displayName"><saml2:AttributeValue>Enterprise Dev</saml2:AttributeValue></saml2:Attribute></saml2:Assertion>`;
+    const mockXml = `<saml2:Assertion><saml2:NameID>enterprise.dev@corp.com</saml2:NameID><saml2:Attribute Name="displayName"><saml2:AttributeValue>Enterprise Dev</saml2:AttributeValue></saml2:At[...]
     const base64 = Buffer.from(mockXml).toString("base64");
     const parsed = parseSAMLAssertion(base64);
     expect(parsed.email).toBe("enterprise.dev@corp.com");
@@ -724,9 +731,3 @@ describe("PHASE 4 — MicroVM Sandbox, SAML 2.0 & GitHub Auto-Sync", () => {
     expect(suspicious.anomalies.unnaturalPasteDetected).toBe(true);
   });
 });
-
-
-
-
-
-
