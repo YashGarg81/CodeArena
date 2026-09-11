@@ -10,6 +10,7 @@ import { PORT, CORS_ORIGINS, IS_TEST, getJwtSecret, safeErrorMessage, MAX_JSON_B
 import { auth, optionalAuth, adminAuth, developerAuth, revokeToken } from "./src/auth";
 import { validatePassword, validateEmail, clampPagination, sanitizeSearchQuery } from "./src/validation";
 import { createRateLimiter } from "./src/rateLimit";
+import { initRedis, getRedisClient } from "./src/redisClient";
 import { verifyOAuthToken, OAuthVerificationError, generateOAuthState, verifyOAuthState } from "./src/oauth";
 import { publishedProblemWhere, isPublishedProblem, publicTestCases, firstPublicTestCase, toPublicProblemView, isStarterTemplate } from "./src/publicProblem";
 import { sanitizeTestResults, sanitizeJudgeOutput, toOwnerSubmissionView, toPublicShareView, toStrangerSubmissionView } from "./src/judgePrivacy";
@@ -32,7 +33,7 @@ export { validateCodeSecurity } from "./src/security";
 const JWT_SECRET = getJwtSecret();
 
 if (!IS_TEST) {
-    initRedis().catch((err) => console.error("Redis connection failed:", err.message));
+    initRedis().catch((err: any) => console.error("Redis connection failed:", err?.message || err));
 }
 
 const app = express();

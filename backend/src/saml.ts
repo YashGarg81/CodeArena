@@ -38,15 +38,9 @@ export function verifySAMLSignature(xml: string, certPem: string): boolean {
   }
 
   try {
-    const doc = new DOMParser({
-      errorHandler: {
-        warning: () => {},
-        error: () => {},
-        fatalError: () => {}
-      }
-    }).parseFromString(xml, "text/xml");
+    const doc = new DOMParser().parseFromString(xml, "text/xml");
 
-    if (!doc || !doc.documentElement) {
+    if (!doc || !doc.documentElement || doc.documentElement.tagName === "parsererror") {
       return false;
     }
 
@@ -80,7 +74,7 @@ export function verifySAMLSignature(xml: string, certPem: string): boolean {
     }
 
     const sig = new SignedXml();
-    sig.keyInfoProvider = {
+    (sig as any).keyInfoProvider = {
       getKeyInfo: () => "<X509Data></X509Data>",
       getKey: () => formattedCert
     };

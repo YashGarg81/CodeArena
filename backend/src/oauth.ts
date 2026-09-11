@@ -24,19 +24,20 @@ export class OAuthVerificationError extends Error {
 // In-memory single-use CSRF OAuth state cache with TTL
 const oauthStates = new Map<string, { provider: "github" | "google"; expiresAt: number }>();
 
-export function generateOAuthState(provider: "github" | "google"): string {
+export function generateOAuthState(provider?: "github" | "google"): string {
   const state = crypto.randomBytes(32).toString("hex");
-  oauthStates.set(state, { provider, expiresAt: Date.now() + 10 * 60 * 1000 }); // 10 min TTL
+  oauthStates.set(state, { provider: provider || "github", expiresAt: Date.now() + 10 * 60 * 1000 }); // 10 min TTL
   return state;
 }
 
-export function verifyOAuthState(state: string, expectedProvider: "github" | "google"): boolean {
+export function verifyOAuthState(state: string, expectedProvider?: "github" | "google"): boolean {
   if (!state || typeof state !== "string") return false;
   const record = oauthStates.get(state.trim());
   if (!record) return false;
   oauthStates.delete(state.trim()); // Single-use consumption
   if (Date.now() > record.expiresAt) return false;
-  return record.provider === expectedProvider;
+  if (expectedProvider && record.provider !== expectedProvider) return false;
+  return true;
 }
 
 async function fetchGitHubPrimaryEmail(token: string): Promise<string | null> {
