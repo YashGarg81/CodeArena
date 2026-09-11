@@ -118,22 +118,5 @@ bun run build:frontend
 bun test
 ```
 
----
-
-## 📖 Technical Documentation
-
-Explore the detailed sub-system documentation in [`/docs`](./docs/):
-- **[System Specification](docs/system_spec.md)**
-- **[System Architecture](docs/architecture.md)**
-- **[Authentication & RBAC](docs/authentication.md)**
-- **[Database Schema & Models](docs/database.md)**
-- **[Judge & Sandbox Engine](docs/judge.md)**
-- **[Real-Time Collaboration](docs/collaboration.md)**
-- **[Security Architecture](docs/security.md)**
-- **[Deployment & Operations](docs/deployment.md)**
-- **[Scaling & High Availability](docs/scaling.md)**
-
----
-
 ## 📄 License
 MIT © CodeArena Engineering
