@@ -7,7 +7,9 @@ import { revokeToken, isTokenRevoked } from "./auth";
 describe("OAuth Module", () => {
   test("dev mode allows social login without token when email provided", async () => {
     const originalEnv = process.env.NODE_ENV;
+    const originalAllowDev = process.env.ALLOW_DEV_SOCIAL_AUTH;
     process.env.NODE_ENV = "development";
+    process.env.ALLOW_DEV_SOCIAL_AUTH = "true";
     try {
       const profile = await verifyOAuthToken("github", undefined, {
         email: "dev@test.com",
@@ -18,6 +20,11 @@ describe("OAuth Module", () => {
       expect(profile.provider).toBe("github");
     } finally {
       process.env.NODE_ENV = originalEnv;
+      if (originalAllowDev) {
+        process.env.ALLOW_DEV_SOCIAL_AUTH = originalAllowDev;
+      } else {
+        delete process.env.ALLOW_DEV_SOCIAL_AUTH;
+      }
     }
   });
 
@@ -195,4 +202,3 @@ describe("Issue 12 & 13 — Interview Authorization & Score Validation", () => {
     expect(checkAuth("user-outsider").isInterviewer).toBe(false);
   });
 });
-
