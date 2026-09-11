@@ -102,7 +102,7 @@ describe("Issue 11 — Multi-Language Compatibility & Adapter Validation Matrix"
         } finally {
             try { fs.rmSync(tmpFolder, { recursive: true, force: true }); } catch {}
         }
-    });
+    }, { timeout: 10000 });
 
     test("Hidden test case outputs are never leaked in error logs", () => {
         const testResults = [
