@@ -68,6 +68,16 @@ export async function runProcessSafely(
         let stdout = "";
         let stderr = "";
 
+        const tleResult: ExecutionResult = {
+            passed: false,
+            got: "",
+            expected: expectedOutput,
+            runtime: timeoutMs,
+            verdict: "TLE",
+            isTLE: true,
+            error: "Time Limit Exceeded (TLE)"
+        };
+
         const timer = setTimeout(() => {
             isTimedOut = true;
             try {
@@ -77,6 +87,9 @@ export async function runProcessSafely(
                     child.kill("SIGKILL");
                 }
             } catch {}
+            // Resolve immediately — don't wait for exit event which may never fire
+            // after an external kill (especially on CI Linux runners)
+            resolve(tleResult);
         }, timeoutMs);
 
         child.on("error", (err: any) => {
@@ -119,6 +132,8 @@ export async function runProcessSafely(
 
         child.on("exit", (code: number) => {
             clearTimeout(timer);
+            // Already resolved via TLE timeout — skip
+            if (isTimedOut) return;
             const endTime = performance.now();
             const runtime = Math.max(1, Math.round((endTime - startTime) * 100) / 100);
 
