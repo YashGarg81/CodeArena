@@ -62,7 +62,11 @@ describe("AUTH — Authentication & Token Security Suite", () => {
     const origEnv = process.env.NODE_ENV;
     process.env.NODE_ENV = "development";
     try {
-      const profile = await verifyOAuthToken("github", undefined);
+      const profile = await verifyOAuthToken("github", undefined, {
+        email: "dev@codearena.dev",
+        name: "Dev User",
+        username: "devuser"
+      });
       expect(profile.provider).toBe("github");
       expect(profile.email).toContain("@codearena.dev");
     } finally {
