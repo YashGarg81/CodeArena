@@ -131,12 +131,10 @@ export async function verifyOAuthToken(
 ): Promise<OAuthProfile> {
   const isMockToken = token && (token.startsWith("mock_") || token.startsWith("dev_"));
 
-  // First check: if a real token is provided (not mock), verify it
   if (token && !isMockToken) {
     return provider === "github" ? verifyGitHubToken(token) : verifyGoogleToken(token);
   }
 
-  // Second check: if dev social auth is allowed and no token/mock token provided
   if (isDevSocialAuthAllowed()) {
     const devEmail = devPayload?.email?.trim().toLowerCase() || `${provider}_dev@codearena.dev`;
     return {
@@ -149,6 +147,5 @@ export async function verifyOAuthToken(
     };
   }
 
-  // No valid token and dev auth not allowed
   throw new OAuthVerificationError("Valid OAuth access token is required");
 }

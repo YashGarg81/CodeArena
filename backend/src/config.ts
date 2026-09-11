@@ -64,11 +64,10 @@ export const MAX_JSON_BODY = "5mb";
 /** Sandbox execution mode: "docker" (default container isolation), "firecracker" (advanced MicroVM), or "process" (testing only) */
 export const SANDBOX_MODE = process.env.SANDBOX_MODE || "docker";
 
-/** Allow mock social login without OAuth token in development and testing */
+/** Allow mock social login without OAuth token in development */
 export function isDevSocialAuthAllowed(): boolean {
   if (process.env.ALLOW_DEV_SOCIAL_AUTH === "true") return true;
   if (process.env.ALLOW_DEV_SOCIAL_AUTH === "false") return false;
-  // Allow in development, test, or any non-production environment
   return process.env.NODE_ENV !== "production";
 }
 
