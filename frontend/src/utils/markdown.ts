@@ -37,6 +37,10 @@ export function markdownToHtml(md: string): string {
     .replace(/^- (.+)$/gm, (_, t) => `<li>${escHtml(t)}</li>`)
     .replace(/(<li>.*<\/li>\n?)+/g, "<ul>$&</ul>")
     .replace(/^\d+\. (.+)$/gm, (_, t) => `<li>${escHtml(t)}</li>`)
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, text, url) => {
+      const safeUrl = /^(?:https?:\/\/|mailto:|\/|#)/i.test(url.trim()) ? escHtml(url.trim()) : "#";
+      return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${escHtml(text)}</a>`;
+    })
     .replace(/\n\n/g, "<br/><br/>");
 
   // DOMPurify with strict allowlist to eliminate stored and reflected XSS vectors in browser runtime

@@ -58,8 +58,9 @@ Because the host machine environment lacks a running Docker daemon, the real Doc
 | **Static Typechecks** | `tsc --noEmit` (Backend, Worker, Frontend) | 3 | 3 | 0 | 0 | 0 | `STATIC` |
 | **Production Bundle Builds** | `frontend/build.ts` | 1 | 1 | 0 | 0 | 0 | `REAL_RUNTIME` |
 | **API Contract Validation** | `ROUTE_MAP.md` & `api_contract.test.ts` | 119 | 119 | 0 | 0 | 0 | `REAL_RUNTIME` |
+| **Frontend Unit Tests** | `frontend/src/utils/*.test.ts` | 4 | 4 | 0 | 0 | 0 | `REAL_RUNTIME` |
 | **Docker Container Execution** | Containerized worker sandbox | 1 | 0 | 0 | 1 | 0 | `BLOCKED` (Host lacks Docker) |
-| **TOTAL** | | **2,302** | **2,301** | **0** | **1** | **0** | |
+| **TOTAL** | | **2,307** | **2,306** | **0** | **1** | **0** | |
 
 ---
 
@@ -232,7 +233,7 @@ Commit:
 Latest repository HEAD (audited baseline b6c3b456932d1d130f4e8823075b4e27f7f619d2 / c92de7b)
 
 Tests:
-2,301 / 2,302
+2,306 / 2,307
 
 Blocked:
 1 (Real Docker container execution on local host without Docker daemon)

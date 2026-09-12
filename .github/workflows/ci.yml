@@ -108,6 +108,10 @@ jobs:
           NODE_ENV: test
           SANDBOX_MODE: docker
 
+      - name: 6.1. Frontend Unit & Sanitizer Tests
+        run: |
+          (cd frontend && bun test)
+
       - name: 7. Frontend Production Bundle Build
         run: |
           (cd frontend && bun run build.ts)
