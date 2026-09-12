@@ -13,7 +13,13 @@
     "docker:scale-workers": "docker-compose up -d --scale worker=3",
     "build:frontend": "cd frontend && bun run build.ts",
     "typecheck": "(cd backend && bun x tsc --noEmit) && (cd worker && bun x tsc --noEmit) && (cd frontend && bun x tsc --noEmit)",
-    "test": "bun test"
+    "test": "(cd backend && bun test) && (cd worker && bun test) && (cd frontend && bun test)",
+    "test:backend": "cd backend && bun test",
+    "test:worker": "cd worker && bun test",
+    "test:frontend": "cd frontend && bun test",
+    "test:e2e": "cd frontend && bunx playwright test",
+    "test:rbac": "cd backend && bun run src/rbac_matrix_harness.ts",
+    "test:all": "bun run test && bun run test:e2e && bun run test:rbac"
   },
   "keywords": [
     "coding-platform",
@@ -26,5 +32,8 @@
     "postgresql"
   ],
   "author": "CodeArena Engineering",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.7.3"
+  }
 }
