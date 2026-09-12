@@ -35,16 +35,17 @@ function pruneRevocationCache(): void {
   }
 }
 
-export async function revokeToken(token: string): Promise<void> {
+export async function revokeToken(token: string, ttlSeconds?: number): Promise<void> {
   if (!token) return;
   const hash = hashToken(token);
   pruneRevocationCache();
-  revokedTokensMemory.set(hash, Date.now() + REVOCATION_TTL_MS);
+  const ttlMs = ttlSeconds ? ttlSeconds * 1000 : REVOCATION_TTL_MS;
+  revokedTokensMemory.set(hash, Date.now() + ttlMs);
 
   const redis = getRedisClient();
   if (redis) {
     try {
-      await redis.set(`revoked_token:${hash}`, "1", { EX: 7 * 24 * 60 * 60 });
+      await redis.set(`revoked_token:${hash}`, "1", { EX: ttlSeconds || 7 * 24 * 60 * 60 });
     } catch {
       // Redis fallback
     }

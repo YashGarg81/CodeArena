@@ -23,6 +23,7 @@ app.use((_req, res, next) => {
 });
 
 import { systemDesignRouter } from './systemDesign';
+import { collaborationEngine } from './collaboration';
 import { infraRouter } from './infra';
 
 // Simple health check
@@ -60,8 +61,6 @@ const socketMessageCounts = new Map<string, { count: number; resetTime: number }
 io.on('connection', (socket: any) => {
   const userId = socket.userId;
   console.log(`[Socket] Authenticated client connected: ${socket.id} (user: ${userId})`);
-
-import { collaborationEngine } from './collaboration';
 
   // Room authorization & join
   socket.on('canvas:join', (roomId: string) => {
