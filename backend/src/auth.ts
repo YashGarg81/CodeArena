@@ -95,55 +95,48 @@ export function generateRefreshToken(payload: { userId: string; familyId: string
   return jwt.sign(payload, getRefreshTokenSecret(), { expiresIn: "7d" });
 }
 
-export function auth(req: AuthenticatedRequest, res: Response, next: NextFunction): void {
+export async function auth(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
   const token = req.headers.authorization?.split(" ")[1];
   if (!token) {
     res.status(401).json({ error: "Access token required" });
     return;
   }
-  if (isTokenRevoked(token)) {
+  if (await checkTokenRevocation(token)) {
     res.status(401).json({ error: "Token has been revoked" });
     return;
   }
-  jwt.verify(token, getJwtSecret(), async (err, decoded) => {
-    if (err) {
-      res.status(403).json({ error: "Invalid or expired token" });
+  try {
+    const dec = jwt.verify(token, getJwtSecret()) as { userId: string; role?: string; tokenVersion?: number; sessionId?: string; is2FAPending?: boolean };
+    if (dec.is2FAPending) {
+      res.status(403).json({ error: "Two-Factor Authentication challenge required before accessing platform" });
       return;
     }
-    if (await checkTokenRevocation(token)) {
-      res.status(401).json({ error: "Token has been revoked" });
+    const user = await prisma.user.findUnique({
+      where: { id: dec.userId },
+      select: { id: true, role: true, email: true, isSuspended: true, tokenVersion: true }
+    });
+    if (!user) {
+      res.status(401).json({ error: "User not found" });
       return;
     }
-    const dec = decoded as { userId: string; role?: string; tokenVersion?: number; sessionId?: string };
-    const userId = dec.userId;
-    try {
-      const user = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { id: true, role: true, email: true, isSuspended: true, tokenVersion: true }
-      });
-      if (!user) {
-        res.status(401).json({ error: "User not found" });
-        return;
-      }
-      if (user.isSuspended) {
-        res.status(403).json({ error: "Account suspended. Please contact platform administration." });
-        return;
-      }
-      // Check if token was issued prior to a global session revocation (tokenVersion mismatch)
-      if (dec.tokenVersion !== undefined && user.tokenVersion !== undefined && dec.tokenVersion < user.tokenVersion) {
-        res.status(401).json({ error: "Session has expired or was revoked. Please sign in again." });
-        return;
-      }
+    if (user.isSuspended) {
+      res.status(403).json({ error: "Account suspended. Please contact platform administration." });
+      return;
+    }
+    // Check if token was issued prior to a global session revocation (tokenVersion mismatch)
+    if (dec.tokenVersion !== undefined && user.tokenVersion !== undefined && dec.tokenVersion < user.tokenVersion) {
+      res.status(401).json({ error: "Session has expired or was revoked. Please sign in again." });
+      return;
+    }
 
-      req.userId = user.id;
-      req.userRole = user.role;
-      req.user = { id: user.id, role: user.role, email: user.email };
-      req.sessionId = dec.sessionId;
-      next();
-    } catch (err: any) {
-      res.status(401).json({ error: "Authentication verification failed" });
-    }
-  });
+    req.userId = user.id;
+    req.userRole = user.role;
+    req.user = { id: user.id, role: user.role, email: user.email };
+    req.sessionId = dec.sessionId;
+    next();
+  } catch {
+    res.status(403).json({ error: "Invalid or expired token" });
+  }
 }
 
 export async function optionalAuth(req: AuthenticatedRequest, _res: Response, next: NextFunction): Promise<void> {
@@ -154,10 +147,12 @@ export async function optionalAuth(req: AuthenticatedRequest, _res: Response, ne
       return;
     }
     try {
-      const decoded = jwt.verify(token, getJwtSecret()) as { userId: string; role?: string; tokenVersion?: number; sessionId?: string };
-      req.userId = decoded.userId;
-      req.userRole = decoded.role || "STUDENT";
-      req.sessionId = decoded.sessionId;
+      const decoded = jwt.verify(token, getJwtSecret()) as { userId: string; role?: string; tokenVersion?: number; sessionId?: string; is2FAPending?: boolean };
+      if (!decoded.is2FAPending) {
+        req.userId = decoded.userId;
+        req.userRole = decoded.role || "STUDENT";
+        req.sessionId = decoded.sessionId;
+      }
     } catch {
       // In optional auth, invalid/expired token is gracefully ignored and request proceeds as anonymous
     }
@@ -181,7 +176,11 @@ export async function adminAuth(req: AuthenticatedRequest, res: Response, next: 
   }
 
   try {
-    const decoded = jwt.verify(token, getJwtSecret()) as { userId: string; role?: string; tokenVersion?: number };
+    const decoded = jwt.verify(token, getJwtSecret()) as { userId: string; role?: string; tokenVersion?: number; is2FAPending?: boolean };
+    if (decoded.is2FAPending) {
+      res.status(403).json({ error: "Two-Factor Authentication challenge required" });
+      return;
+    }
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
       select: { id: true, role: true, email: true, isSuspended: true, tokenVersion: true },
@@ -227,14 +226,23 @@ export async function problemAdminAuth(req: AuthenticatedRequest, res: Response,
   }
 
   try {
-    const decoded = jwt.verify(token, getJwtSecret()) as { userId: string; role?: string };
+    const decoded = jwt.verify(token, getJwtSecret()) as { userId: string; role?: string; tokenVersion?: number; is2FAPending?: boolean };
+    if (decoded.is2FAPending) {
+      res.status(403).json({ error: "Two-Factor Authentication challenge required" });
+      return;
+    }
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
-      select: { id: true, role: true, email: true, isSuspended: true },
+      select: { id: true, role: true, email: true, isSuspended: true, tokenVersion: true },
     });
 
     if (!user || user.isSuspended) {
       res.status(403).json({ error: "Access denied" });
+      return;
+    }
+
+    if (decoded.tokenVersion !== undefined && user.tokenVersion !== undefined && decoded.tokenVersion < user.tokenVersion) {
+      res.status(401).json({ error: "Session has expired or was revoked. Please sign in again." });
       return;
     }
 
@@ -268,14 +276,23 @@ export async function developerAuth(req: AuthenticatedRequest, res: Response, ne
   }
 
   try {
-    const decoded = jwt.verify(token, getJwtSecret()) as { userId: string; role?: string };
+    const decoded = jwt.verify(token, getJwtSecret()) as { userId: string; role?: string; tokenVersion?: number; is2FAPending?: boolean };
+    if (decoded.is2FAPending) {
+      res.status(403).json({ error: "Two-Factor Authentication challenge required" });
+      return;
+    }
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
-      select: { id: true, role: true, email: true, isSuspended: true },
+      select: { id: true, role: true, email: true, isSuspended: true, tokenVersion: true },
     });
 
     if (!user || user.isSuspended) {
       res.status(403).json({ error: "Access denied" });
+      return;
+    }
+
+    if (decoded.tokenVersion !== undefined && user.tokenVersion !== undefined && decoded.tokenVersion < user.tokenVersion) {
+      res.status(401).json({ error: "Session has expired or was revoked. Please sign in again." });
       return;
     }
 

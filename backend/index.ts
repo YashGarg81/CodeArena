@@ -2160,8 +2160,8 @@ app.post("/api/v1/auth/social", authRateLimiter, async (req, res) => {
         return res.status(400).json({ error: "OAuth access token is required for social authentication" });
     }
 
-    if (!IS_TEST && state && !verifyOAuthState(state)) {
-        return res.status(400).json({ error: "Invalid or expired OAuth state parameter (CSRF protection)" });
+    if (!IS_TEST && (!state || !verifyOAuthState(state, provider as "github" | "google"))) {
+        return res.status(400).json({ error: "Invalid, missing, or expired OAuth state parameter (CSRF protection)" });
     }
 
     const trimmedToken = oauthToken.trim();
@@ -2429,6 +2429,60 @@ app.post("/api/v1/auth/2fa/verify", auth, async (req: any, res) => {
         res.json({ success: true, message: "Two-Factor Authentication verified and enabled successfully!" });
     } catch (err: any) {
         res.status(500).json({ error: err.message });
+    }
+});
+
+app.post("/api/v1/auth/2fa/challenge", authRateLimiter, async (req, res) => {
+    try {
+        const { tempToken, totpCode } = req.body;
+        if (!tempToken || !totpCode) {
+            return res.status(400).json({ error: "Temporary 2FA token and verification code are required" });
+        }
+
+        let decoded: any;
+        try {
+            decoded = jwt.verify(tempToken, JWT_SECRET);
+        } catch {
+            return res.status(401).json({ error: "Invalid or expired temporary authentication token" });
+        }
+
+        if (!decoded || !decoded.is2FAPending || !decoded.userId) {
+            return res.status(400).json({ error: "Invalid 2FA challenge token" });
+        }
+
+        const user = await prisma.user.findUnique({ where: { id: decoded.userId } });
+        if (!user || user.isSuspended) {
+            return res.status(403).json({ error: "Account inaccessible or suspended" });
+        }
+
+        if (!user.twoFactorEnabled || !user.twoFactorSecret) {
+            return res.status(400).json({ error: "Two-factor authentication is not active for this account" });
+        }
+
+        const isValid = verifyTOTPCode(user.twoFactorSecret, String(totpCode).trim());
+        if (!isValid) {
+            return res.status(400).json({ error: "Invalid two-factor authentication code" });
+        }
+
+        const token = jwt.sign({ userId: user.id, tokenVersion: user.tokenVersion || 0 }, JWT_SECRET, { expiresIn: "7d" });
+        res.json({
+            token,
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                username: user.username,
+                role: user.role,
+                avatar: user.avatar,
+                contestRating: user.contestRating,
+                xp: user.xp,
+                level: user.level,
+                streak: user.streak,
+                twoFactorEnabled: true
+            }
+        });
+    } catch (err: any) {
+        res.status(500).json({ error: err.message || "2FA challenge verification failed" });
     }
 });
 

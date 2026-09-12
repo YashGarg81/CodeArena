@@ -66,9 +66,10 @@ export const SANDBOX_MODE = process.env.SANDBOX_MODE || "docker";
 
 /** Allow mock social login without OAuth token in development */
 export function isDevSocialAuthAllowed(): boolean {
+  if (process.env.NODE_ENV === "production") return false;
   if (process.env.ALLOW_DEV_SOCIAL_AUTH === "true") return true;
   if (process.env.ALLOW_DEV_SOCIAL_AUTH === "false") return false;
-  return process.env.NODE_ENV !== "production";
+  return true;
 }
 
 /** Only honor X-Forwarded-For when sitting behind a trusted reverse proxy. */

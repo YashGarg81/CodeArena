@@ -2,12 +2,12 @@ import { describe, test, expect, beforeAll } from "bun:test";
 import jwt from "jsonwebtoken";
 import { verifySamlResponse } from "./saml";
 import { generateOAuthState, verifyOAuthState, assertGoogleAudience, OAuthVerificationError } from "./oauth";
-import { optionalAuth, revokeToken } from "./auth";
+import { auth, adminAuth, problemAdminAuth, developerAuth, optionalAuth, revokeToken } from "./auth";
 import { generateBase32Secret, generateTOTPCode, verifyTOTPCode } from "./totp";
 import { collaborationEngine } from "./collaboration";
 import { markdownToHtml } from "../../frontend/src/utils/markdown";
 import { isIpBlocked } from "./ssrf";
-import { getJwtSecret } from "./config";
+import { getJwtSecret, isDevSocialAuthAllowed } from "./config";
 
 const TEST_JWT_SECRET = getJwtSecret();
 
@@ -136,6 +136,46 @@ describe("P0 & P1 Security Regression Suite", () => {
       const isValid = verifyTOTPCode(secret, "000000");
       // Note: "000000" might theoretically match if lucky, but 99.9999% false
       expect(verifyTOTPCode(secret, "abc123")).toBe(false);
+    });
+
+    test("auth and adminAuth reject tokens with is2FAPending: true", async () => {
+      const temp2FAToken = jwt.sign({ userId: "user-123", is2FAPending: true }, TEST_JWT_SECRET, { expiresIn: "5m" });
+
+      // Test auth middleware
+      let authStatus = 0;
+      let authErr = "";
+      const req1: any = { headers: { authorization: `Bearer ${temp2FAToken}` } };
+      const res1: any = {
+        status: (s: number) => { authStatus = s; return { json: (d: any) => { authErr = d.error; } }; }
+      };
+      await auth(req1, res1, () => {});
+      expect(authStatus).toBe(403);
+      expect(authErr).toContain("Two-Factor Authentication");
+
+      // Test adminAuth middleware
+      let adminStatus = 0;
+      let adminErr = "";
+      const req2: any = { headers: { authorization: `Bearer ${temp2FAToken}` } };
+      const res2: any = {
+        status: (s: number) => { adminStatus = s; return { json: (d: any) => { adminErr = d.error; } }; }
+      };
+      await adminAuth(req2, res2, () => {});
+      expect(adminStatus).toBe(403);
+      expect(adminErr).toContain("Two-Factor Authentication");
+    });
+
+    test("isDevSocialAuthAllowed is strictly false in production regardless of env flags", () => {
+      const origEnv = process.env.NODE_ENV;
+      const origFlag = process.env.ALLOW_DEV_SOCIAL_AUTH;
+      try {
+        process.env.NODE_ENV = "production";
+        process.env.ALLOW_DEV_SOCIAL_AUTH = "true";
+        expect(isDevSocialAuthAllowed()).toBe(false);
+      } finally {
+        process.env.NODE_ENV = origEnv;
+        if (origFlag !== undefined) process.env.ALLOW_DEV_SOCIAL_AUTH = origFlag;
+        else delete process.env.ALLOW_DEV_SOCIAL_AUTH;
+      }
     });
   });
 
