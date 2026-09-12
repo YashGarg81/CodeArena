@@ -3,6 +3,7 @@ import { prisma } from "./db";
 import cors from "cors";
 import jwt from "jsonwebtoken";
 import fs from "fs";
+import path from "path";
 import { DRIVERS } from "./drivers";
 import { LanguageAdapterRegistry } from "../worker/src/adapters";
 import { validateCodeSecurity } from "./src/security";
@@ -229,6 +230,50 @@ app.get("/api/v1/admin/security/audit-logs", adminAuth, (_req: any, res) => {
     }
 });
 
+// ─── STORAGE ASSET SERVING & UPLOAD HANDLERS ─────────────────────────────────
+
+app.get("/api/v1/storage/files/:key(*)", (req, res) => {
+    try {
+        const fileKey = (req.params as any).key || (req.params as any)["key(*)"];
+        if (!fileKey || fileKey.includes("..")) {
+            return res.status(400).json({ error: "Invalid file key or path traversal detected" });
+        }
+        const uploadsDir = path.resolve(__dirname, "uploads");
+        const safePath = path.resolve(uploadsDir, fileKey.replace(/^uploads[\\/]/, ""));
+        if (!safePath.startsWith(uploadsDir) || !fs.existsSync(safePath)) {
+            return res.status(404).json({ error: "Requested asset not found" });
+        }
+        res.setHeader("X-Content-Type-Options", "nosniff");
+        res.sendFile(safePath);
+    } catch (err: any) {
+        res.status(500).json({ error: "Failed to retrieve asset" });
+    }
+});
+
+app.post("/api/v1/storage/upload", auth, (req, res) => {
+    try {
+        const key = typeof req.query.key === "string" ? req.query.key : "";
+        if (!key || key.includes("..")) {
+            return res.status(400).json({ error: "Invalid upload file key" });
+        }
+        const uploadsDir = path.resolve(__dirname, "uploads");
+        if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+        const safePath = path.resolve(uploadsDir, key.replace(/^uploads[\\/]/, ""));
+        if (!safePath.startsWith(uploadsDir)) {
+            return res.status(400).json({ error: "Invalid upload destination path" });
+        }
+        const fileData = req.body;
+        if (typeof fileData === "string") {
+            fs.writeFileSync(safePath, fileData, "utf8");
+        } else {
+            fs.writeFileSync(safePath, JSON.stringify(fileData), "utf8");
+        }
+        res.json({ success: true, key, message: "File uploaded successfully" });
+    } catch (err: any) {
+        res.status(500).json({ error: "Failed to upload asset" });
+    }
+});
+
 // ─── GLOBAL SOCIAL LAYER, DISCUSSIONS, TOURNAMENTS & TEAMS ───────────────────
 import { socialAndTournamentEngine } from "./src/socialEngine";
 
@@ -347,7 +392,12 @@ app.post("/api/v1/debugger/trace", optionalAuth, (req: any, res) => {
 
 // ─── RATE LIMITERS (Redis-backed with in-memory fallback) ─────────────────────
 
-const authRateLimiter = createRateLimiter("auth", 30, 60 * 1000);
+const authRateLimiter = createRateLimiter("auth", 30, 60 * 1000, {
+    keyGenerator: (req) => {
+        const email = req.body?.email ? String(req.body.email).trim().toLowerCase() : null;
+        return email ? [`account:${email}`] : [];
+    }
+});
 const runCodeRateLimiter = createRateLimiter("run-code", 40, 60 * 1000);
 
 // ─── RUN TESTCASE HELPER ───────────────────────────────────────────────────────

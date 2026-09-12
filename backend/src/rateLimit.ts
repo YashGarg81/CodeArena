@@ -69,7 +69,10 @@ export function createRateLimiter(
   name: string,
   maxRequests: number,
   windowMs: number,
-  options: { failClosed?: boolean } = {}
+  options: {
+    failClosed?: boolean;
+    keyGenerator?: (req: Request) => string | string[];
+  } = {}
 ) {
   const windowSec = Math.max(1, Math.ceil(windowMs / 1000));
   // Security-critical limiters (auth, registration, submissions) fail closed on unhandled errors
@@ -78,20 +81,23 @@ export function createRateLimiter(
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const ip = getClientIp(req);
-      const key = `${name}:${ip}`;
-      const allowed = await checkRedisLimit(key, maxRequests, windowSec);
+      const customKeys = options.keyGenerator ? options.keyGenerator(req) : [];
+      const additionalKeys = Array.isArray(customKeys) ? customKeys : (customKeys ? [customKeys] : []);
+      const keys = [`${name}:ip:${ip}`, ...additionalKeys.map(k => `${name}:${k}`)];
 
-      if (!allowed) {
-        res.status(429).json({ error: "Too many requests. Please slow down and try again later." });
-        return;
+      for (const key of keys) {
+        const allowed = await checkRedisLimit(key, maxRequests, windowSec);
+        if (!allowed) {
+          res.status(429).json({ error: "Too many requests. Please slow down and try again later." });
+          return;
+        }
       }
       next();
     } catch (err) {
       // For security-critical endpoints, don't blindly fail open if rate limiting infrastructure errors out
       if (failClosed) {
-        // Attempt immediate synchronous in-memory rate check as emergency defense
         const ip = getClientIp(req);
-        const key = `${name}:${ip}`;
+        const key = `${name}:ip:${ip}`;
         const memoryAllowed = checkMemoryLimit(key, maxRequests, windowMs);
         if (!memoryAllowed) {
           res.status(429).json({ error: "Too many requests. Please slow down and try again later." });
