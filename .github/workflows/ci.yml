@@ -17,6 +17,31 @@ jobs:
   verify-and-build:
     name: CI Verification & Build Release Gate
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgrespassword
+          POSTGRES_DB: codearena
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -31,12 +56,12 @@ jobs:
         with:
           bun-version: latest
 
-      - name: 1. Install Dependencies
+      - name: 1. Strict Dependency Installation (Frozen Lockfile)
         run: |
-          bun install --frozen-lockfile || bun install
-          (cd backend && bun install)
-          (cd worker && bun install)
-          (cd frontend && bun install)
+          bun install --frozen-lockfile
+          (cd backend && bun install --frozen-lockfile)
+          (cd worker && bun install --frozen-lockfile)
+          (cd frontend && bun install --frozen-lockfile)
 
       - name: 2. Generate Database Clients
         run: |
@@ -62,6 +87,8 @@ jobs:
           (cd backend && bun test)
         env:
           NODE_ENV: test
+          DATABASE_URL: postgresql://postgres:postgrespassword@localhost:5432/codearena?schema=public
+          REDIS_URL: redis://localhost:6379
           JWT_SECRET: ci_test_secret_32_characters_minimum_sample
           ALLOW_DEV_SOCIAL_AUTH: "false"
 
@@ -78,12 +105,10 @@ jobs:
 
       - name: 8. Backend Service Verification
         run: |
-          # Verify backend entrypoint parses and executes cleanly under test
           (cd backend && bun run --eval "import('./src/config.ts').then(() => console.log('Backend config verified.'))")
 
       - name: 9. Worker Service Verification
         run: |
-          # Verify worker adapters and registry load without error
           (cd worker && bun run --eval "import('./src/adapters/index.ts').then(() => console.log('Worker adapters verified.'))")
 
       - name: 10. Security Vulnerability & Dependency Scan
@@ -91,22 +116,36 @@ jobs:
           echo "Running dependency vulnerability security gate..."
           (cd backend && bun pm untrusted)
           (cd worker && bun pm untrusted)
-          # Strict dependency vulnerability audit gate - fail on critical issues
-          npm audit --audit-level=critical
+          # Strict dependency vulnerability audit gate - fail on high/critical issues
+          npm audit --audit-level=high
 
-      - name: 11. Sandbox Security & Hardening Integration Suite
-        run: |
-          echo "Running sandbox security integration test suite..."
-          (cd worker && bun test sandbox_security.test.ts)
-        env:
-          NODE_ENV: test
-          SANDBOX_MODE: docker
-
-      - name: 12. Docker Image Build Gate
+      - name: 11. Docker Image Build Gate
         run: |
           echo "Validating Docker container image builds..."
           docker build -t codearena-backend:ci -f backend/Dockerfile .
           docker build -t codearena-worker:ci -f worker/Dockerfile .
           docker build -t codearena-frontend:ci frontend/
 
+      - name: 12. Real Docker Sandbox Tests Inside Worker Image
+        run: |
+          echo "Running worker test suite and sandbox adversarial tests inside Docker worker container..."
+          docker run --rm \
+            -e NODE_ENV=test \
+            -e SANDBOX_MODE=docker \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            codearena-worker:ci \
+            bun test
 
+      - name: 13. Playwright Browser E2E Release Verification
+        run: |
+          echo "Installing Playwright browser dependencies..."
+          (cd frontend && npx playwright install --with-deps chromium)
+          echo "Executing 16-feature + 8 cross-feature E2E browser tests..."
+          (cd frontend && npx playwright test)
+
+      - name: 14. Release Gate Evidence Verification
+        run: |
+          echo "Verifying RBAC Runtime Matrix Report..."
+          test -f RBAC_RUNTIME_MATRIX_REPORT.md
+          echo "Verifying Production Readiness Final Report..."
+          test -f PRODUCTION_READINESS_FINAL.md

@@ -30,7 +30,9 @@ describe("Adversarial Production Sandbox & Mock Injection Test Matrix", () => {
       folderPath: "./",
       codeWithDriver: "console.log('hi')",
       expectedOutput: "expected_test_output",
-      timeoutMs: 2000
+      inputData: "",
+      timeoutMs: 2000,
+      memoryLimitMb: 256
     });
     expect(result.passed).toBe(false);
     expect(result.verdict).toBe("RE");
@@ -87,7 +89,11 @@ describe("Adversarial Production Sandbox & Mock Injection Test Matrix", () => {
 
     const result = await runProcessSafely("whoami", [], {
       folderPath: "./",
-      expectedOutput: "root"
+      codeWithDriver: "whoami",
+      expectedOutput: "root",
+      inputData: "",
+      timeoutMs: 2000,
+      memoryLimitMb: 256
     });
 
     expect(result.passed).toBe(false);

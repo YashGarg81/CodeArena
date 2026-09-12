@@ -106,6 +106,69 @@ const inMemoryStore: Record<string, any[]> = {
       twoFactorEnabled: false,
       twoFactorSecret: null,
       twoFactorBackupCodes: [],
+    },
+    {
+      id: "usr_interviewer_1",
+      name: "Interviewer User",
+      email: "interviewer@codearena.dev",
+      username: "interviewer",
+      password: "$argon2id$v=19$m=65536,t=2,p=1$lNDbwp9EgEM88oHRcAPapPFn8Xx1hbtA/8D4dZSfuJc$A6nRGA8TMMmb01eEc6Z7oCXruZ5/yiWImnany4xhOP4",
+      role: "INTERVIEWER",
+      isEmailVerified: true,
+      tokenVersion: 0,
+      isSuspended: false,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    },
+    {
+      id: "usr_instructor_1",
+      name: "Instructor User",
+      email: "instructor@codearena.dev",
+      username: "instructor",
+      password: "$argon2id$v=19$m=65536,t=2,p=1$lNDbwp9EgEM88oHRcAPapPFn8Xx1hbtA/8D4dZSfuJc$A6nRGA8TMMmb01eEc6Z7oCXruZ5/yiWImnany4xhOP4",
+      role: "INSTRUCTOR",
+      isEmailVerified: true,
+      tokenVersion: 0,
+      isSuspended: false,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    },
+    {
+      id: "usr_moderator_1",
+      name: "Moderator User",
+      email: "moderator@codearena.dev",
+      username: "moderator",
+      password: "$argon2id$v=19$m=65536,t=2,p=1$lNDbwp9EgEM88oHRcAPapPFn8Xx1hbtA/8D4dZSfuJc$A6nRGA8TMMmb01eEc6Z7oCXruZ5/yiWImnany4xhOP4",
+      role: "MODERATOR",
+      isEmailVerified: true,
+      tokenVersion: 0,
+      isSuspended: false,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    },
+    {
+      id: "usr_contest_admin_1",
+      name: "Contest Admin",
+      email: "contest_admin@codearena.dev",
+      username: "contest_admin",
+      password: "$argon2id$v=19$m=65536,t=2,p=1$lNDbwp9EgEM88oHRcAPapPFn8Xx1hbtA/8D4dZSfuJc$A6nRGA8TMMmb01eEc6Z7oCXruZ5/yiWImnany4xhOP4",
+      role: "CONTEST_ADMIN",
+      isEmailVerified: true,
+      tokenVersion: 0,
+      isSuspended: false,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    },
+    {
+      id: "usr_problem_admin_1",
+      name: "Problem Admin",
+      email: "problem_admin@codearena.dev",
+      username: "problem_admin",
+      password: "$argon2id$v=19$m=65536,t=2,p=1$lNDbwp9EgEM88oHRcAPapPFn8Xx1hbtA/8D4dZSfuJc$A6nRGA8TMMmb01eEc6Z7oCXruZ5/yiWImnany4xhOP4",
+      role: "PROBLEM_ADMIN",
+      isEmailVerified: true,
+      tokenVersion: 0,
+      isSuspended: false,
       createdAt: new Date(),
       updatedAt: new Date()
     }
@@ -357,6 +420,21 @@ const inMemoryStore: Record<string, any[]> = {
 // Create a resilient Proxy for Prisma calls to prevent connection crashes when DB is offline
 const handler: ProxyHandler<any> = {
   get(target, propKey: string) {
+    if (propKey === "$transaction") {
+      return async function (arg: any) {
+        if (postgresConnected && target.$transaction) {
+          return target.$transaction(arg);
+        }
+        if (typeof arg === "function") {
+          return arg(new Proxy(target, handler));
+        }
+        if (Array.isArray(arg)) {
+          return Promise.all(arg);
+        }
+        return null;
+      };
+    }
+
     if (typeof propKey === "symbol" || propKey.startsWith("$")) {
       const val = target[propKey];
       return typeof val === "function" ? val.bind(target) : val;
@@ -383,6 +461,7 @@ const handler: ProxyHandler<any> = {
                       if (queryOptions.where.userId && queryOptions.where.problemId) {
                         return item.userId === queryOptions.where.userId && item.problemId === queryOptions.where.problemId;
                       }
+                      if (queryOptions.where.role && item.role === queryOptions.where.role) return true;
                       if (queryOptions.where.email && item.email?.toLowerCase() === queryOptions.where.email.toLowerCase()) return true;
                       if (queryOptions.where.username && item.username?.toLowerCase() === queryOptions.where.username.toLowerCase()) return true;
                       if (queryOptions.where.slug && item.slug === queryOptions.where.slug) return true;
@@ -430,6 +509,7 @@ const handler: ProxyHandler<any> = {
                   if (where.role) res = res.filter(item => item.role === where.role);
                   if (where.userId) res = res.filter(item => item.userId === where.userId);
                   if (where.problemId) res = res.filter(item => item.problemId === where.problemId);
+                  if (where.email) res = res.filter(item => item.email?.toLowerCase() === String(where.email).toLowerCase());
                   if (where.isPublic !== undefined) res = res.filter(item => item.isPublic === where.isPublic);
                   if (where.id) res = res.filter(item => item.id === where.id);
                   if (where.OR && Array.isArray(where.OR)) {
@@ -515,9 +595,28 @@ const handler: ProxyHandler<any> = {
                 }
 
                 if (methodKey === "create") {
+                  const data = queryOptions.data || {};
+                  if (modelName === "user") {
+                    const emailConflict = data.email && list.some((i: any) => i.email && i.email.toLowerCase() === data.email.toLowerCase());
+                    const usernameConflict = data.username && list.some((i: any) => i.username && i.username.toLowerCase() === data.username.toLowerCase());
+                    if (emailConflict || usernameConflict) {
+                      const err: any = new Error("Unique constraint failed on the fields: (`email`)");
+                      err.code = "P2002";
+                      err.meta = { target: emailConflict ? ["email"] : ["username"] };
+                      throw err;
+                    }
+                  }
+                  if (modelName === "contestparticipant") {
+                    const conflict = data.contestId && data.userId && list.some((i: any) => i.contestId === data.contestId && i.userId === data.userId);
+                    if (conflict) {
+                      const err: any = new Error("Unique constraint failed on the fields: (`contestId`, `userId`)");
+                      err.code = "P2002";
+                      throw err;
+                    }
+                  }
                   const newItem = {
-                    id: queryOptions.data.id || `${modelName}_${Date.now()}_${Math.floor(Math.random()*1000)}`,
-                    ...queryOptions.data,
+                    id: data.id || `${modelName}_${Date.now()}_${Math.floor(Math.random()*1000)}`,
+                    ...data,
                     createdAt: new Date(),
                     updatedAt: new Date()
                   };

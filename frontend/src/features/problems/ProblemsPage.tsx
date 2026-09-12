@@ -53,7 +53,7 @@ export function ProblemsPage({ onNavigate, user, onToast }: { onNavigate: (p: st
   const filtered = problems.filter(p => {
     if (filters.difficulty && p.difficulty !== filters.difficulty) return false;
     if (filters.category && p.category !== filters.category) return false;
-    if (filters.company && !p.companies.includes(filters.company)) return false;
+    if (filters.company && !p.companies?.includes(filters.company)) return false;
     if (filters.search && !p.title.toLowerCase().includes(filters.search.toLowerCase())) return false;
     if (filters.solved === "solved" && !solvedIds.has(p.id)) return false;
     if (filters.solved === "unsolved" && solvedIds.has(p.id)) return false;
@@ -278,8 +278,8 @@ export function ProblemsPage({ onNavigate, user, onToast }: { onNavigate: (p: st
                       <td style={{ color: "var(--text-secondary)", fontSize: 13 }}>{p.category}</td>
                       <td>
                         <div className="problem-companies">
-                          {p.companies.slice(0, 2).map(c => <span key={c} className="company-tag">{c}</span>)}
-                          {p.companies.length > 2 && <span className="company-tag">+{p.companies.length - 2}</span>}
+                          {(p.companies || []).slice(0, 2).map(c => <span key={c} className="company-tag">{c}</span>)}
+                          {(p.companies?.length || 0) > 2 && <span className="company-tag">+{(p.companies?.length || 0) - 2}</span>}
                         </div>
                       </td>
                       <td>

@@ -10,7 +10,7 @@ import { validateCodeSecurity } from "./src/security";
 import { PORT, CORS_ORIGINS, IS_TEST, getJwtSecret, safeErrorMessage, MAX_JSON_BODY, isDevSocialAuthAllowed } from "./src/config";
 import { auth, optionalAuth, adminAuth, developerAuth, revokeToken } from "./src/auth";
 import { validatePassword, validateEmail, clampPagination, sanitizeSearchQuery } from "./src/validation";
-import { createRateLimiter } from "./src/rateLimit";
+import { createRateLimiter, loginRateLimiter, signupRateLimiter, passwordResetRateLimiter, submissionRateLimiter, runCodeRateLimiter, storageUploadRateLimiter, isAccountLocked, recordFailedLogin, resetFailedLogins } from "./src/rateLimit";
 import { initRedis, getRedisClient } from "./src/redisClient";
 import { verifyOAuthToken, OAuthVerificationError, generateOAuthState, verifyOAuthState } from "./src/oauth";
 import { publishedProblemWhere, isPublishedProblem, publicTestCases, firstPublicTestCase, toPublicProblemView, isStarterTemplate } from "./src/publicProblem";
@@ -183,24 +183,30 @@ app.get("/api/v1/arena/matches/:matchId", optionalAuth, (req: any, res) => {
 app.post("/api/v1/arena/matches/:matchId/progress", auth, async (req: any, res) => {
     try {
         const { testsPassed = 0, totalTests = 5 } = req.body;
-        const match = battleArenaService.updatePlayerProgress(req.params.matchId, req.userId!, Number(testsPassed), Number(totalTests));
-        if (!match) return res.status(404).json({ error: "Active match not found" });
-
-        // If this action concluded a victory for the current player, award performance XP & Elo
-        if (match.status === "completed" && match.winnerId === req.userId) {
-            const user = await prisma.user.findUnique({ where: { id: req.userId } });
-            if (user) {
-                const xpGain = match.gameMode === "best_of_3" ? 150 : match.gameMode === "survival" ? 120 : 100;
-                const newXp = (user.xp || 0) + xpGain;
-                const newLevel = Math.floor(newXp / 300) + 1;
-                const eloGain = 25;
-                const newElo = (user.contestRating || 1200) + eloGain;
-
-                await prisma.user.update({
-                    where: { id: req.userId },
-                    data: { xp: newXp, level: newLevel, contestRating: newElo }
-                });
+        let match = battleArenaService.updatePlayerProgress(req.params.matchId, req.userId!, Number(testsPassed), Number(totalTests));
+        if (!match) {
+            const existing = battleArenaService.getMatch(req.params.matchId);
+            if (existing && existing.status === "completed") {
+                match = existing;
+            } else {
+                return res.status(404).json({ error: "Active match not found" });
             }
+        }
+
+        // If this action concluded a victory for the current player, award performance XP & Elo idempotently
+        if (match.status === "completed" && match.winnerId === req.userId && !(match as any).hasAwardedRewards) {
+            (match as any).hasAwardedRewards = true;
+            const xpGain = match.gameMode === "best_of_3" ? 150 : match.gameMode === "survival" ? 120 : 100;
+            const eloGain = 25;
+
+            // Atomic increment prevents lost updates under concurrent match completions
+            await prisma.user.update({
+                where: { id: req.userId },
+                data: {
+                    xp: { increment: xpGain },
+                    contestRating: { increment: eloGain }
+                }
+            });
         }
 
         res.json({ success: true, match });
@@ -231,44 +237,72 @@ app.get("/api/v1/admin/security/audit-logs", adminAuth, (_req: any, res) => {
 });
 
 // ─── STORAGE ASSET SERVING & UPLOAD HANDLERS ─────────────────────────────────
+import { validateStorageKey, resolveSafeStoragePath, checkFileAccess, saveStorageFile } from "./src/storageService";
 
-app.get("/api/v1/storage/files/*key", (req, res) => {
+app.get("/api/v1/storage/files/*key", optionalAuth, async (req: any, res) => {
     try {
-        const fileKey = (req.params as any).key || (req.params as any)[0] || "";
-        if (!fileKey || fileKey.includes("..")) {
-            return res.status(400).json({ error: "Invalid file key or path traversal detected" });
+        const paramKey = (req.params as any).key || (req.params as any)[0];
+        const rawKey = Array.isArray(paramKey) ? paramKey.join("/") : String(paramKey || "");
+        const validation = validateStorageKey(rawKey);
+        if (!validation.safe || !validation.cleanKey) {
+            return res.status(400).json({ error: validation.error || "Invalid file key or path traversal detected" });
         }
-        const uploadsDir = path.resolve(__dirname, "uploads");
-        const safePath = path.resolve(uploadsDir, fileKey.replace(/^uploads[\\/]/, ""));
-        if (!safePath.startsWith(uploadsDir) || !fs.existsSync(safePath)) {
+
+        const access = checkFileAccess(validation.cleanKey, req.userId, req.userRole);
+        if (!access.allowed) {
+            return res.status(access.status).json({ error: access.error });
+        }
+
+        const resolution = await resolveSafeStoragePath(validation.cleanKey);
+        if (!resolution.safe || !resolution.resolvedPath) {
+            return res.status(400).json({ error: resolution.error || "Path validation failed" });
+        }
+
+        if (!fs.existsSync(resolution.resolvedPath)) {
             return res.status(404).json({ error: "Requested asset not found" });
         }
+
         res.setHeader("X-Content-Type-Options", "nosniff");
-        res.sendFile(safePath);
+        res.sendFile(resolution.resolvedPath);
     } catch (err: any) {
         res.status(500).json({ error: "Failed to retrieve asset" });
     }
 });
 
-app.post("/api/v1/storage/upload", auth, (req, res) => {
+app.post("/api/v1/storage/upload", auth, storageUploadRateLimiter, express.raw({ type: "*/*", limit: "15mb" }), async (req: any, res) => {
     try {
-        const key = typeof req.query.key === "string" ? req.query.key : "";
-        if (!key || key.includes("..")) {
-            return res.status(400).json({ error: "Invalid upload file key" });
+        const filename = typeof req.query.filename === "string" ? req.query.filename : (typeof req.query.key === "string" ? req.query.key : "upload.txt");
+        const isPublic = req.query.isPublic === "true" || req.body?.isPublic === true;
+
+        if (typeof req.query.key === "string") {
+            const keyValidation = validateStorageKey(req.query.key);
+            if (!keyValidation.safe) {
+                return res.status(400).json({ error: keyValidation.error });
+            }
         }
-        const uploadsDir = path.resolve(__dirname, "uploads");
-        if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
-        const safePath = path.resolve(uploadsDir, key.replace(/^uploads[\\/]/, ""));
-        if (!safePath.startsWith(uploadsDir)) {
-            return res.status(400).json({ error: "Invalid upload destination path" });
-        }
-        const fileData = req.body;
-        if (typeof fileData === "string") {
-            fs.writeFileSync(safePath, fileData, "utf8");
+
+        let fileBuffer: Buffer;
+        if (Buffer.isBuffer(req.body)) {
+            fileBuffer = req.body;
+        } else if (typeof req.body === "string") {
+            fileBuffer = Buffer.from(req.body, "utf8");
+        } else if (req.body && typeof req.body === "object" && Object.keys(req.body).length > 0) {
+            fileBuffer = Buffer.from(JSON.stringify(req.body), "utf8");
         } else {
-            fs.writeFileSync(safePath, JSON.stringify(fileData), "utf8");
+            return res.status(400).json({ error: "No file content payload provided" });
         }
-        res.json({ success: true, key, message: "File uploaded successfully" });
+
+        const result = await saveStorageFile(req.userId!, filename, fileBuffer, isPublic);
+        if (!result.success) {
+            return res.status(result.status).json({ error: result.error });
+        }
+
+        res.status(200).json({
+            success: true,
+            key: result.key,
+            downloadUrl: `/api/v1/storage/files/${encodeURIComponent(result.key!)}`,
+            message: "File uploaded successfully"
+        });
     } catch (err: any) {
         res.status(500).json({ error: "Failed to upload asset" });
     }
@@ -398,7 +432,6 @@ const authRateLimiter = createRateLimiter("auth", 30, 60 * 1000, {
         return email ? [`account:${email}`] : [];
     }
 });
-const runCodeRateLimiter = createRateLimiter("run-code", 40, 60 * 1000);
 
 // ─── RUN TESTCASE HELPER ───────────────────────────────────────────────────────
 
@@ -2072,7 +2105,7 @@ CREATE INDEX idx_urls_code ON urls(code);
 
 // ─── AUTH ROUTES ──────────────────────────────────────────────────────────────
 
-app.post("/api/v1/auth/signup", authRateLimiter, async (req, res) => {
+app.post("/api/v1/auth/signup", signupRateLimiter, async (req, res) => {
     const { name, email, password, username } = req.body;
     if (!name || !email || !password) return res.status(400).json({ error: "Missing required fields: name, email, and password are required" });
 
@@ -2088,7 +2121,7 @@ app.post("/api/v1/auth/signup", authRateLimiter, async (req, res) => {
 
     try {
         const existingEmail = await prisma.user.findFirst({ where: { email: cleanEmail } });
-        if (existingEmail) return res.status(400).json({ error: "An account with this email already exists. Please log in." });
+        if (existingEmail) return res.status(409).json({ error: "An account with this email already exists. Please log in." });
 
         let existingUser = await prisma.user.findFirst({ where: { username: usernameClean } });
         if (existingUser) {
@@ -2126,24 +2159,32 @@ app.post("/api/v1/auth/signup", authRateLimiter, async (req, res) => {
         });
     } catch (err: any) {
         if (err?.code === "P2002") {
-            return res.status(400).json({ error: "Email or username already in use. Please choose another." });
+            return res.status(409).json({ error: "An account with this email or username already exists. Please log in." });
         }
-        res.status(500).json({ error: err.message || "Registration failed" });
+        res.status(500).json({ error: safeErrorMessage(err, "Registration failed") });
     }
 });
 
-app.post("/api/v1/auth/login", authRateLimiter, async (req, res) => {
+app.post("/api/v1/auth/login", loginRateLimiter, async (req, res) => {
     const { email, password, totpCode } = req.body;
     if (!email || !password) return res.status(400).json({ error: "Missing email or password" });
 
     const cleanEmail = email.trim().toLowerCase();
+
+    // Account lockout defense against brute force guessing
+    if (await isAccountLocked(cleanEmail)) {
+        return res.status(429).json({ error: "Too many failed login attempts. Account temporarily locked for 15 minutes." });
+    }
 
     try {
         const user = await prisma.user.findFirst({
             where: { OR: [{ email: cleanEmail }, { username: email.trim() }] }
         });
 
-        if (!user) return res.status(400).json({ error: "Invalid email or password" });
+        if (!user) {
+            await recordFailedLogin(cleanEmail);
+            return res.status(400).json({ error: "Invalid email or password" });
+        }
 
         let isMatch = false;
         try {
@@ -2152,7 +2193,13 @@ app.post("/api/v1/auth/login", authRateLimiter, async (req, res) => {
             isMatch = false;
         }
 
-        if (!isMatch) return res.status(400).json({ error: "Invalid email or password" });
+        if (!isMatch) {
+            const fail = await recordFailedLogin(cleanEmail);
+            if (fail.locked) {
+                return res.status(429).json({ error: "Too many failed login attempts. Account temporarily locked for 15 minutes." });
+            }
+            return res.status(400).json({ error: "Invalid email or password" });
+        }
 
         if (user.isSuspended) {
             return res.status(403).json({ error: "Account suspended. Please contact platform administration." });
@@ -2170,9 +2217,13 @@ app.post("/api/v1/auth/login", authRateLimiter, async (req, res) => {
 
             const isValid = verifyTOTPCode(user.twoFactorSecret || "", String(totpCode).trim());
             if (!isValid) {
+                await recordFailedLogin(cleanEmail);
                 return res.status(400).json({ error: "Invalid two-factor authentication code" });
             }
         }
+
+        // Reset failed login counter upon successful authentication
+        await resetFailedLogins(cleanEmail);
 
         const token = jwt.sign({ userId: user.id, tokenVersion: user.tokenVersion || 0 }, JWT_SECRET, { expiresIn: "7d" });
         res.json({
@@ -2594,10 +2645,10 @@ app.post("/api/v1/auth/logout-all", auth, async (req: any, res) => {
 });
 
 // Backward compat
-app.post("/auth/signup", authRateLimiter, async (req, res) => { req.url = "/api/v1/auth/signup"; (app as any)._router.handle(req, res, () => {}); });
-app.post("/auth/login", authRateLimiter, async (req, res) => { req.url = "/api/v1/auth/login"; (app as any)._router.handle(req, res, () => {}); });
-app.post("/auth/logout", (req: any, res, next) => { req.url = "/api/v1/auth/logout"; (app as any)._router.handle(req, res, next); });
-app.get("/auth/me", (req: any, res, next) => { req.url = "/api/v1/auth/me"; app._router.handle(req, res, next); });
+app.post("/auth/signup", authRateLimiter, async (req, res, next) => { req.url = "/api/v1/auth/signup"; (app as any).handle(req, res, next); });
+app.post("/auth/login", authRateLimiter, async (req, res, next) => { req.url = "/api/v1/auth/login"; (app as any).handle(req, res, next); });
+app.post("/auth/logout", (req: any, res, next) => { req.url = "/api/v1/auth/logout"; (app as any).handle(req, res, next); });
+app.get("/auth/me", (req: any, res, next) => { req.url = "/api/v1/auth/me"; (app as any).handle(req, res, next); });
 
 // ─── PROBLEMS ROUTES ──────────────────────────────────────────────────────────
 
@@ -2750,8 +2801,8 @@ app.get("/api/v1/problems/:problemId/submissions", auth, async (req: any, res) =
 });
 
 // Legacy compat
-app.get("/problems", async (req, res) => { req.url = "/api/v1/problems"; app._router.handle(req, res, () => {}); });
-app.get("/problems/:id", (req: any, res, next) => { req.url = `/api/v1/problems/${req.params.id}`; app._router.handle(req, res, next); });
+app.get("/problems", async (req, res, next) => { req.url = "/api/v1/problems"; (app as any).handle(req, res, next); });
+app.get("/problems/:id", (req: any, res, next) => { req.url = `/api/v1/problems/${req.params.id}`; (app as any).handle(req, res, next); });
 
 // ─── PHASE 5: ADMIN PROBLEM MANAGEMENT ───────────────────────────────────────
 
@@ -3817,8 +3868,8 @@ app.post("/api/v1/submissions/run", runCodeRateLimiter, auth, async (req: any, r
 });
 
 // Full judge queue submission
-app.post("/api/v1/submissions", runCodeRateLimiter, auth, async (req: any, res) => {
-    const { problemId, code, language = "js" } = req.body;
+app.post("/api/v1/submissions", submissionRateLimiter, auth, async (req: any, res) => {
+    const { problemId, code, language = "js", contestId } = req.body;
     if (!problemId || typeof code !== "string" || !code.trim()) return res.status(400).json({ error: "problemId and non-empty code required" });
 
     const secCheck = validateCodeSecurity(code, language);
@@ -3827,26 +3878,54 @@ app.post("/api/v1/submissions", runCodeRateLimiter, auth, async (req: any, res) 
     }
 
     try {
-        const problem = await prisma.problems.findFirst({ where: { id: problemId } });
-        if (!problem || !isPublishedProblem(problem)) return res.status(404).json({ error: "Problem not found" });
-        if (isStarterTemplate(code, problem.templates)) {
-            return res.status(400).json({ error: "Complete the function implementation before submitting." });
-        }
+        const result = await prisma.$transaction(async (tx: any) => {
+            // Atomic contest deadline verification
+            if (contestId) {
+                const contest = await tx.contest.findUnique({ where: { id: contestId } });
+                if (!contest) {
+                    throw new Error("CONTEST_NOT_FOUND");
+                }
+                const now = new Date();
+                if (contest.status === "Ended" || now >= contest.endTime) {
+                    throw new Error("CONTEST_ENDED");
+                }
+                if (now < contest.startTime) {
+                    throw new Error("CONTEST_NOT_STARTED");
+                }
+            }
 
-        const testCasesTotal = (problem.testCases as any[]).length;
-        const submission = await prisma.submissions.create({
-            data: { problemId, userId: req.userId, code, language, status: "Processing", testCasesTotal, testCasesPassed: 0, isPublic: false }
+            const problem = await tx.problems.findFirst({ where: { id: problemId } });
+            if (!problem || !isPublishedProblem(problem)) {
+                throw new Error("PROBLEM_NOT_FOUND");
+            }
+            if (isStarterTemplate(code, problem.templates)) {
+                throw new Error("STARTER_TEMPLATE");
+            }
+
+            const testCasesTotal = (problem.testCases as any[]).length;
+            const submission = await tx.submissions.create({
+                data: { problemId, userId: req.userId, code, language, status: "Processing", testCasesTotal, testCasesPassed: 0, isPublic: false }
+            });
+
+            await tx.problems.update({ where: { id: problemId }, data: { attemptCount: { increment: 1 } } });
+            return submission;
         });
 
-        await prisma.problems.update({ where: { id: problemId }, data: { attemptCount: { increment: 1 } } });
         if (!IS_TEST) {
             const redis = getRedisClient();
             if (redis) {
-                await redis.lPush("problems", JSON.stringify({ submissionId: submission.id, problemId, code, language }));
+                await redis.lPush("problems", JSON.stringify({ submissionId: result.id, problemId, code, language }));
             }
         }
-        res.json({ message: "processing", id: submission.id });
-    } catch (err: any) { res.status(500).json({ error: safeErrorMessage(err) }); }
+        res.json({ message: "processing", id: result.id });
+    } catch (err: any) {
+        if (err.message === "CONTEST_NOT_FOUND") return res.status(404).json({ error: "Contest not found" });
+        if (err.message === "CONTEST_ENDED") return res.status(400).json({ error: "Contest has ended. Submissions are closed." });
+        if (err.message === "CONTEST_NOT_STARTED") return res.status(400).json({ error: "Contest has not started yet." });
+        if (err.message === "PROBLEM_NOT_FOUND") return res.status(404).json({ error: "Problem not found" });
+        if (err.message === "STARTER_TEMPLATE") return res.status(400).json({ error: "Complete the function implementation before submitting." });
+        res.status(500).json({ error: safeErrorMessage(err) });
+    }
 });
 
 app.get("/api/v1/submissions/:id", optionalAuth, async (req: any, res) => {
@@ -3942,8 +4021,8 @@ app.get("/api/v1/users/:userId/submissions", optionalAuth, async (req: any, res)
 });
 
 // Legacy compat
-app.post("/submission", (req: any, res, next) => { req.url = "/api/v1/submissions"; app._router.handle(req, res, next); });
-app.get("/submission/:id", (req: any, res, next) => { req.url = `/api/v1/submissions/${req.params.id}`; app._router.handle(req, res, next); });
+app.post("/submission", (req: any, res, next) => { req.url = "/api/v1/submissions"; (app as any).handle(req, res, next); });
+app.get("/submission/:id", (req: any, res, next) => { req.url = `/api/v1/submissions/${req.params.id}`; (app as any).handle(req, res, next); });
 
 // ─── USER STATS & PROFILE ─────────────────────────────────────────────────────
 
@@ -3971,7 +4050,7 @@ app.get("/api/v1/users/:userId/stats", async (req, res) => {
 });
 
 // Legacy compat
-app.get("/users/:userId/stats", (req: any, res, next) => { req.url = `/api/v1/users/${req.params.userId}/stats`; app._router.handle(req, res, next); });
+app.get("/users/:userId/stats", (req: any, res, next) => { req.url = `/api/v1/users/${req.params.userId}/stats`; (app as any).handle(req, res, next); });
 
 app.get("/api/v1/users/:username/profile", async (req, res) => {
     try {
@@ -4012,7 +4091,7 @@ app.get("/api/v1/leaderboard", async (req, res) => {
 });
 
 // Legacy compat
-app.get("/leaderboard", (req: any, res, next) => { req.url = "/api/v1/leaderboard"; app._router.handle(req, res, next); });
+app.get("/leaderboard", (req: any, res, next) => { req.url = "/api/v1/leaderboard"; (app as any).handle(req, res, next); });
 
 // ─── FORUM / COMMUNITY ────────────────────────────────────────────────────────
 
@@ -4077,10 +4156,10 @@ app.post("/api/v1/forum/posts/:postId/comments", auth, async (req: any, res) => 
 });
 
 // Legacy compat
-app.get("/forum/posts", (req: any, res, next) => { req.url = "/api/v1/forum/posts"; app._router.handle(req, res, next); });
-app.post("/forum/posts", (req: any, res, next) => { req.url = "/api/v1/forum/posts"; app._router.handle(req, res, next); });
-app.get("/forum/posts/:id", (req: any, res, next) => { req.url = `/api/v1/forum/posts/${req.params.id}`; app._router.handle(req, res, next); });
-app.post("/forum/posts/:id/comments", (req: any, res, next) => { req.url = `/api/v1/forum/posts/${req.params.id}/comments`; app._router.handle(req, res, next); });
+app.get("/forum/posts", (req: any, res, next) => { req.url = "/api/v1/forum/posts"; (app as any).handle(req, res, next); });
+app.post("/forum/posts", (req: any, res, next) => { req.url = "/api/v1/forum/posts"; (app as any).handle(req, res, next); });
+app.get("/forum/posts/:id", (req: any, res, next) => { req.url = `/api/v1/forum/posts/${req.params.id}`; (app as any).handle(req, res, next); });
+app.post("/forum/posts/:id/comments", (req: any, res, next) => { req.url = `/api/v1/forum/posts/${req.params.id}/comments`; (app as any).handle(req, res, next); });
 
 // ─── SNIPPETS ─────────────────────────────────────────────────────────────────
 

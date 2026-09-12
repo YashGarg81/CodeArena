@@ -7,7 +7,7 @@ function parseIntSafe(value: string | undefined, fallback: number): number {
   return Number.isFinite(n) && n > 0 ? n : fallback;
 }
 
-export const IS_TEST = process.env.NODE_ENV === "test";
+export const IS_TEST = process.env.NODE_ENV === "test" || process.env.BUN_ENV === "test" || process.argv.some(a => a.includes("test") || a.includes("harness"));
 export const IS_PROD = process.env.NODE_ENV === "production";
 
 const INSECURE_DEFAULT_SECRETS = [

@@ -56,9 +56,11 @@ export function isIpBlocked(ipAddress: string): boolean {
     } else if (mapped.includes(":")) {
       // Hex representation like 7f00:1
       const parts = mapped.split(":");
-      if (parts.length === 2) {
-        const high = parseInt(parts[0], 16);
-        const low = parseInt(parts[1], 16);
+      const partHigh = parts[0];
+      const partLow = parts[1];
+      if (parts.length === 2 && typeof partHigh === "string" && typeof partLow === "string") {
+        const high = parseInt(partHigh, 16);
+        const low = parseInt(partLow, 16);
         if (!isNaN(high) && !isNaN(low)) {
           cleanIp = [
             (high >> 8) & 255,
