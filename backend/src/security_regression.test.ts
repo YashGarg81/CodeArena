@@ -1,7 +1,8 @@
 import { describe, test, expect, beforeAll } from "bun:test";
 import jwt from "jsonwebtoken";
 import { verifySamlResponse } from "./saml";
-import { generateOAuthState, verifyOAuthState } from "./oauth";
+import { generateOAuthState, verifyOAuthState, assertGoogleAudience, OAuthVerificationError } from "./oauth";
+import { optionalAuth, revokeToken } from "./auth";
 import { generateBase32Secret, generateTOTPCode, verifyTOTPCode } from "./totp";
 import { collaborationEngine } from "./collaboration";
 import { markdownToHtml } from "../../frontend/src/utils/markdown";
@@ -65,8 +66,8 @@ describe("P0 & P1 Security Regression Suite", () => {
     });
   });
 
-  // ─── 2. OAUTH CSRF STATE VERIFICATION ────────────────────────────────────
-  describe("OAuth CSRF Protection", () => {
+  // ─── 2. OAUTH CSRF & AUDIENCE CONFUSION PROTECTION ───────────────────────
+  describe("OAuth CSRF & Audience Confusion Protection", () => {
     test("generates and verifies valid single-use OAuth state", () => {
       const state = generateOAuthState();
       expect(typeof state).toBe("string");
@@ -85,6 +86,35 @@ describe("P0 & P1 Security Regression Suite", () => {
       expect(verifyOAuthState("forged_state_1234567890")).toBe(false);
       expect(verifyOAuthState("")).toBe(false);
       expect(verifyOAuthState(undefined as any)).toBe(false);
+    });
+
+    test("assertGoogleAudience enforces matching GOOGLE_CLIENT_ID", () => {
+      const origClientId = process.env.GOOGLE_CLIENT_ID;
+      try {
+        process.env.GOOGLE_CLIENT_ID = "valid-client-id-123.apps.googleusercontent.com";
+        // Matching audience succeeds without throwing
+        expect(() => assertGoogleAudience("valid-client-id-123.apps.googleusercontent.com")).not.toThrow();
+
+        // Mismatched foreign audience throws to prevent audience confusion attacks
+        expect(() => assertGoogleAudience("malicious-foreign-app-id.apps.googleusercontent.com")).toThrow(OAuthVerificationError);
+      } finally {
+        if (origClientId !== undefined) process.env.GOOGLE_CLIENT_ID = origClientId;
+        else delete process.env.GOOGLE_CLIENT_ID;
+      }
+    });
+
+    test("optionalAuth ignores revoked tokens via distributed revocation check", async () => {
+      const token = jwt.sign({ userId: "revoked-user-1", role: "STUDENT" }, TEST_JWT_SECRET, { expiresIn: "1h" });
+      await revokeToken(token, 3600);
+
+      let nextCalled = false;
+      const req: any = { headers: { authorization: `Bearer ${token}` } };
+      const res: any = {};
+      await optionalAuth(req, res, () => { nextCalled = true; });
+
+      expect(nextCalled).toBe(true);
+      // userId must NOT be populated because the token was revoked
+      expect(req.userId).toBeUndefined();
     });
   });
 

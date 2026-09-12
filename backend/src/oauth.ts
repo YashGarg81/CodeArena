@@ -129,6 +129,19 @@ export async function verifyGitHubToken(token: string): Promise<OAuthProfile> {
   };
 }
 
+export function assertGoogleAudience(audOrAzp: string | undefined): void {
+  const expectedClientId = process.env.GOOGLE_CLIENT_ID;
+  if (!expectedClientId) {
+    if (process.env.NODE_ENV === "production") {
+      throw new OAuthVerificationError("GOOGLE_CLIENT_ID is not configured on the server");
+    }
+    return;
+  }
+  if (!audOrAzp || audOrAzp !== expectedClientId) {
+    throw new OAuthVerificationError("Google token audience mismatch (token was not issued for this application)");
+  }
+}
+
 export async function verifyGoogleToken(token: string): Promise<OAuthProfile> {
   // Validate token via Google tokeninfo / userinfo endpoint
   let profile: OAuthProfile | null = null;
@@ -139,11 +152,13 @@ export async function verifyGoogleToken(token: string): Promise<OAuthProfile> {
   if (idRes.ok) {
     const data = (await idRes.json()) as {
       sub: string;
+      aud?: string;
       email?: string;
       email_verified?: string | boolean;
       name?: string;
       picture?: string;
     };
+    assertGoogleAudience(data.aud);
     if (data.email && (data.email_verified === true || data.email_verified === "true")) {
       profile = {
         provider: "google",
@@ -156,6 +171,18 @@ export async function verifyGoogleToken(token: string): Promise<OAuthProfile> {
   }
 
   if (!profile) {
+    // Validate audience/azp of access token before spending against userinfo
+    const tokenInfoRes = await fetch(
+      `https://oauth2.googleapis.com/tokeninfo?access_token=${encodeURIComponent(token)}`
+    );
+    if (tokenInfoRes.ok) {
+      const tokenData = (await tokenInfoRes.json()) as {
+        aud?: string;
+        azp?: string;
+      };
+      assertGoogleAudience(tokenData.aud || tokenData.azp);
+    }
+
     const userRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
       headers: { Authorization: `Bearer ${token}` },
     });

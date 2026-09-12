@@ -146,19 +146,20 @@ export function auth(req: AuthenticatedRequest, res: Response, next: NextFunctio
   });
 }
 
-export function optionalAuth(req: AuthenticatedRequest, _res: Response, next: NextFunction): void {
+export async function optionalAuth(req: AuthenticatedRequest, _res: Response, next: NextFunction): Promise<void> {
   const token = req.headers.authorization?.split(" ")[1];
   if (token) {
-    if (isTokenRevoked(token)) {
+    if (await checkTokenRevocation(token)) {
       next();
       return;
     }
     try {
-      const decoded = jwt.verify(token, getJwtSecret()) as { userId: string; role?: string; tokenVersion?: number };
+      const decoded = jwt.verify(token, getJwtSecret()) as { userId: string; role?: string; tokenVersion?: number; sessionId?: string };
       req.userId = decoded.userId;
       req.userRole = decoded.role || "STUDENT";
+      req.sessionId = decoded.sessionId;
     } catch {
-      // Ignore invalid optional tokens
+      // In optional auth, invalid/expired token is gracefully ignored and request proceeds as anonymous
     }
   }
   next();
