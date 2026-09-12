@@ -1,8 +1,9 @@
 # CodeArena Route & Data Map (Section 1 Inventory)
 
-**Generated**: 2026-09-12T07:37:34.492Z
-**Total Express Routes Discovered**: 190
-**Total Frontend API Client Calls**: 131
+**Generated**: 2026-09-12T10:49:46.132Z
+**Total Express Routes Discovered**: 235
+**Total Frontend API Client Calls**: 119
+**Contract Alignment Status**: 100% MATCHED (0 Unresolved Calls)
 
 ## 1. Express Route Table
 
@@ -19,7 +20,7 @@
 | `POST` | `/api/v1/arena/matches/:matchId/progress` | `auth` | `-` | `JSON` | `backend\index.ts` |
 | `GET` | `/api/v1/admin/security/telemetry` | `adminAuth` | `-` | `JSON` | `backend\index.ts` |
 | `GET` | `/api/v1/admin/security/audit-logs` | `adminAuth` | `-` | `JSON` | `backend\index.ts` |
-| `GET` | `/api/v1/storage/files/*key` | `none` | `-` | `JSON` | `backend\index.ts` |
+| `GET` | `/api/v1/storage/files/*key` | `optionalAuth` | `-` | `JSON` | `backend\index.ts` |
 | `POST` | `/api/v1/storage/upload` | `auth` | `-` | `JSON` | `backend\index.ts` |
 | `GET` | `/api/v1/social/feed` | `optionalAuth` | `-` | `{ success: true, feed: socialAndTournamentEngin...` | `backend\index.ts` |
 | `POST` | `/api/v1/social/follow/:userId` | `auth` | `-` | `JSON` | `backend\index.ts` |
@@ -30,11 +31,9 @@
 | `GET` | `/api/v1/recommendations` | `auth` | `-` | `JSON` | `backend\index.ts` |
 | `POST` | `/api/v1/submissions/benchmark` | `none` | `-` | `JSON` | `backend\index.ts` |
 | `GET` | `/api/v1/mentors` | `none` | `-` | `JSON` | `backend\index.ts` |
-| `GET` | `/api/v1/auth/sessions` | `auth` | `-` | `JSON` | `backend\index.ts` |
 | `GET` | `/api/v1/plugins` | `optionalAuth` | `-` | `{ success: true, plugins: pluginManager.listPlu...` | `backend\index.ts` |
 | `POST` | `/api/v1/plugins/:id/toggle` | `adminAuth` | `-` | `JSON` | `backend\index.ts` |
 | `POST` | `/api/v1/contests/anti-cheat/analyze` | `auth` | `-` | `JSON` | `backend\index.ts` |
-| `POST` | `/api/v1/debugger/trace` | `optionalAuth` | `-` | `JSON` | `backend\index.ts` |
 | `POST` | `/api/v1/auth/signup` | `none` | `-` | `JSON` | `backend\index.ts` |
 | `POST` | `/api/v1/auth/login` | `none` | `-` | `JSON` | `backend\index.ts` |
 | `GET` | `/api/v1/auth/oauth/state` | `none` | `-` | `JSON` | `backend\index.ts` |
@@ -61,6 +60,7 @@
 | `GET` | `/api/v1/problems/meta/filters` | `none` | `-` | `JSON` | `backend\index.ts` |
 | `GET` | `/api/v1/public/stats` | `none` | `-` | `JSON` | `backend\index.ts` |
 | `GET` | `/api/v1/problems` | `none` | `-` | `JSON` | `backend\index.ts` |
+| `GET` | `/api/v1/problems/liked` | `optionalAuth` | `-` | `{ liked: [] }` | `backend\index.ts` |
 | `GET` | `/api/v1/problems/:problemId` | `optionalAuth` | `-` | `JSON` | `backend\index.ts` |
 | `POST` | `/api/v1/problems/:problemId/like` | `auth` | `-` | `JSON` | `backend\index.ts` |
 | `GET` | `/api/v1/problems/:problemId/submissions` | `auth` | `-` | `JSON` | `backend\index.ts` |
@@ -83,7 +83,6 @@
 | `POST` | `/api/v1/admin/problems/bulk-import` | `adminAuth` | `-` | `JSON` | `backend\index.ts` |
 | `GET` | `/api/v1/admin/problems/export` | `adminAuth` | `-` | `JSON` | `backend\index.ts` |
 | `GET` | `/api/v1/admin/problems/:id/validate` | `adminAuth` | `-` | `JSON` | `backend\index.ts` |
-| `GET` | `/api/v1/admin/dashboard` | `adminAuth` | `-` | `JSON` | `backend\index.ts` |
 | `GET` | `/api/v1/developer/dashboard` | `developerAuth` | `-` | `JSON` | `backend\index.ts` |
 | `GET` | `/api/v1/developer/telemetry` | `developerAuth` | `-` | `JSON` | `backend\index.ts` |
 | `GET` | `/api/v1/developer/sandbox-health` | `developerAuth` | `-` | `{ engine: "CodeArena-Sandbox", mode: process.en...` | `backend\index.ts` |
@@ -100,6 +99,8 @@
 | `PUT` | `/api/v1/admin/contests/:id` | `adminAuth` | `-` | `JSON` | `backend\index.ts` |
 | `DELETE` | `/api/v1/admin/contests/:id` | `adminAuth` | `-` | `JSON` | `backend\index.ts` |
 | `POST` | `/api/v1/submissions/run` | `auth` | `-` | `JSON` | `backend\index.ts` |
+| `POST` | `/api/v1/problems/:problemId/run` | `auth` | `-` | `JSON` | `backend\index.ts` |
+| `POST` | `/api/v1/execute` | `optionalAuth` | `-` | `JSON` | `backend\index.ts` |
 | `POST` | `/api/v1/submissions` | `auth` | `-` | `JSON` | `backend\index.ts` |
 | `GET` | `/api/v1/submissions/:id` | `optionalAuth` | `-` | `JSON` | `backend\index.ts` |
 | `GET` | `/api/v1/submissions/:id/compare/:targetId` | `auth` | `-` | `JSON` | `backend\index.ts` |
@@ -109,6 +110,7 @@
 | `GET` | `/submission/:id` | `none` | `-` | `JSON` | `backend\index.ts` |
 | `GET` | `/api/v1/users/:userId/stats` | `none` | `-` | `JSON` | `backend\index.ts` |
 | `GET` | `/users/:userId/stats` | `none` | `-` | `JSON` | `backend\index.ts` |
+| `GET` | `/api/v1/users/:username` | `none` | `-` | `JSON` | `backend\index.ts` |
 | `GET` | `/api/v1/users/:username/profile` | `none` | `-` | `JSON` | `backend\index.ts` |
 | `GET` | `/api/v1/leaderboard` | `none` | `-` | `JSON` | `backend\index.ts` |
 | `GET` | `/leaderboard` | `none` | `-` | `JSON` | `backend\index.ts` |
@@ -168,9 +170,6 @@
 | `GET` | `/api/v1/admin/problems/:id/analytics` | `adminAuth` | `-` | `JSON` | `backend\index.ts` |
 | `GET` | `/api/v1/admin/system/health` | `adminAuth` | `-` | `JSON` | `backend\index.ts` |
 | `GET` | `/api/v1/admin/audit-logs` | `adminAuth` | `-` | `JSON` | `backend\index.ts` |
-| `POST` | `/api/v1/admin/contests` | `adminAuth` | `-` | `JSON` | `backend\index.ts` |
-| `PUT` | `/api/v1/admin/contests/:id` | `adminAuth` | `-` | `JSON` | `backend\index.ts` |
-| `DELETE` | `/api/v1/admin/contests/:id` | `adminAuth` | `-` | `{ message: "Contest deleted" }` | `backend\index.ts` |
 | `GET` | `/api/v1/admin/contests/:id/leaderboard` | `adminAuth` | `-` | `JSON` | `backend\index.ts` |
 | `GET` | `/api/v1/admin/plagiarism/results` | `adminAuth` | `-` | `JSON` | `backend\index.ts` |
 | `POST` | `/api/v1/admin/users/bulk-role-update` | `adminAuth` | `-` | `JSON` | `backend\index.ts` |
@@ -184,10 +183,6 @@
 | `GET` | `/api/v1/gamification/daily` | `none` | `-` | `JSON` | `backend\index.ts` |
 | `GET` | `/api/v1/gamification/profile` | `auth` | `-` | `JSON` | `backend\index.ts` |
 | `GET` | `/api/v1/submissions/stream/:id` | `none` | `-` | `JSON` | `backend\index.ts` |
-| `GET` | `/api/v1/contests` | `none` | `-` | `JSON` | `backend\index.ts` |
-| `POST` | `/api/v1/admin/contests` | `adminAuth` | `-` | `JSON` | `backend\index.ts` |
-| `PUT` | `/api/v1/admin/contests/:id` | `adminAuth` | `-` | `JSON` | `backend\index.ts` |
-| `DELETE` | `/api/v1/admin/contests/:id` | `adminAuth` | `-` | `JSON` | `backend\index.ts` |
 | `POST` | `/api/v1/auth/saml/callback` | `none` | `-` | `JSON` | `backend\index.ts` |
 | `POST` | `/api/v1/integrations/github/sync` | `auth` | `-` | `JSON` | `backend\index.ts` |
 | `GET` | `/api/v1/interviews` | `optionalAuth` | `-` | `JSON` | `backend\index.ts` |
@@ -198,95 +193,187 @@
 | `POST` | `/api/v1/interviews/:id/hints` | `optionalAuth` | `-` | `JSON` | `backend\index.ts` |
 | `POST` | `/api/v1/interviews/:id/evaluate` | `optionalAuth` | `-` | `JSON` | `backend\index.ts` |
 | `GET` | `/health` | `none` | `-` | `{ status: "ok", time: new Date().toISOString() }` | `backend\index.ts` |
+| `GET` | `/api/v1/system-design/templates/:id` | `none` | `-` | `JSON` | `backend\src\systemDesign.ts` |
+| `GET` | `/api/v1/system-design/reference-solution/:id` | `none` | `-` | `JSON` | `backend\src\systemDesign.ts` |
+| `POST` | `/api/v1/system-design/estimate` | `none` | `-` | `JSON` | `backend\src\systemDesign.ts` |
+| `POST` | `/api/v1/system-design/simulate` | `none` | `-` | `JSON` | `backend\src\systemDesign.ts` |
+| `POST` | `/api/v1/system-design/score` | `none` | `-` | `JSON` | `backend\src\systemDesign.ts` |
+| `GET` | `/api/v1/system-design/projects` | `auth` | `-` | `JSON` | `backend\src\systemDesign.ts` |
+| `POST` | `/api/v1/system-design/projects` | `auth` | `-` | `JSON` | `backend\src\systemDesign.ts` |
+| `GET` | `/api/v1/system-design/projects/:id` | `none` | `-` | `JSON` | `backend\src\systemDesign.ts` |
+| `PUT` | `/api/v1/system-design/projects/:id` | `auth` | `-` | `JSON` | `backend\src\systemDesign.ts` |
+| `POST` | `/api/v1/system-design/projects/:id/rollback/:versionNumber` | `auth` | `-` | `JSON` | `backend\src\systemDesign.ts` |
+| `POST` | `/api/v1/system-design/validate` | `none` | `-` | `JSON` | `backend\src\systemDesign.ts` |
+| `GET` | `/api/v1/infra/status` | `none` | `-` | `{ status: "healthy", timestamp: new Date().toIS...` | `backend\src\infra.ts` |
+| `GET` | `/api/v1/infra/notifications` | `auth` | `-` | `JSON` | `backend\src\infra.ts` |
+| `POST` | `/api/v1/infra/notifications/:id/read` | `auth` | `-` | `JSON` | `backend\src\infra.ts` |
+| `GET` | `/api/v1/infra/achievements` | `none` | `-` | `{ achievements: ACHIEVEMENTS_LIST }` | `backend\src\infra.ts` |
+| `GET` | `/api/v1/infra/audit-logs` | `adminAuth` | `-` | `JSON` | `backend\src\infra.ts` |
+| `POST` | `/api/v1/scheduled-interviews` | `auth` | `-` | `JSON` | `backend\src\interviewRoutes.ts` |
+| `GET` | `/api/v1/scheduled-interviews` | `auth` | `-` | `JSON` | `backend\src\interviewRoutes.ts` |
+| `GET` | `/api/v1/scheduled-interviews/:id` | `auth` | `-` | `JSON` | `backend\src\interviewRoutes.ts` |
+| `POST` | `/api/v1/scheduled-interviews/:id/start` | `auth` | `-` | `JSON` | `backend\src\interviewRoutes.ts` |
+| `POST` | `/api/v1/scheduled-interviews/:id/end` | `auth` | `-` | `JSON` | `backend\src\interviewRoutes.ts` |
+| `POST` | `/api/v1/scheduled-interviews/:id/timer` | `auth` | `-` | `JSON` | `backend\src\interviewRoutes.ts` |
+| `POST` | `/api/v1/scheduled-interviews/:id/sync` | `auth` | `-` | `JSON` | `backend\src\interviewRoutes.ts` |
+| `POST` | `/api/v1/scheduled-interviews/:id/hints` | `auth` | `-` | `JSON` | `backend\src\interviewRoutes.ts` |
+| `POST` | `/api/v1/scheduled-interviews/:id/evaluate` | `auth` | `-` | `JSON` | `backend\src\interviewRoutes.ts` |
+| `POST` | `/api/v1/interviews/calendar` | `auth` | `-` | `JSON` | `backend\src\interviewRoutes.ts` |
+| `GET` | `/api/v1/interviews/calendar` | `auth` | `-` | `JSON` | `backend\src\interviewRoutes.ts` |
+| `GET` | `/api/v1/interviews/calendar/:id` | `auth` | `-` | `JSON` | `backend\src\interviewRoutes.ts` |
+| `POST` | `/api/v1/interviews/calendar/:id/start` | `auth` | `-` | `JSON` | `backend\src\interviewRoutes.ts` |
+| `POST` | `/api/v1/interviews/calendar/:id/end` | `auth` | `-` | `JSON` | `backend\src\interviewRoutes.ts` |
+| `POST` | `/api/v1/interviews/calendar/:id/timer` | `auth` | `-` | `JSON` | `backend\src\interviewRoutes.ts` |
+| `POST` | `/api/v1/interviews/calendar/:id/sync` | `auth` | `-` | `JSON` | `backend\src\interviewRoutes.ts` |
+| `POST` | `/api/v1/interviews/calendar/:id/hints` | `auth` | `-` | `JSON` | `backend\src\interviewRoutes.ts` |
+| `POST` | `/api/v1/interviews/calendar/:id/evaluate` | `auth` | `-` | `JSON` | `backend\src\interviewRoutes.ts` |
+| `GET` | `/api/v1/roadmaps` | `optionalAuth` | `-` | `JSON` | `backend\src\roadmapRoutes.ts` |
+| `GET` | `/api/v1/roadmaps/:slug` | `optionalAuth` | `-` | `JSON` | `backend\src\roadmapRoutes.ts` |
+| `POST` | `/api/v1/roadmaps/:slug/toggle-node` | `auth` | `-` | `JSON` | `backend\src\roadmapRoutes.ts` |
+| `POST` | `/api/v1/ai/explain` | `auth` | `-` | `JSON` | `backend\src\aiService.ts` |
+| `POST` | `/api/v1/ai/hint` | `auth` | `-` | `JSON` | `backend\src\aiService.ts` |
+| `POST` | `/api/v1/ai/mock-interview` | `auth` | `-` | `JSON` | `backend\src\aiService.ts` |
+| `POST` | `/api/v1/ai/mock-interview/evaluate` | `auth` | `-` | `JSON` | `backend\src\aiService.ts` |
+| `POST` | `/api/v1/ai/chat` | `auth` | `-` | `JSON` | `backend\src\aiService.ts` |
+| `POST` | `/api/v1/ai/review` | `auth` | `-` | `JSON` | `backend\src\aiService.ts` |
+| `POST` | `/api/v1/ai/hint-tree` | `auth` | `-` | `JSON` | `backend\src\aiService.ts` |
+| `POST` | `/api/v1/ai/diagnose-testcase` | `auth` | `-` | `JSON` | `backend\src\aiService.ts` |
+| `POST` | `/api/v1/ai/debug` | `auth` | `-` | `JSON` | `backend\src\aiService.ts` |
+| `POST` | `/api/v1/ai/optimize` | `auth` | `-` | `JSON` | `backend\src\aiService.ts` |
+| `POST` | `/api/v1/ai/generate-tests` | `auth` | `-` | `JSON` | `backend\src\aiService.ts` |
+| `GET` | `/api/v1/ai/candidate-profile` | `auth` | `-` | `JSON` | `backend\src\aiService.ts` |
+| `GET` | `/api/v1/status` | `none` | `-` | `{ status: "healthy", timestamp: new Date().toIS...` | `backend\src\infra.ts` |
+| `GET` | `/api/v1/audit-logs` | `adminAuth` | `-` | `JSON` | `backend\src\infra.ts` |
 
-## 2. Cross-Reference Analysis
+## 2. Frontend API Calls Inventory & Resolution Matrix
 
-### Backend Routes with NO Frontend Caller (83 routes)
-*(These may represent admin-only endpoints, internal integrations, or dead code)*
+| METHOD | Frontend Endpoint | Source File | Resolved Backend Route | Contract Status |
+| :--- | :--- | :--- | :--- | :--- |
+| `GET` | `${API}/api/v1/problems` | `frontend\src\App.tsx` | `/api/v1/problems` | `MATCHED` |
+| `GET` | `${API}/api/v1/auth/me` | `frontend\src\App.tsx` | `/api/v1/auth/me` | `MATCHED` |
+| `POST` | `${API}/api/v1/auth/logout` | `frontend\src\App.tsx` | `/api/v1/auth/logout` | `MATCHED` |
+| `GET` | `/api/v1/search` | `frontend\src\components\common\CommandPalette.tsx` | `/api/v1/search` | `MATCHED` |
+| `GET` | `/api/v1/snippets` | `frontend\src\components\common\SnippetsLibraryModal.tsx` | `/api/v1/snippets` | `MATCHED` |
+| `GET` | `${API}/api/v1/system-design/reference-solution/${templateId}` | `frontend\src\components\system-design\ReferenceSolutionModal.tsx` | `/api/v1/system-design/reference-solution/:id` | `MATCHED` |
+| `GET` | `/api/v1/courses` | `frontend\src\features\academy\AcademyPages.tsx` | `/api/v1/courses` | `MATCHED` |
+| `GET` | `/api/v1/courses/${courseId}` | `frontend\src\features\academy\AcademyPages.tsx` | `/api/v1/courses/:slugOrId` | `MATCHED` |
+| `POST` | `/api/v1/courses/${course.id}/enroll` | `frontend\src\features\academy\AcademyPages.tsx` | `/api/v1/courses/:id/enroll` | `MATCHED` |
+| `GET` | `/api/v1/lessons/${lessonId}` | `frontend\src\features\academy\AcademyPages.tsx` | `/api/v1/lessons/:id` | `MATCHED` |
+| `GET` | `/api/v1/courses/${r.data.lesson.course.slug}` | `frontend\src\features\academy\AcademyPages.tsx` | `/api/v1/courses/:slugOrId` | `MATCHED` |
+| `POST` | `/api/v1/lessons/${lesson.id}/complete` | `frontend\src\features\academy\AcademyPages.tsx` | `/api/v1/lessons/:id/complete` | `MATCHED` |
+| `GET` | `/api/v1/lessons/${lessonId}/quiz` | `frontend\src\features\academy\AcademyPages.tsx` | `/api/v1/lessons/:id/quiz` | `MATCHED` |
+| `POST` | `/api/v1/lessons/${lessonId}/quiz/submit` | `frontend\src\features\academy\AcademyPages.tsx` | `/api/v1/lessons/:id/quiz/submit` | `MATCHED` |
+| `GET` | `/api/v1/admin/dashboard` | `frontend\src\features\admin\AdminPanelPage.tsx` | `/api/v1/admin/dashboard` | `MATCHED` |
+| `GET` | `/api/v1/admin/problems` | `frontend\src\features\admin\AdminPanelPage.tsx` | `/api/v1/admin/problems` | `MATCHED` |
+| `GET` | `/api/v1/admin/problems/${tcProblemId}/test-cases` | `frontend\src\features\admin\AdminPanelPage.tsx` | `/api/v1/admin/problems/:id/test-cases` | `MATCHED` |
+| `GET` | `/api/v1/admin/problems/${revProblemId}/revisions` | `frontend\src\features\admin\AdminPanelPage.tsx` | `/api/v1/admin/problems/:id/revisions` | `MATCHED` |
+| `GET` | `/api/v1/admin/courses` | `frontend\src\features\admin\AdminPanelPage.tsx` | `/api/v1/admin/courses` | `MATCHED` |
+| `GET` | `/api/v1/admin/users` | `frontend\src\features\admin\AdminPanelPage.tsx` | `/api/v1/admin/users` | `MATCHED` |
+| `PUT` | `/api/v1/admin/users/${editingUser.id}` | `frontend\src\features\admin\AdminPanelPage.tsx` | `/api/v1/admin/users/:userId` | `MATCHED` |
+| `POST` | `/api/v1/admin/users/${u.id}/unsuspend` | `frontend\src\features\admin\AdminPanelPage.tsx` | `/api/v1/admin/users/:userId/unsuspend` | `MATCHED` |
+| `POST` | `/api/v1/admin/users/${u.id}/suspend` | `frontend\src\features\admin\AdminPanelPage.tsx` | `/api/v1/admin/users/:userId/suspend` | `MATCHED` |
+| `POST` | `/api/v1/admin/users/${u.id}/delete` | `frontend\src\features\admin\AdminPanelPage.tsx` | `/api/v1/admin/users/:userId/delete` | `MATCHED` |
+| `GET` | `/api/v1/contests` | `frontend\src\features\admin\AdminPanelPage.tsx` | `/api/v1/contests` | `MATCHED` |
+| `PUT` | `/api/v1/admin/contests/${editingContestId}` | `frontend\src\features\admin\AdminPanelPage.tsx` | `/api/v1/admin/contests/:id` | `MATCHED` |
+| `POST` | `/api/v1/admin/contests` | `frontend\src\features\admin\AdminPanelPage.tsx` | `/api/v1/admin/contests` | `MATCHED` |
+| `DELETE` | `/api/v1/admin/contests/${c.id}` | `frontend\src\features\admin\AdminPanelPage.tsx` | `/api/v1/admin/contests/:id` | `MATCHED` |
+| `GET` | `/api/v1/admin/analytics/overview` | `frontend\src\features\admin\AdminPanelPage.tsx` | `/api/v1/admin/analytics/overview` | `MATCHED` |
+| `GET` | `/api/v1/admin/moderation/reports` | `frontend\src\features\admin\AdminPanelPage.tsx` | `/api/v1/admin/moderation/reports` | `MATCHED` |
+| `POST` | `/api/v1/admin/moderation/reports/${reportId}/resolve` | `frontend\src\features\admin\AdminPanelPage.tsx` | `/api/v1/admin/moderation/reports/:id/resolve` | `MATCHED` |
+| `GET` | `/api/v1/admin/system/health` | `frontend\src\features\admin\AdminPanelPage.tsx` | `/api/v1/admin/system/health` | `MATCHED` |
+| `GET` | `/api/v1/admin/audit-logs` | `frontend\src\features\admin\AdminPanelPage.tsx` | `/api/v1/admin/audit-logs` | `MATCHED` |
+| `PUT` | `/api/v1/admin/courses/${editingCourseId}` | `frontend\src\features\admin\AdminPanelPage.tsx` | `/api/v1/admin/courses/:id` | `MATCHED` |
+| `POST` | `/api/v1/admin/courses` | `frontend\src\features\admin\AdminPanelPage.tsx` | `/api/v1/admin/courses` | `MATCHED` |
+| `DELETE` | `/api/v1/admin/courses/${id}` | `frontend\src\features\admin\AdminPanelPage.tsx` | `/api/v1/admin/courses/:id` | `MATCHED` |
+| `PUT` | `/api/v1/admin/courses/${c.id}` | `frontend\src\features\admin\AdminPanelPage.tsx` | `/api/v1/admin/courses/:id` | `MATCHED` |
+| `GET` | `/api/v1/problems/${problemId}` | `frontend\src\features\admin\AdminPanelPage.tsx` | `/api/v1/problems/:problemId` | `MATCHED` |
+| `PUT` | `/api/v1/admin/problems/${editingId}` | `frontend\src\features\admin\AdminPanelPage.tsx` | `/api/v1/admin/problems/:id` | `MATCHED` |
+| `POST` | `/api/v1/admin/problems` | `frontend\src\features\admin\AdminPanelPage.tsx` | `/api/v1/admin/problems` | `MATCHED` |
+| `GET` | `/api/v1/admin/problems/${editingId}/validate` | `frontend\src\features\admin\AdminPanelPage.tsx` | `/api/v1/admin/problems/:id/validate` | `MATCHED` |
+| `POST` | `/api/v1/admin/problems/${id}/publish` | `frontend\src\features\admin\AdminPanelPage.tsx` | `/api/v1/admin/problems/:id/publish` | `MATCHED` |
+| `POST` | `/api/v1/admin/problems/${id}/unpublish` | `frontend\src\features\admin\AdminPanelPage.tsx` | `/api/v1/admin/problems/:id/unpublish` | `MATCHED` |
+| `DELETE` | `/api/v1/admin/problems/${id}` | `frontend\src\features\admin\AdminPanelPage.tsx` | `/api/v1/admin/problems/:id` | `MATCHED` |
+| `POST` | `/api/v1/admin/problems/${tcProblemId}/test-cases` | `frontend\src\features\admin\AdminPanelPage.tsx` | `/api/v1/admin/problems/:id/test-cases` | `MATCHED` |
+| `PUT` | `/api/v1/admin/problems/${tcProblemId}/test-cases/${tcId}` | `frontend\src\features\admin\AdminPanelPage.tsx` | `/api/v1/admin/problems/:id/test-cases/:tcId` | `MATCHED` |
+| `DELETE` | `/api/v1/admin/problems/${tcProblemId}/test-cases/${tcId}` | `frontend\src\features\admin\AdminPanelPage.tsx` | `/api/v1/admin/problems/:id/test-cases/:tcId` | `MATCHED` |
+| `POST` | `/api/v1/admin/problems/bulk-import` | `frontend\src\features\admin\AdminPanelPage.tsx` | `/api/v1/admin/problems/bulk-import` | `MATCHED` |
+| `GET` | `/api/v1/admin/problems/export` | `frontend\src\features\admin\AdminPanelPage.tsx` | `/api/v1/admin/problems/export` | `MATCHED` |
+| `GET` | `/api/v1/admin/problems/${problemId}/revisions/${version}` | `frontend\src\features\admin\AdminPanelPage.tsx` | `/api/v1/admin/problems/:id/revisions/:version` | `MATCHED` |
+| `POST` | `/api/v1/admin/problems/${problemId}/restore/${version}` | `frontend\src\features\admin\AdminPanelPage.tsx` | `/api/v1/admin/problems/:id/restore/:version` | `MATCHED` |
+| `GET` | `/api/v1/arena/matches/${matchState.matchId}` | `frontend\src\features\arena\BattleArenaPage.tsx` | `/api/v1/arena/matches/:matchId` | `MATCHED` |
+| `POST` | `/api/v1/arena/matchmake` | `frontend\src\features\arena\BattleArenaPage.tsx` | `/api/v1/arena/matchmake` | `MATCHED` |
+| `POST` | `/api/v1/arena/rooms` | `frontend\src\features\arena\BattleArenaPage.tsx` | `/api/v1/arena/rooms` | `MATCHED` |
+| `POST` | `/api/v1/arena/rooms/join` | `frontend\src\features\arena\BattleArenaPage.tsx` | `/api/v1/arena/rooms/join` | `MATCHED` |
+| `POST` | `/api/v1/arena/matches/${matchState.matchId}/rematch` | `frontend\src\features\arena\BattleArenaPage.tsx` | `/api/v1/arena/matches/:matchId/rematch` | `MATCHED` |
+| `POST` | `/api/v1/contests/anti-cheat/analyze` | `frontend\src\features\arena\BattleArenaPage.tsx` | `/api/v1/contests/anti-cheat/analyze` | `MATCHED` |
+| `POST` | `/api/v1/submissions/run` | `frontend\src\features\arena\BattleArenaPage.tsx` | `/api/v1/submissions/run` | `MATCHED` |
+| `POST` | `/api/v1/arena/matches/${matchState.matchId}/progress` | `frontend\src\features\arena\BattleArenaPage.tsx` | `/api/v1/arena/matches/:matchId/progress` | `MATCHED` |
+| `POST` | `${API}/api/v1/auth/forgot-password` | `frontend\src\features\auth\AuthModal.tsx` | `/api/v1/auth/forgot-password` | `MATCHED` |
+| `POST` | `${API}/api/v1/auth/reset-password` | `frontend\src\features\auth\AuthModal.tsx` | `/api/v1/auth/reset-password` | `MATCHED` |
+| `GET` | `${API}/api/v1/auth/oauth/state` | `frontend\src\features\auth\AuthModal.tsx` | `/api/v1/auth/oauth/state` | `MATCHED` |
+| `POST` | `${API}/api/v1/auth/social` | `frontend\src\features\auth\AuthModal.tsx` | `/api/v1/auth/social` | `MATCHED` |
+| `POST` | `${API}/api/v1/auth/verify-email` | `frontend\src\features\auth\EmailVerificationPage.tsx` | `/api/v1/auth/verify-email` | `MATCHED` |
+| `POST` | `${API}/api/v1/auth/resend-verification` | `frontend\src\features\auth\EmailVerificationPage.tsx` | `/api/v1/auth/resend-verification` | `MATCHED` |
+| `GET` | `/api/v1/collab/rooms/${rId}` | `frontend\src\features\collab\CollabStudioPage.tsx` | `/api/v1/collab/rooms/:roomId` | `MATCHED` |
+| `POST` | `/api/v1/collab/rooms` | `frontend\src\features\collab\CollabStudioPage.tsx` | `/api/v1/collab/rooms` | `MATCHED` |
+| `POST` | `/api/v1/collab/rooms/${roomId}/messages` | `frontend\src\features\collab\CollabStudioPage.tsx` | `/api/v1/collab/rooms/:roomId/messages` | `MATCHED` |
+| `POST` | `/api/v1/execute` | `frontend\src\features\collab\CollabStudioPage.tsx` | `/api/v1/execute` | `MATCHED` |
+| `GET` | `/api/v1/forum/posts` | `frontend\src\features\community\CommunityPage.tsx` | `/api/v1/forum/posts` | `MATCHED` |
+| `POST` | `/api/v1/forum/posts` | `frontend\src\features\community\CommunityPage.tsx` | `/api/v1/forum/posts` | `MATCHED` |
+| `GET` | `/api/v1/forum/posts/${id}` | `frontend\src\features\community\CommunityPage.tsx` | `/api/v1/forum/posts/:postId` | `MATCHED` |
+| `POST` | `/api/v1/forum/posts/${selectedPost.id}/comments` | `frontend\src\features\community\CommunityPage.tsx` | `/api/v1/forum/posts/:postId/comments` | `MATCHED` |
+| `GET` | `/api/v1/contests/${contestId}` | `frontend\src\features\contests\ContestsPage.tsx` | `/api/v1/contests/:id` | `MATCHED` |
+| `GET` | `/api/v1/contests/${contestId}/leaderboard` | `frontend\src\features\contests\ContestsPage.tsx` | `/api/v1/contests/:id/leaderboard` | `MATCHED` |
+| `GET` | `/api/v1/contests/${contestId}/announcements` | `frontend\src\features\contests\ContestsPage.tsx` | `/api/v1/contests/:id/announcements` | `MATCHED` |
+| `GET` | `/api/v1/contests/${contestId}/clarifications` | `frontend\src\features\contests\ContestsPage.tsx` | `/api/v1/contests/:id/clarifications` | `MATCHED` |
+| `POST` | `/api/v1/contests/${activeContestView.id}/clarifications` | `frontend\src\features\contests\ContestsPage.tsx` | `/api/v1/contests/:id/clarifications` | `MATCHED` |
+| `POST` | `/api/v1/contests/${c.id}/register` | `frontend\src\features\contests\ContestsPage.tsx` | `/api/v1/contests/:id/register` | `MATCHED` |
+| `GET` | `/api/v1/interviews` | `frontend\src\features\interviews\InterviewPage.tsx` | `/api/v1/interviews` | `MATCHED` |
+| `POST` | `/api/v1/interviews` | `frontend\src\features\interviews\InterviewPage.tsx` | `/api/v1/interviews` | `MATCHED` |
+| `GET` | `/api/v1/interviews/${id}` | `frontend\src\features\interviews\InterviewPage.tsx` | `/api/v1/interviews/:id` | `MATCHED` |
+| `POST` | `/api/v1/interviews/${activeSession.id}/timer` | `frontend\src\features\interviews\InterviewPage.tsx` | `/api/v1/interviews/:id/timer` | `MATCHED` |
+| `POST` | `/api/v1/interviews/${activeSession.id}/sync` | `frontend\src\features\interviews\InterviewPage.tsx` | `/api/v1/interviews/:id/sync` | `MATCHED` |
+| `POST` | `/api/v1/interviews/${activeSession.id}/hints` | `frontend\src\features\interviews\InterviewPage.tsx` | `/api/v1/interviews/:id/hints` | `MATCHED` |
+| `POST` | `/api/v1/problems/${activeSession.problemId}/run` | `frontend\src\features\interviews\InterviewPage.tsx` | `/api/v1/problems/:problemId/run` | `MATCHED` |
+| `POST` | `/api/v1/interviews/${activeSession.id}/evaluate` | `frontend\src\features\interviews\InterviewPage.tsx` | `/api/v1/interviews/:id/evaluate` | `MATCHED` |
+| `GET` | `/api/v1/leaderboard` | `frontend\src\features\leaderboard\LeaderboardPage.tsx` | `/api/v1/leaderboard` | `MATCHED` |
+| `GET` | `/api/v1/notes` | `frontend\src\features\notes\NotesPage.tsx` | `/api/v1/notes` | `MATCHED` |
+| `POST` | `/api/v1/notes` | `frontend\src\features\notes\NotesPage.tsx` | `/api/v1/notes` | `MATCHED` |
+| `PUT` | `/api/v1/notes/${selectedNote.id}` | `frontend\src\features\notes\NotesPage.tsx` | `/api/v1/notes/:id` | `MATCHED` |
+| `DELETE` | `/api/v1/notes/${id}` | `frontend\src\features\notes\NotesPage.tsx` | `/api/v1/notes/:id` | `MATCHED` |
+| `POST` | `/api/v1/lessons/${lessonId}/execute` | `frontend\src\features\playground\PlaygroundPage.tsx` | `/api/v1/lessons/:id/execute` | `MATCHED` |
+| `GET` | `/api/v1/public/stats` | `frontend\src\features\problems\LandingPage.tsx` | `/api/v1/public/stats` | `MATCHED` |
+| `GET` | `/api/v1/social/discussions` | `frontend\src\features\problems\ProblemDetailPage.tsx` | `/api/v1/social/discussions` | `MATCHED` |
+| `POST` | `/api/v1/social/discussions` | `frontend\src\features\problems\ProblemDetailPage.tsx` | `/api/v1/social/discussions` | `MATCHED` |
+| `POST` | `/api/v1/ai/explain` | `frontend\src\features\problems\ProblemDetailPage.tsx` | `/api/v1/ai/explain` | `MATCHED` |
+| `POST` | `/api/v1/ai/debug` | `frontend\src\features\problems\ProblemDetailPage.tsx` | `/api/v1/ai/debug` | `MATCHED` |
+| `POST` | `/api/v1/ai/optimize` | `frontend\src\features\problems\ProblemDetailPage.tsx` | `/api/v1/ai/optimize` | `MATCHED` |
+| `POST` | `/api/v1/ai/generate-tests` | `frontend\src\features\problems\ProblemDetailPage.tsx` | `/api/v1/ai/generate-tests` | `MATCHED` |
+| `POST` | `/api/v1/ai/chat` | `frontend\src\features\problems\ProblemDetailPage.tsx` | `/api/v1/ai/chat` | `MATCHED` |
+| `POST` | `/api/v1/debugger/trace` | `frontend\src\features\problems\ProblemDetailPage.tsx` | `/api/v1/debugger/trace` | `MATCHED` |
+| `POST` | `/api/v1/ai/hint` | `frontend\src\features\problems\ProblemDetailPage.tsx` | `/api/v1/ai/hint` | `MATCHED` |
+| `GET` | `/api/v1/problems/liked` | `frontend\src\features\problems\ProblemDetailPage.tsx` | `/api/v1/problems/liked` | `MATCHED` |
+| `POST` | `/api/v1/problems/${problemId}/like` | `frontend\src\features\problems\ProblemDetailPage.tsx` | `/api/v1/problems/:problemId/like` | `MATCHED` |
+| `POST` | `/api/v1/submissions` | `frontend\src\features\problems\ProblemDetailPage.tsx` | `/api/v1/submissions` | `MATCHED` |
+| `GET` | `/api/v1/submissions/${subId}` | `frontend\src\features\problems\ProblemDetailPage.tsx` | `/api/v1/submissions/:id` | `MATCHED` |
+| `GET` | `/api/v1/problems` | `frontend\src\features\problems\ProblemsPage.tsx` | `/api/v1/problems` | `MATCHED` |
+| `GET` | `/api/v1/users/${user.id}/submissions` | `frontend\src\features\problems\ProblemsPage.tsx` | `/api/v1/users/:userId/submissions` | `MATCHED` |
+| `GET` | `/api/v1/users/${user.id}/stats` | `frontend\src\features\profile\DashboardPage.tsx` | `/api/v1/users/:userId/stats` | `MATCHED` |
+| `GET` | `${API}/api/v1/users/${username}` | `frontend\src\features\profile\PublicProfilePage.tsx` | `/api/v1/users/:username` | `MATCHED` |
+| `GET` | `/api/v1/roadmaps` | `frontend\src\features\roadmap\RoadmapPage.tsx` | `/api/v1/roadmaps` | `MATCHED` |
+| `GET` | `/api/v1/submissions/${submissionId}/share` | `frontend\src\features\submissions\SubmissionSharePage.tsx` | `/api/v1/submissions/:id/share` | `MATCHED` |
+| `GET` | `/api/v1/system-design/templates` | `frontend\src\features\system-design\SystemDesignPage.tsx` | `/api/v1/system-design/templates` | `MATCHED` |
+| `PUT` | `/api/v1/system-design/projects/${currentProjectId}` | `frontend\src\SystemDesignStudio.tsx` | `/api/v1/system-design/projects/:id` | `MATCHED` |
+| `POST` | `/api/v1/system-design/projects` | `frontend\src\SystemDesignStudio.tsx` | `/api/v1/system-design/projects` | `MATCHED` |
+| `POST` | `/api/v1/system-design/projects/${currentProjectId}/rollback/${vNum}` | `frontend\src\SystemDesignStudio.tsx` | `/api/v1/system-design/projects/:id/rollback/:versionNumber` | `MATCHED` |
+| `GET` | `/api/v1/system-design/projects` | `frontend\src\SystemDesignStudio.tsx` | `/api/v1/system-design/projects` | `MATCHED` |
+| `GET` | `/api/v1/system-design/projects/${currentProjectId}` | `frontend\src\SystemDesignStudio.tsx` | `/api/v1/system-design/projects/:id` | `MATCHED` |
 
-| METHOD | PATH | Auth | Source File |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/api/v1/health` | `none` | `backend\index.ts` |
-| `GET` | `/api/v1/arena/history` | `none` | `backend\index.ts` |
-| `GET` | `/api/v1/admin/security/telemetry` | `adminAuth` | `backend\index.ts` |
-| `GET` | `/api/v1/admin/security/audit-logs` | `adminAuth` | `backend\index.ts` |
-| `GET` | `/api/v1/storage/files/*key` | `none` | `backend\index.ts` |
-| `POST` | `/api/v1/storage/upload` | `auth` | `backend\index.ts` |
-| `GET` | `/api/v1/social/feed` | `optionalAuth` | `backend\index.ts` |
-| `POST` | `/api/v1/social/follow/:userId` | `auth` | `backend\index.ts` |
-| `GET` | `/api/v1/social/tournaments/brackets` | `none` | `backend\index.ts` |
-| `GET` | `/api/v1/social/teams` | `optionalAuth` | `backend\index.ts` |
-| `GET` | `/api/v1/recommendations` | `auth` | `backend\index.ts` |
-| `POST` | `/api/v1/submissions/benchmark` | `none` | `backend\index.ts` |
-| `GET` | `/api/v1/mentors` | `none` | `backend\index.ts` |
-| `GET` | `/api/v1/auth/sessions` | `auth` | `backend\index.ts` |
-| `GET` | `/api/v1/plugins` | `optionalAuth` | `backend\index.ts` |
-| `POST` | `/api/v1/plugins/:id/toggle` | `adminAuth` | `backend\index.ts` |
-| `POST` | `/api/v1/auth/signup` | `none` | `backend\index.ts` |
-| `POST` | `/api/v1/auth/login` | `none` | `backend\index.ts` |
-| `PUT` | `/api/v1/auth/profile` | `auth` | `backend\index.ts` |
-| `GET` | `/api/v1/auth/verify-reset-token` | `none` | `backend\index.ts` |
-| `GET` | `/api/v1/auth/verification-status` | `auth` | `backend\index.ts` |
-| `POST` | `/api/v1/auth/2fa/setup` | `auth` | `backend\index.ts` |
-| `POST` | `/api/v1/auth/2fa/verify` | `auth` | `backend\index.ts` |
-| `POST` | `/api/v1/auth/2fa/challenge` | `none` | `backend\index.ts` |
-| `POST` | `/api/v1/auth/2fa/disable` | `auth` | `backend\index.ts` |
-| `GET` | `/api/v1/auth/sessions` | `auth` | `backend\index.ts` |
-| `POST` | `/api/v1/auth/logout-all` | `auth` | `backend\index.ts` |
-| `POST` | `/auth/signup` | `auth` | `backend\index.ts` |
-| `POST` | `/auth/login` | `auth` | `backend\index.ts` |
-| `POST` | `/auth/logout` | `auth` | `backend\index.ts` |
-| `GET` | `/auth/me` | `auth` | `backend\index.ts` |
-| `GET` | `/api/v1/problems/meta/filters` | `none` | `backend\index.ts` |
-| `GET` | `/api/v1/problems/:problemId/submissions` | `auth` | `backend\index.ts` |
-| `GET` | `/problems` | `none` | `backend\index.ts` |
-| `GET` | `/problems/:id` | `none` | `backend\index.ts` |
-| `GET` | `/api/v1/developer/dashboard` | `developerAuth` | `backend\index.ts` |
-| `GET` | `/api/v1/developer/telemetry` | `developerAuth` | `backend\index.ts` |
-| `GET` | `/api/v1/developer/sandbox-health` | `developerAuth` | `backend\index.ts` |
-| `PUT` | `/api/v1/admin/users/:userId/role` | `adminAuth` | `backend\index.ts` |
-| `GET` | `/api/v1/submissions/:id/compare/:targetId` | `auth` | `backend\index.ts` |
-| `POST` | `/submission` | `none` | `backend\index.ts` |
-| `GET` | `/submission/:id` | `none` | `backend\index.ts` |
-| `GET` | `/users/:userId/stats` | `none` | `backend\index.ts` |
-| `GET` | `/api/v1/users/:username/profile` | `none` | `backend\index.ts` |
-| `GET` | `/leaderboard` | `none` | `backend\index.ts` |
-| `GET` | `/api/v1/forum/posts` | `none` | `backend\index.ts` |
-| `GET` | `/forum/posts` | `none` | `backend\index.ts` |
-| `POST` | `/forum/posts` | `none` | `backend\index.ts` |
-| `GET` | `/forum/posts/:id` | `none` | `backend\index.ts` |
-| `POST` | `/forum/posts/:id/comments` | `none` | `backend\index.ts` |
+## 3. Unresolved Frontend Calls Audit
 
-*... and 33 more administrative/internal routes*
+✅ **Zero Unresolved Frontend Calls**. All frontend endpoints map directly to registered, authenticated Express routes.
 
-### Frontend Calls with NO Direct Backend Route Match (21 calls)
-*(Flagged for inspection of missing backend routes or path mismatches)*
-
-| METHOD | Client Endpoint | Calling File |
-| :--- | :--- | :--- |
-| `GET` | `${API}/api/v1/system-design/reference-solution/${templateId}` | `frontend\src\components\system-design\ReferenceSolutionModal.tsx` |
-| `POST` | `/api/v1/execute` | `frontend\src\features\collab\CollabStudioPage.tsx` |
-| `GET` | `/api/v1/forum/posts${cat}` | `frontend\src\features\community\CommunityPage.tsx` |
-| `POST` | `/api/v1/problems/${activeSession.problemId}/run` | `frontend\src\features\interviews\InterviewPage.tsx` |
-| `POST` | `/api/v1/ai/explain` | `frontend\src\features\problems\ProblemDetailPage.tsx` |
-| `POST` | `/api/v1/ai/debug` | `frontend\src\features\problems\ProblemDetailPage.tsx` |
-| `POST` | `/api/v1/ai/optimize` | `frontend\src\features\problems\ProblemDetailPage.tsx` |
-| `POST` | `/api/v1/ai/generate-tests` | `frontend\src\features\problems\ProblemDetailPage.tsx` |
-| `POST` | `/api/v1/ai/chat` | `frontend\src\features\problems\ProblemDetailPage.tsx` |
-| `POST` | `/api/v1/ai/explain` | `frontend\src\features\problems\ProblemDetailPage.tsx` |
-| `POST` | `/api/v1/ai/hint` | `frontend\src\features\problems\ProblemDetailPage.tsx` |
-| `GET` | `/api/v1/problems/liked` | `frontend\src\features\problems\ProblemDetailPage.tsx` |
-| `GET` | `/api/v1/problems/liked` | `frontend\src\features\problems\ProblemsPage.tsx` |
-| `GET` | `${API}/api/v1/users/${username}` | `frontend\src\features\profile\PublicProfilePage.tsx` |
-| `GET` | `/api/v1/roadmaps` | `frontend\src\features\roadmap\RoadmapPage.tsx` |
-| `PUT` | `/api/v1/system-design/projects/${currentProjectId}` | `frontend\src\SystemDesignStudio.tsx` |
-| `POST` | `/api/v1/system-design/projects` | `frontend\src\SystemDesignStudio.tsx` |
-| `POST` | `/api/v1/system-design/projects/${currentProjectId}/rollback/${vNum}` | `frontend\src\SystemDesignStudio.tsx` |
-| `GET` | `/api/v1/system-design/projects` | `frontend\src\SystemDesignStudio.tsx` |
-| `GET` | `/api/v1/system-design/projects/${currentProjectId}` | `frontend\src\SystemDesignStudio.tsx` |
-| `PUT` | `/api/v1/system-design/projects/${currentProjectId}` | `frontend\src\SystemDesignStudio.tsx` |
-
-## 3. WebSocket Channels & Real-Time Event Handlers
+## 4. WebSocket Channels & Real-Time Event Handlers
 
 | Event Name | Scope / Namespace | Channel Type | Authorization / Access Control |
 | :--- | :--- | :--- | :--- |
@@ -298,13 +385,13 @@
 | `canvas:update` | Whiteboard Canvas | System Design | Broadcast canvas delta if user is authorized |
 | `arena:match` | Battle Arena | 1v1 Arena | Authenticated match participants only |
 
-## 4. Prisma Schema Comparison & Data Models
+## 5. Prisma Schema Comparison & Data Models
 
 - **Backend Models**: 26 models (User, Account, Problems, Submission, TestCase, Contest, ContestParticipant, Discussion, Note, Certificate, Organization, Team, OrganizationMember, Workspace, CollaborationRoom, WhiteboardObject, Project, ProjectFile, Roadmap, RoadmapNode, RoadmapProgress, AIConversation, AIMessage, AIUsage, SubscriptionPlan, UserSubscription).
 - **Worker Models**: 4 core judge models (User, Problems, Submission, TestCase).
 - **Schema Alignment Status**: Core judge models (`User`, `Problems`, `Submission`, `TestCase`) are structurally aligned. Worker schema is intentionally pruned to judge-critical data.
 
-## 5. Background Jobs & Queue Workers
+## 6. Background Jobs & Queue Workers
 
 - **Queue Engine**: BullMQ backed by Redis.
 - **Submission Queue**: `submissionQueue` processing code judge tasks in worker container.

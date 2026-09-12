@@ -104,7 +104,9 @@ async function runRbacMatrix() {
       .replace(":matchId", matchId)
       .replace(":contestId", contestId)
       .replace(":tcId", "tc_1")
+      .replace(":versionNumber", "1")
       .replace(":version", "1")
+      .replace(":slug", "javascript")
       .replace(":targetId", problemId)
       .replace(":username", "admin")
       .replace("*key", "public/test.png");

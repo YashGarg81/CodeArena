@@ -92,6 +92,15 @@ jobs:
           JWT_SECRET: ci_test_secret_32_characters_minimum_sample
           ALLOW_DEV_SOCIAL_AUTH: "false"
 
+      - name: 5.1. RBAC Full Runtime Matrix Evaluation
+        run: |
+          (cd backend && bun run src/rbac_matrix_harness.ts)
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://postgres:postgrespassword@localhost:5432/codearena?schema=public
+          REDIS_URL: redis://localhost:6379
+          JWT_SECRET: ci_test_secret_32_characters_minimum_sample
+
       - name: 6. Multi-Language & Worker Reliability Tests
         run: |
           (cd worker && bun test)

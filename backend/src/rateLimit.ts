@@ -249,3 +249,9 @@ export const runCodeRateLimiter = createRateLimiter("run-code", 40, 60 * 1000, {
 export const storageUploadRateLimiter = createRateLimiter("storage-upload", 25, 10 * 60 * 1000, {
   keyGenerator: (req: any) => req.userId ? [`user:${req.userId}`] : []
 });
+
+export function resetRateLimits(): void {
+  memoryStore.clear();
+  failedLoginStore.clear();
+}
+

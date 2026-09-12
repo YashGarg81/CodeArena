@@ -1,8 +1,8 @@
 # RBAC Runtime Matrix Report (Automated HTTP Execution)
 
-**Generated**: 2026-09-12T09:54:54.293Z
-**Total Combinations Evaluated**: 1520 (8 roles x 190 routes)
-**Passed**: 1520
+**Generated**: 2026-09-12T10:50:11.331Z
+**Total Combinations Evaluated**: 1880 (8 roles x 235 routes)
+**Passed**: 1880
 **Failed**: 0
 **Skipped**: 0
 **Blocked**: 0
@@ -11,14 +11,14 @@
 
 | Role | Combinations | Passed | Failed |
 | :--- | :--- | :--- | :--- |
-| `STUDENT` | 190 | 190 | 0 |
-| `DEVELOPER` | 190 | 190 | 0 |
-| `INTERVIEWER` | 190 | 190 | 0 |
-| `INSTRUCTOR` | 190 | 190 | 0 |
-| `MODERATOR` | 190 | 190 | 0 |
-| `CONTEST_ADMIN` | 190 | 190 | 0 |
-| `PROBLEM_ADMIN` | 190 | 190 | 0 |
-| `ADMIN` | 190 | 190 | 0 |
+| `STUDENT` | 235 | 235 | 0 |
+| `DEVELOPER` | 235 | 235 | 0 |
+| `INTERVIEWER` | 235 | 235 | 0 |
+| `INSTRUCTOR` | 235 | 235 | 0 |
+| `MODERATOR` | 235 | 235 | 0 |
+| `CONTEST_ADMIN` | 235 | 235 | 0 |
+| `PROBLEM_ADMIN` | 235 | 235 | 0 |
+| `ADMIN` | 235 | 235 | 0 |
 
 ## Runtime Combinations Breakdown
 
@@ -112,14 +112,14 @@
 | `GET` | `/api/v1/admin/security/audit-logs` | `CONTEST_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/security/audit-logs` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/security/audit-logs` | `ADMIN` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `GET` | `/api/v1/storage/files/*key` | `STUDENT` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
-| `GET` | `/api/v1/storage/files/*key` | `DEVELOPER` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
-| `GET` | `/api/v1/storage/files/*key` | `INTERVIEWER` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
-| `GET` | `/api/v1/storage/files/*key` | `INSTRUCTOR` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
-| `GET` | `/api/v1/storage/files/*key` | `MODERATOR` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
-| `GET` | `/api/v1/storage/files/*key` | `CONTEST_ADMIN` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
-| `GET` | `/api/v1/storage/files/*key` | `PROBLEM_ADMIN` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
-| `GET` | `/api/v1/storage/files/*key` | `ADMIN` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/storage/files/*key` | `STUDENT` | `optionalAuth` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/storage/files/*key` | `DEVELOPER` | `optionalAuth` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/storage/files/*key` | `INTERVIEWER` | `optionalAuth` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/storage/files/*key` | `INSTRUCTOR` | `optionalAuth` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/storage/files/*key` | `MODERATOR` | `optionalAuth` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/storage/files/*key` | `CONTEST_ADMIN` | `optionalAuth` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/storage/files/*key` | `PROBLEM_ADMIN` | `optionalAuth` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/storage/files/*key` | `ADMIN` | `optionalAuth` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
 | `POST` | `/api/v1/storage/upload` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `POST` | `/api/v1/storage/upload` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `POST` | `/api/v1/storage/upload` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
@@ -200,14 +200,6 @@
 | `GET` | `/api/v1/mentors` | `CONTEST_ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/mentors` | `PROBLEM_ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/mentors` | `ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `GET` | `/api/v1/auth/sessions` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `GET` | `/api/v1/auth/sessions` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `GET` | `/api/v1/auth/sessions` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `GET` | `/api/v1/auth/sessions` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `GET` | `/api/v1/auth/sessions` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `GET` | `/api/v1/auth/sessions` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `GET` | `/api/v1/auth/sessions` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `GET` | `/api/v1/auth/sessions` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/plugins` | `STUDENT` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/plugins` | `DEVELOPER` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/plugins` | `INTERVIEWER` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
@@ -232,14 +224,6 @@
 | `POST` | `/api/v1/contests/anti-cheat/analyze` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
 | `POST` | `/api/v1/contests/anti-cheat/analyze` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
 | `POST` | `/api/v1/contests/anti-cheat/analyze` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
-| `POST` | `/api/v1/debugger/trace` | `STUDENT` | `optionalAuth` | Public / Optional | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
-| `POST` | `/api/v1/debugger/trace` | `DEVELOPER` | `optionalAuth` | Public / Optional | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
-| `POST` | `/api/v1/debugger/trace` | `INTERVIEWER` | `optionalAuth` | Public / Optional | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
-| `POST` | `/api/v1/debugger/trace` | `INSTRUCTOR` | `optionalAuth` | Public / Optional | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
-| `POST` | `/api/v1/debugger/trace` | `MODERATOR` | `optionalAuth` | Public / Optional | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
-| `POST` | `/api/v1/debugger/trace` | `CONTEST_ADMIN` | `optionalAuth` | Public / Optional | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
-| `POST` | `/api/v1/debugger/trace` | `PROBLEM_ADMIN` | `optionalAuth` | Public / Optional | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
-| `POST` | `/api/v1/debugger/trace` | `ADMIN` | `optionalAuth` | Public / Optional | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
 | `POST` | `/api/v1/auth/signup` | `STUDENT` | `none` | Public / Optional | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
 | `POST` | `/api/v1/auth/signup` | `DEVELOPER` | `none` | Public / Optional | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
 | `POST` | `/api/v1/auth/signup` | `INTERVIEWER` | `none` | Public / Optional | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
@@ -448,6 +432,14 @@
 | `GET` | `/api/v1/problems` | `CONTEST_ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/problems` | `PROBLEM_ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/problems` | `ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/problems/liked` | `STUDENT` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/problems/liked` | `DEVELOPER` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/problems/liked` | `INTERVIEWER` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/problems/liked` | `INSTRUCTOR` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/problems/liked` | `MODERATOR` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/problems/liked` | `CONTEST_ADMIN` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/problems/liked` | `PROBLEM_ADMIN` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/problems/liked` | `ADMIN` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/problems/:problemId` | `STUDENT` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/problems/:problemId` | `DEVELOPER` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/problems/:problemId` | `INTERVIEWER` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
@@ -624,14 +616,6 @@
 | `GET` | `/api/v1/admin/problems/:id/validate` | `CONTEST_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/problems/:id/validate` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/problems/:id/validate` | `ADMIN` | `adminAuth` | Allowed (non-403) | `500` | ✅ PASS | Authorized access reached application layer (HTTP 500) |
-| `GET` | `/api/v1/admin/dashboard` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `GET` | `/api/v1/admin/dashboard` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `GET` | `/api/v1/admin/dashboard` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `GET` | `/api/v1/admin/dashboard` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `GET` | `/api/v1/admin/dashboard` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `GET` | `/api/v1/admin/dashboard` | `CONTEST_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `GET` | `/api/v1/admin/dashboard` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `GET` | `/api/v1/admin/dashboard` | `ADMIN` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/developer/dashboard` | `STUDENT` | `developerAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/developer/dashboard` | `DEVELOPER` | `developerAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/developer/dashboard` | `INTERVIEWER` | `developerAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
@@ -760,6 +744,22 @@
 | `POST` | `/api/v1/submissions/run` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
 | `POST` | `/api/v1/submissions/run` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
 | `POST` | `/api/v1/submissions/run` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/problems/:problemId/run` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/problems/:problemId/run` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/problems/:problemId/run` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/problems/:problemId/run` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/problems/:problemId/run` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/problems/:problemId/run` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/problems/:problemId/run` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/problems/:problemId/run` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/execute` | `STUDENT` | `optionalAuth` | Public / Optional | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/execute` | `DEVELOPER` | `optionalAuth` | Public / Optional | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/execute` | `INTERVIEWER` | `optionalAuth` | Public / Optional | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/execute` | `INSTRUCTOR` | `optionalAuth` | Public / Optional | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/execute` | `MODERATOR` | `optionalAuth` | Public / Optional | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/execute` | `CONTEST_ADMIN` | `optionalAuth` | Public / Optional | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/execute` | `PROBLEM_ADMIN` | `optionalAuth` | Public / Optional | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/execute` | `ADMIN` | `optionalAuth` | Public / Optional | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
 | `POST` | `/api/v1/submissions` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
 | `POST` | `/api/v1/submissions` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
 | `POST` | `/api/v1/submissions` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
@@ -832,6 +832,14 @@
 | `GET` | `/users/:userId/stats` | `CONTEST_ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/users/:userId/stats` | `PROBLEM_ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/users/:userId/stats` | `ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/users/:username` | `STUDENT` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/users/:username` | `DEVELOPER` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/users/:username` | `INTERVIEWER` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/users/:username` | `INSTRUCTOR` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/users/:username` | `MODERATOR` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/users/:username` | `CONTEST_ADMIN` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/users/:username` | `PROBLEM_ADMIN` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/users/:username` | `ADMIN` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
 | `GET` | `/api/v1/users/:username/profile` | `STUDENT` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
 | `GET` | `/api/v1/users/:username/profile` | `DEVELOPER` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
 | `GET` | `/api/v1/users/:username/profile` | `INTERVIEWER` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
@@ -1304,30 +1312,6 @@
 | `GET` | `/api/v1/admin/audit-logs` | `CONTEST_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/audit-logs` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/audit-logs` | `ADMIN` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `POST` | `/api/v1/admin/contests` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `POST` | `/api/v1/admin/contests` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `POST` | `/api/v1/admin/contests` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `POST` | `/api/v1/admin/contests` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `POST` | `/api/v1/admin/contests` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `POST` | `/api/v1/admin/contests` | `CONTEST_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `POST` | `/api/v1/admin/contests` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `POST` | `/api/v1/admin/contests` | `ADMIN` | `adminAuth` | Allowed (non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
-| `PUT` | `/api/v1/admin/contests/:id` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `PUT` | `/api/v1/admin/contests/:id` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `PUT` | `/api/v1/admin/contests/:id` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `PUT` | `/api/v1/admin/contests/:id` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `PUT` | `/api/v1/admin/contests/:id` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `PUT` | `/api/v1/admin/contests/:id` | `CONTEST_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `PUT` | `/api/v1/admin/contests/:id` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `PUT` | `/api/v1/admin/contests/:id` | `ADMIN` | `adminAuth` | Allowed (non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
-| `DELETE` | `/api/v1/admin/contests/:id` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `DELETE` | `/api/v1/admin/contests/:id` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `DELETE` | `/api/v1/admin/contests/:id` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `DELETE` | `/api/v1/admin/contests/:id` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `DELETE` | `/api/v1/admin/contests/:id` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `DELETE` | `/api/v1/admin/contests/:id` | `CONTEST_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `DELETE` | `/api/v1/admin/contests/:id` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `DELETE` | `/api/v1/admin/contests/:id` | `ADMIN` | `adminAuth` | Allowed (non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
 | `GET` | `/api/v1/admin/contests/:id/leaderboard` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/contests/:id/leaderboard` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/contests/:id/leaderboard` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
@@ -1432,38 +1416,6 @@
 | `GET` | `/api/v1/submissions/stream/:id` | `CONTEST_ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/submissions/stream/:id` | `PROBLEM_ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/submissions/stream/:id` | `ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `GET` | `/api/v1/contests` | `STUDENT` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `GET` | `/api/v1/contests` | `DEVELOPER` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `GET` | `/api/v1/contests` | `INTERVIEWER` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `GET` | `/api/v1/contests` | `INSTRUCTOR` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `GET` | `/api/v1/contests` | `MODERATOR` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `GET` | `/api/v1/contests` | `CONTEST_ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `GET` | `/api/v1/contests` | `PROBLEM_ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `GET` | `/api/v1/contests` | `ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `POST` | `/api/v1/admin/contests` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `POST` | `/api/v1/admin/contests` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `POST` | `/api/v1/admin/contests` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `POST` | `/api/v1/admin/contests` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `POST` | `/api/v1/admin/contests` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `POST` | `/api/v1/admin/contests` | `CONTEST_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `POST` | `/api/v1/admin/contests` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `POST` | `/api/v1/admin/contests` | `ADMIN` | `adminAuth` | Allowed (non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
-| `PUT` | `/api/v1/admin/contests/:id` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `PUT` | `/api/v1/admin/contests/:id` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `PUT` | `/api/v1/admin/contests/:id` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `PUT` | `/api/v1/admin/contests/:id` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `PUT` | `/api/v1/admin/contests/:id` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `PUT` | `/api/v1/admin/contests/:id` | `CONTEST_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `PUT` | `/api/v1/admin/contests/:id` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `PUT` | `/api/v1/admin/contests/:id` | `ADMIN` | `adminAuth` | Allowed (non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
-| `DELETE` | `/api/v1/admin/contests/:id` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `DELETE` | `/api/v1/admin/contests/:id` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `DELETE` | `/api/v1/admin/contests/:id` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `DELETE` | `/api/v1/admin/contests/:id` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `DELETE` | `/api/v1/admin/contests/:id` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `DELETE` | `/api/v1/admin/contests/:id` | `CONTEST_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `DELETE` | `/api/v1/admin/contests/:id` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `DELETE` | `/api/v1/admin/contests/:id` | `ADMIN` | `adminAuth` | Allowed (non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
 | `POST` | `/api/v1/auth/saml/callback` | `STUDENT` | `none` | Public / Optional | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
 | `POST` | `/api/v1/auth/saml/callback` | `DEVELOPER` | `none` | Public / Optional | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
 | `POST` | `/api/v1/auth/saml/callback` | `INTERVIEWER` | `none` | Public / Optional | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
@@ -1544,3 +1496,411 @@
 | `GET` | `/health` | `CONTEST_ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/health` | `PROBLEM_ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/health` | `ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/system-design/templates/:id` | `STUDENT` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/system-design/templates/:id` | `DEVELOPER` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/system-design/templates/:id` | `INTERVIEWER` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/system-design/templates/:id` | `INSTRUCTOR` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/system-design/templates/:id` | `MODERATOR` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/system-design/templates/:id` | `CONTEST_ADMIN` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/system-design/templates/:id` | `PROBLEM_ADMIN` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/system-design/templates/:id` | `ADMIN` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/system-design/reference-solution/:id` | `STUDENT` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/system-design/reference-solution/:id` | `DEVELOPER` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/system-design/reference-solution/:id` | `INTERVIEWER` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/system-design/reference-solution/:id` | `INSTRUCTOR` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/system-design/reference-solution/:id` | `MODERATOR` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/system-design/reference-solution/:id` | `CONTEST_ADMIN` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/system-design/reference-solution/:id` | `PROBLEM_ADMIN` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/system-design/reference-solution/:id` | `ADMIN` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/system-design/estimate` | `STUDENT` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/system-design/estimate` | `DEVELOPER` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/system-design/estimate` | `INTERVIEWER` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/system-design/estimate` | `INSTRUCTOR` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/system-design/estimate` | `MODERATOR` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/system-design/estimate` | `CONTEST_ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/system-design/estimate` | `PROBLEM_ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/system-design/estimate` | `ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/system-design/simulate` | `STUDENT` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/system-design/simulate` | `DEVELOPER` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/system-design/simulate` | `INTERVIEWER` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/system-design/simulate` | `INSTRUCTOR` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/system-design/simulate` | `MODERATOR` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/system-design/simulate` | `CONTEST_ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/system-design/simulate` | `PROBLEM_ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/system-design/simulate` | `ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/system-design/score` | `STUDENT` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/system-design/score` | `DEVELOPER` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/system-design/score` | `INTERVIEWER` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/system-design/score` | `INSTRUCTOR` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/system-design/score` | `MODERATOR` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/system-design/score` | `CONTEST_ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/system-design/score` | `PROBLEM_ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/system-design/score` | `ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/system-design/projects` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/system-design/projects` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/system-design/projects` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/system-design/projects` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/system-design/projects` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/system-design/projects` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/system-design/projects` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/system-design/projects` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/system-design/projects` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/system-design/projects` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/system-design/projects` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/system-design/projects` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/system-design/projects` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/system-design/projects` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/system-design/projects` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/system-design/projects` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `GET` | `/api/v1/system-design/projects/:id` | `STUDENT` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/system-design/projects/:id` | `DEVELOPER` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/system-design/projects/:id` | `INTERVIEWER` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/system-design/projects/:id` | `INSTRUCTOR` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/system-design/projects/:id` | `MODERATOR` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/system-design/projects/:id` | `CONTEST_ADMIN` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/system-design/projects/:id` | `PROBLEM_ADMIN` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/system-design/projects/:id` | `ADMIN` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `PUT` | `/api/v1/system-design/projects/:id` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `PUT` | `/api/v1/system-design/projects/:id` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `PUT` | `/api/v1/system-design/projects/:id` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `PUT` | `/api/v1/system-design/projects/:id` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `PUT` | `/api/v1/system-design/projects/:id` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `PUT` | `/api/v1/system-design/projects/:id` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `PUT` | `/api/v1/system-design/projects/:id` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `PUT` | `/api/v1/system-design/projects/:id` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/system-design/projects/:id/rollback/:versionNumber` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/system-design/projects/:id/rollback/:versionNumber` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/system-design/projects/:id/rollback/:versionNumber` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/system-design/projects/:id/rollback/:versionNumber` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/system-design/projects/:id/rollback/:versionNumber` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/system-design/projects/:id/rollback/:versionNumber` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/system-design/projects/:id/rollback/:versionNumber` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/system-design/projects/:id/rollback/:versionNumber` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/system-design/validate` | `STUDENT` | `none` | Public / Optional | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/system-design/validate` | `DEVELOPER` | `none` | Public / Optional | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/system-design/validate` | `INTERVIEWER` | `none` | Public / Optional | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/system-design/validate` | `INSTRUCTOR` | `none` | Public / Optional | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/system-design/validate` | `MODERATOR` | `none` | Public / Optional | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/system-design/validate` | `CONTEST_ADMIN` | `none` | Public / Optional | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/system-design/validate` | `PROBLEM_ADMIN` | `none` | Public / Optional | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/system-design/validate` | `ADMIN` | `none` | Public / Optional | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `GET` | `/api/v1/infra/status` | `STUDENT` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/infra/status` | `DEVELOPER` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/infra/status` | `INTERVIEWER` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/infra/status` | `INSTRUCTOR` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/infra/status` | `MODERATOR` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/infra/status` | `CONTEST_ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/infra/status` | `PROBLEM_ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/infra/status` | `ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/infra/notifications` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/infra/notifications` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/infra/notifications` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/infra/notifications` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/infra/notifications` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/infra/notifications` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/infra/notifications` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/infra/notifications` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/infra/notifications/:id/read` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/infra/notifications/:id/read` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/infra/notifications/:id/read` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/infra/notifications/:id/read` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/infra/notifications/:id/read` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/infra/notifications/:id/read` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/infra/notifications/:id/read` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/infra/notifications/:id/read` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/infra/achievements` | `STUDENT` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/infra/achievements` | `DEVELOPER` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/infra/achievements` | `INTERVIEWER` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/infra/achievements` | `INSTRUCTOR` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/infra/achievements` | `MODERATOR` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/infra/achievements` | `CONTEST_ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/infra/achievements` | `PROBLEM_ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/infra/achievements` | `ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/infra/audit-logs` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `GET` | `/api/v1/infra/audit-logs` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `GET` | `/api/v1/infra/audit-logs` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `GET` | `/api/v1/infra/audit-logs` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `GET` | `/api/v1/infra/audit-logs` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `GET` | `/api/v1/infra/audit-logs` | `CONTEST_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `GET` | `/api/v1/infra/audit-logs` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `GET` | `/api/v1/infra/audit-logs` | `ADMIN` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/scheduled-interviews` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/scheduled-interviews` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/scheduled-interviews` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/scheduled-interviews` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/scheduled-interviews` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/scheduled-interviews` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/scheduled-interviews` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/scheduled-interviews` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/scheduled-interviews` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/scheduled-interviews` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/scheduled-interviews` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/scheduled-interviews` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/scheduled-interviews` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/scheduled-interviews` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/scheduled-interviews` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/scheduled-interviews` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/scheduled-interviews/:id` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/scheduled-interviews/:id` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/scheduled-interviews/:id` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/scheduled-interviews/:id` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/scheduled-interviews/:id` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/scheduled-interviews/:id` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/scheduled-interviews/:id` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/scheduled-interviews/:id` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/scheduled-interviews/:id/start` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/scheduled-interviews/:id/start` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/scheduled-interviews/:id/start` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/scheduled-interviews/:id/start` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/scheduled-interviews/:id/start` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/scheduled-interviews/:id/start` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/scheduled-interviews/:id/start` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/scheduled-interviews/:id/start` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/scheduled-interviews/:id/end` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/scheduled-interviews/:id/end` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/scheduled-interviews/:id/end` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/scheduled-interviews/:id/end` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/scheduled-interviews/:id/end` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/scheduled-interviews/:id/end` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/scheduled-interviews/:id/end` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/scheduled-interviews/:id/end` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/scheduled-interviews/:id/timer` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/scheduled-interviews/:id/timer` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/scheduled-interviews/:id/timer` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/scheduled-interviews/:id/timer` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/scheduled-interviews/:id/timer` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/scheduled-interviews/:id/timer` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/scheduled-interviews/:id/timer` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/scheduled-interviews/:id/timer` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/scheduled-interviews/:id/sync` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/scheduled-interviews/:id/sync` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/scheduled-interviews/:id/sync` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/scheduled-interviews/:id/sync` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/scheduled-interviews/:id/sync` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/scheduled-interviews/:id/sync` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/scheduled-interviews/:id/sync` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/scheduled-interviews/:id/sync` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/scheduled-interviews/:id/hints` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/scheduled-interviews/:id/hints` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/scheduled-interviews/:id/hints` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/scheduled-interviews/:id/hints` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/scheduled-interviews/:id/hints` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/scheduled-interviews/:id/hints` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/scheduled-interviews/:id/hints` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/scheduled-interviews/:id/hints` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/scheduled-interviews/:id/evaluate` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/scheduled-interviews/:id/evaluate` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/scheduled-interviews/:id/evaluate` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/scheduled-interviews/:id/evaluate` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/scheduled-interviews/:id/evaluate` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/scheduled-interviews/:id/evaluate` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/scheduled-interviews/:id/evaluate` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/scheduled-interviews/:id/evaluate` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/interviews/calendar` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/interviews/calendar` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/interviews/calendar` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/interviews/calendar` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/interviews/calendar` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/interviews/calendar` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/interviews/calendar` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/interviews/calendar` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/interviews/calendar` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/interviews/calendar` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/interviews/calendar` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/interviews/calendar` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/interviews/calendar` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/interviews/calendar` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/interviews/calendar` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/interviews/calendar` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/interviews/calendar/:id` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/interviews/calendar/:id` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/interviews/calendar/:id` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/interviews/calendar/:id` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/interviews/calendar/:id` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/interviews/calendar/:id` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/interviews/calendar/:id` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/interviews/calendar/:id` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/interviews/calendar/:id/start` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/interviews/calendar/:id/start` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/interviews/calendar/:id/start` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/interviews/calendar/:id/start` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/interviews/calendar/:id/start` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/interviews/calendar/:id/start` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/interviews/calendar/:id/start` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/interviews/calendar/:id/start` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/interviews/calendar/:id/end` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/interviews/calendar/:id/end` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/interviews/calendar/:id/end` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/interviews/calendar/:id/end` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/interviews/calendar/:id/end` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/interviews/calendar/:id/end` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/interviews/calendar/:id/end` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/interviews/calendar/:id/end` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/interviews/calendar/:id/timer` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/interviews/calendar/:id/timer` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/interviews/calendar/:id/timer` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/interviews/calendar/:id/timer` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/interviews/calendar/:id/timer` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/interviews/calendar/:id/timer` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/interviews/calendar/:id/timer` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/interviews/calendar/:id/timer` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/interviews/calendar/:id/sync` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/interviews/calendar/:id/sync` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/interviews/calendar/:id/sync` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/interviews/calendar/:id/sync` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/interviews/calendar/:id/sync` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/interviews/calendar/:id/sync` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/interviews/calendar/:id/sync` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/interviews/calendar/:id/sync` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/interviews/calendar/:id/hints` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/interviews/calendar/:id/hints` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/interviews/calendar/:id/hints` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/interviews/calendar/:id/hints` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/interviews/calendar/:id/hints` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/interviews/calendar/:id/hints` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/interviews/calendar/:id/hints` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/interviews/calendar/:id/hints` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/interviews/calendar/:id/evaluate` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/interviews/calendar/:id/evaluate` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/interviews/calendar/:id/evaluate` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/interviews/calendar/:id/evaluate` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/interviews/calendar/:id/evaluate` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/interviews/calendar/:id/evaluate` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/interviews/calendar/:id/evaluate` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/interviews/calendar/:id/evaluate` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/roadmaps` | `STUDENT` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/roadmaps` | `DEVELOPER` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/roadmaps` | `INTERVIEWER` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/roadmaps` | `INSTRUCTOR` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/roadmaps` | `MODERATOR` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/roadmaps` | `CONTEST_ADMIN` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/roadmaps` | `PROBLEM_ADMIN` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/roadmaps` | `ADMIN` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/roadmaps/:slug` | `STUDENT` | `optionalAuth` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/roadmaps/:slug` | `DEVELOPER` | `optionalAuth` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/roadmaps/:slug` | `INTERVIEWER` | `optionalAuth` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/roadmaps/:slug` | `INSTRUCTOR` | `optionalAuth` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/roadmaps/:slug` | `MODERATOR` | `optionalAuth` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/roadmaps/:slug` | `CONTEST_ADMIN` | `optionalAuth` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/roadmaps/:slug` | `PROBLEM_ADMIN` | `optionalAuth` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/roadmaps/:slug` | `ADMIN` | `optionalAuth` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/roadmaps/:slug/toggle-node` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/roadmaps/:slug/toggle-node` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/roadmaps/:slug/toggle-node` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/roadmaps/:slug/toggle-node` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/roadmaps/:slug/toggle-node` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/roadmaps/:slug/toggle-node` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/roadmaps/:slug/toggle-node` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/roadmaps/:slug/toggle-node` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/ai/explain` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/ai/explain` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/ai/explain` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/ai/explain` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/ai/explain` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/ai/explain` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/ai/explain` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/ai/explain` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/ai/hint` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/hint` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/hint` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/hint` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/hint` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/hint` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/hint` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/hint` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/mock-interview` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/mock-interview` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/mock-interview` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/mock-interview` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/mock-interview` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/mock-interview` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/mock-interview` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/mock-interview` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/mock-interview/evaluate` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/mock-interview/evaluate` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/mock-interview/evaluate` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/mock-interview/evaluate` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/mock-interview/evaluate` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/mock-interview/evaluate` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/mock-interview/evaluate` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/mock-interview/evaluate` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/chat` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/chat` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/chat` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/chat` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/chat` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/chat` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/chat` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/chat` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/review` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/ai/review` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/ai/review` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/ai/review` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/ai/review` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/ai/review` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/ai/review` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/ai/review` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/ai/hint-tree` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/hint-tree` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/hint-tree` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/hint-tree` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/hint-tree` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/hint-tree` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/hint-tree` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/hint-tree` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/diagnose-testcase` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/diagnose-testcase` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/diagnose-testcase` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/diagnose-testcase` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/diagnose-testcase` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/diagnose-testcase` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/diagnose-testcase` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/diagnose-testcase` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/debug` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/ai/debug` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/ai/debug` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/ai/debug` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/ai/debug` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/ai/debug` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/ai/debug` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/ai/debug` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/ai/optimize` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/ai/optimize` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/ai/optimize` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/ai/optimize` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/ai/optimize` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/ai/optimize` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/ai/optimize` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/ai/optimize` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/ai/generate-tests` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/generate-tests` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/generate-tests` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/generate-tests` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/generate-tests` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/generate-tests` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/generate-tests` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/generate-tests` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/ai/candidate-profile` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/ai/candidate-profile` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/ai/candidate-profile` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/ai/candidate-profile` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/ai/candidate-profile` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/ai/candidate-profile` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/ai/candidate-profile` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/ai/candidate-profile` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/status` | `STUDENT` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/status` | `DEVELOPER` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/status` | `INTERVIEWER` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/status` | `INSTRUCTOR` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/status` | `MODERATOR` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/status` | `CONTEST_ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/status` | `PROBLEM_ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/status` | `ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/audit-logs` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `GET` | `/api/v1/audit-logs` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `GET` | `/api/v1/audit-logs` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `GET` | `/api/v1/audit-logs` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `GET` | `/api/v1/audit-logs` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `GET` | `/api/v1/audit-logs` | `CONTEST_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `GET` | `/api/v1/audit-logs` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `GET` | `/api/v1/audit-logs` | `ADMIN` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |

@@ -370,10 +370,6 @@ app.get("/api/v1/mentors", (_req, res) => {
     res.json({ success: true, mentors });
 });
 
-app.get("/api/v1/auth/sessions", auth, (req: any, res) => {
-    const sessions = platformServicesEngine.getActiveSessions(req.userId || "user-1");
-    res.json({ success: true, sessions });
-});
 
 // ─── PLUGINS & EXTENSIONS ARCHITECTURE ───────────────────────────────────────
 import { pluginManager } from "./src/pluginEngine";
@@ -411,17 +407,6 @@ app.post("/api/v1/contests/anti-cheat/analyze", auth, (req: any, res) => {
     });
 
     res.json({ success: true, audit });
-});
-
-// ─── INTERACTIVE AST VISUAL DEBUGGER ─────────────────────────────────────────
-app.post("/api/v1/debugger/trace", optionalAuth, (req: any, res) => {
-    const { code, language = "py", inputArgs = {} } = req.body;
-    if (!code || typeof code !== "string") {
-        return res.status(400).json({ error: "Source code is required for debugging" });
-    }
-
-    const session = traceExecution(code, inputArgs, language);
-    res.json(session);
 });
 
 // ─── RATE LIMITERS (Redis-backed with in-memory fallback) ─────────────────────
@@ -2718,6 +2703,21 @@ app.get("/api/v1/problems", async (req, res) => {
     } catch (err: any) { res.status(500).json({ error: safeErrorMessage(err) }); }
 });
 
+app.get("/api/v1/problems/liked", optionalAuth, async (req: any, res) => {
+    try {
+        if (!req.userId) {
+            return res.json({ liked: [] });
+        }
+        const userLikes = await prisma.problemLike.findMany({
+            where: { userId: req.userId },
+            select: { problemId: true }
+        });
+        res.json({ liked: userLikes.map((l: any) => ({ id: l.problemId })) });
+    } catch (err: any) {
+        res.status(500).json({ error: safeErrorMessage(err, "Failed to retrieve liked problems") });
+    }
+});
+
 app.get("/api/v1/problems/:problemId", optionalAuth, async (req: any, res) => {
     try {
         const problem = await prisma.problems.findFirst({
@@ -3319,32 +3319,6 @@ app.get("/api/v1/admin/problems/:id/validate", adminAuth, async (req: any, res) 
     } catch (err: any) { res.status(500).json({ error: err.message }); }
 });
 
-// GET /api/v1/admin/dashboard — admin overview stats
-app.get("/api/v1/admin/dashboard", adminAuth, async (_req: any, res) => {
-    try {
-        const [
-            totalProblems, draftProblems, publishedProblems, archivedProblems,
-            totalSubmissions, totalUsers, recentProblems
-        ] = await Promise.all([
-            prisma.problems.count(),
-            prisma.problems.count({ where: { status: "Draft" } }),
-            prisma.problems.count({ where: { status: "Published" } }),
-            prisma.problems.count({ where: { status: "Archived" } }),
-            prisma.submissions.count(),
-            prisma.user.count(),
-            prisma.problems.findMany({
-                orderBy: { createdAt: "desc" }, take: 5,
-                select: { id: true, title: true, status: true, difficulty: true, createdAt: true }
-            })
-        ]);
-
-        res.json({
-            stats: { totalProblems, draftProblems, publishedProblems, archivedProblems, totalSubmissions, totalUsers },
-            recentProblems
-        });
-    } catch (err: any) { res.status(500).json({ error: err.message }); }
-});
-
 // ─── DEVELOPER CONSOLE & PRIVILEGED ROUTES (DEVELOPER ROLE) ─────────────────
 
 // GET /api/v1/developer/dashboard — developer console overview
@@ -3867,6 +3841,83 @@ app.post("/api/v1/submissions/run", runCodeRateLimiter, auth, async (req: any, r
     } catch (err: any) { res.status(500).json({ error: safeErrorMessage(err) }); }
 });
 
+// Ephemeral problem execution endpoint for interview studio & runner
+app.post("/api/v1/problems/:problemId/run", runCodeRateLimiter, auth, async (req: any, res) => {
+    const { problemId } = req.params;
+    const { code, language = "js", input, expectedOutput } = req.body;
+    if (!problemId || typeof code !== "string" || !code.trim()) {
+        return res.status(400).json({ error: "problemId and non-empty code are required" });
+    }
+
+    const secCheck = validateCodeSecurity(code, language);
+    if (!secCheck.safe) {
+        return res.status(400).json({ error: secCheck.reason });
+    }
+
+    try {
+        const problem = await prisma.problems.findFirst({
+            where: { OR: [{ id: problemId }, { slug: problemId }] }
+        });
+        if (!problem || !isPublishedProblem(problem)) {
+            return res.status(404).json({ error: "Problem not found" });
+        }
+
+        const publicTc = firstPublicTestCase(problem.testCases);
+        const testInput = input !== undefined ? String(input).slice(0, 64_000) : (publicTc?.input || "");
+        const expected = expectedOutput !== undefined ? String(expectedOutput).slice(0, 64_000) : (publicTc?.output || "");
+
+        const result = await executeSingleTest(problem.id, code, language, testInput, expected, problem.timeLimit || 4000);
+
+        res.json({
+            success: true,
+            allPassed: result.passed,
+            results: [result],
+            message: result.passed ? "All test cases passed! Solution verified ✅" : "Test execution finished with discrepancies"
+        });
+    } catch (err: any) {
+        res.status(500).json({ error: safeErrorMessage(err, "Execution service unavailable") });
+    }
+});
+
+// Ephemeral code execution endpoint for CollabStudio / Live Playground
+app.post("/api/v1/execute", runCodeRateLimiter, optionalAuth, async (req: any, res) => {
+    try {
+        const { code, language = "js" } = req.body;
+        if (!code || typeof code !== "string" || !code.trim()) {
+            return res.status(400).json({ error: "Source code is required for execution" });
+        }
+
+        const secCheck = validateCodeSecurity(code, language);
+        if (!secCheck.safe) {
+            return res.status(400).json({ error: secCheck.reason });
+        }
+
+        const folderPath = __dirname + `/tmp_exec_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+        try {
+            fs.mkdirSync(folderPath, { recursive: true });
+            const execResult = await LanguageAdapterRegistry.executeCode(language, {
+                folderPath,
+                codeWithDriver: code,
+                inputData: "",
+                expectedOutput: "",
+                timeoutMs: 4000,
+                memoryLimitMb: 256
+            });
+            res.json({
+                success: true,
+                output: execResult.got || execResult.error || "",
+                stdout: execResult.got,
+                stderr: execResult.error || null,
+                runtime: execResult.runtime
+            });
+        } finally {
+            try { fs.rmSync(folderPath, { recursive: true, force: true }); } catch {}
+        }
+    } catch (err: any) {
+        res.status(500).json({ error: safeErrorMessage(err, "Failed to execute sandbox run") });
+    }
+});
+
 // Full judge queue submission
 app.post("/api/v1/submissions", submissionRateLimiter, auth, async (req: any, res) => {
     const { problemId, code, language = "js", contestId } = req.body;
@@ -4051,6 +4102,11 @@ app.get("/api/v1/users/:userId/stats", async (req, res) => {
 
 // Legacy compat
 app.get("/users/:userId/stats", (req: any, res, next) => { req.url = `/api/v1/users/${req.params.userId}/stats`; (app as any).handle(req, res, next); });
+
+app.get("/api/v1/users/:username", (req: any, res, next) => {
+    req.url = `/api/v1/users/${encodeURIComponent(req.params.username)}/profile`;
+    (app as any).handle(req, res, next);
+});
 
 app.get("/api/v1/users/:username/profile", async (req, res) => {
     try {
@@ -5967,47 +6023,6 @@ app.get("/api/v1/admin/audit-logs", adminAuth, async (req: any, res) => {
     } catch (err: any) { res.status(500).json({ error: err.message }); }
 });
 
-// ─── ADMIN: CONTEST MANAGEMENT ────────────────────────────────────────────────
-app.post("/api/v1/admin/contests", adminAuth, async (req: any, res) => {
-    try {
-        const { title, description, startTime, endTime, problemIds } = req.body;
-        const contest = await prisma.contest.create({
-            data: {
-                title,
-                description,
-                startTime: new Date(startTime),
-                endTime: new Date(endTime),
-                problems: { create: problemIds.map((id: string) => ({ problemId: id })) }
-            },
-            include: { problems: true }
-        });
-        res.json({ message: "Contest created", contest });
-    } catch (err: any) { res.status(500).json({ error: err.message }); }
-});
-
-app.put("/api/v1/admin/contests/:id", adminAuth, async (req: any, res) => {
-    try {
-        const { title, description, startTime, endTime } = req.body;
-        const contest = await prisma.contest.update({
-            where: { id: req.params.id },
-            data: {
-                ...(title && { title }),
-                ...(description && { description }),
-                ...(startTime && { startTime: new Date(startTime) }),
-                ...(endTime && { endTime: new Date(endTime) })
-            }
-        });
-        res.json({ message: "Contest updated", contest });
-    } catch (err: any) { res.status(500).json({ error: err.message }); }
-});
-
-app.delete("/api/v1/admin/contests/:id", adminAuth, async (req: any, res) => {
-    try {
-        await prisma.contest.delete({ where: { id: req.params.id } });
-        res.json({ message: "Contest deleted" });
-    } catch (err: any) { res.status(500).json({ error: err.message }); }
-});
-
 app.get("/api/v1/admin/contests/:id/leaderboard", adminAuth, async (req: any, res) => {
     try {
         const participants = await prisma.contestParticipant.findMany({
@@ -6267,92 +6282,6 @@ app.get("/api/v1/submissions/stream/:id", async (req: any, res) => {
     req.on("close", () => {
         clearInterval(interval);
     });
-});
-
-// ─── PHASE 1: CONTEST MANAGEMENT (ADMIN & PUBLIC) ───────────────────────────
-app.get("/api/v1/contests", async (_req: any, res) => {
-    try {
-        const contests = await prisma.contest.findMany({
-            orderBy: { startTime: "desc" }
-        });
-        res.json({ contests });
-    } catch (err: any) { res.status(500).json({ error: err.message }); }
-});
-
-app.post("/api/v1/admin/contests", adminAuth, async (req: any, res) => {
-    try {
-        const { title, description, startTime, durationMinutes = 90, problemIds = [] } = req.body;
-        if (!title) return res.status(400).json({ error: "Contest title is required" });
-
-        const id = `contest_${Date.now().toString(36)}`;
-        const contest = await prisma.contest.create({
-            data: {
-                id,
-                title,
-                description: description || "Competitive programming contest",
-                startTime: startTime || new Date(Date.now() + 86400000).toISOString(),
-                durationMinutes: Number(durationMinutes),
-                problemCount: problemIds.length || 4,
-                problemIds,
-                status: "Upcoming",
-                participants: 0
-            }
-        });
-
-        await auditService.log("CONTEST_CREATED", {
-            userId: req.userId,
-            resourceId: contest.id,
-            metadata: { title: contest.title },
-            ipAddress: req.ip || req.socket?.remoteAddress,
-            userAgent: req.headers?.["user-agent"]
-        });
-
-        res.status(201).json({ contest });
-    } catch (err: any) { res.status(500).json({ error: err.message }); }
-});
-
-app.put("/api/v1/admin/contests/:id", adminAuth, async (req: any, res) => {
-    try {
-        const { id } = req.params;
-        const { title, description, startTime, durationMinutes, status } = req.body;
-
-        const contest = await prisma.contest.update({
-            where: { id },
-            data: {
-                ...(title && { title }),
-                ...(description !== undefined && { description }),
-                ...(startTime && { startTime }),
-                ...(durationMinutes !== undefined && { durationMinutes: Number(durationMinutes) }),
-                ...(status && { status })
-            }
-        });
-
-        await auditService.log("CONTEST_UPDATED", {
-            userId: req.userId,
-            resourceId: id,
-            metadata: { status: contest.status },
-            ipAddress: req.ip || req.socket?.remoteAddress,
-            userAgent: req.headers?.["user-agent"]
-        });
-
-        res.json({ contest });
-    } catch (err: any) { res.status(500).json({ error: err.message }); }
-});
-
-app.delete("/api/v1/admin/contests/:id", adminAuth, async (req: any, res) => {
-    try {
-        const { id } = req.params;
-        await prisma.contest.delete({ where: { id } });
-
-        await auditService.log("CONTEST_DELETED", {
-            userId: req.userId,
-            resourceId: id,
-            ipAddress: req.ip || req.socket?.remoteAddress,
-            userAgent: req.headers?.["user-agent"]
-        });
-
-        res.json({ success: true, message: "Contest deleted successfully" });
-    } catch (err: any) { res.status(500).json({ error: err.message }); }
 });
 
 // ─── ENTERPRISE SAML 2.0 SSO ───────────────────────────────────────────────
