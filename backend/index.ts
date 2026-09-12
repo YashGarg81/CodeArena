@@ -232,9 +232,9 @@ app.get("/api/v1/admin/security/audit-logs", adminAuth, (_req: any, res) => {
 
 // ─── STORAGE ASSET SERVING & UPLOAD HANDLERS ─────────────────────────────────
 
-app.get("/api/v1/storage/files/:key(*)", (req, res) => {
+app.get("/api/v1/storage/files/*key", (req, res) => {
     try {
-        const fileKey = (req.params as any).key || (req.params as any)["key(*)"];
+        const fileKey = (req.params as any).key || (req.params as any)[0] || "";
         if (!fileKey || fileKey.includes("..")) {
             return res.status(400).json({ error: "Invalid file key or path traversal detected" });
         }

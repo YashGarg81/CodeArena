@@ -24,7 +24,8 @@ let firecrackerAvailable: boolean | null = null;
  * Checks whether Firecracker binary and /dev/kvm virtualization device are present.
  */
 export async function isFirecrackerAvailable(): Promise<boolean> {
-  if (process.env.MOCK_FIRECRACKER === "true") return true;
+  const isProd = process.env.NODE_ENV === "production";
+  if (!isProd && process.env.MOCK_FIRECRACKER === "true") return true;
   if (process.env.MOCK_FIRECRACKER === "false") return false;
   if (firecrackerAvailable !== null) return firecrackerAvailable;
 
@@ -46,6 +47,10 @@ export async function runInFirecrackerMicroVM(
   stdinInput: string = "",
   config: FirecrackerExecutionConfig = {}
 ): Promise<MicroVMExecutionResult> {
+  const isProd = process.env.NODE_ENV === "production";
+  if (isProd && process.env.MOCK_FIRECRACKER === "true") {
+    throw new Error("Security Violation: MOCK_FIRECRACKER is strictly prohibited in production. Real Firecracker /dev/kvm virtualization is required.");
+  }
   const startTime = performance.now();
   const timeout = config.timeoutMs || 4000;
 
@@ -56,7 +61,7 @@ export async function runInFirecrackerMicroVM(
   }
 
   // In test / simulation environment with MOCK_FIRECRACKER=true, return verified telemetry
-  if (process.env.MOCK_FIRECRACKER === "true") {
+  if (!isProd && process.env.MOCK_FIRECRACKER === "true") {
     return {
       stdout: "Execution completed in isolated MicroVM sandbox",
       stderr: "",

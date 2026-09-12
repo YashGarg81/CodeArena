@@ -32,20 +32,60 @@ export interface SSRFValidationResult {
 }
 
 export function isIpBlocked(ipAddress: string): boolean {
-  const isIP = net.isIP(ipAddress);
+  if (!ipAddress) return true;
+  let cleanIp = ipAddress.trim().toLowerCase().replace(/^\[|\]$/g, "");
+
+  // Convert decimal representation if pure number (e.g. 2130706433)
+  if (/^\d+$/.test(cleanIp)) {
+    const num = parseInt(cleanIp, 10);
+    if (!isNaN(num) && num >= 0 && num <= 4294967295) {
+      cleanIp = [
+        (num >>> 24) & 255,
+        (num >>> 16) & 255,
+        (num >>> 8) & 255,
+        num & 255
+      ].join(".");
+    }
+  }
+
+  // Handle IPv4-mapped IPv6 (::ffff:127.0.0.1 or ::ffff:7f00:1)
+  if (cleanIp.startsWith("::ffff:")) {
+    const mapped = cleanIp.slice(7);
+    if (mapped.includes(".")) {
+      cleanIp = mapped;
+    } else if (mapped.includes(":")) {
+      // Hex representation like 7f00:1
+      const parts = mapped.split(":");
+      if (parts.length === 2) {
+        const high = parseInt(parts[0], 16);
+        const low = parseInt(parts[1], 16);
+        if (!isNaN(high) && !isNaN(low)) {
+          cleanIp = [
+            (high >> 8) & 255,
+            high & 255,
+            (low >> 8) & 255,
+            low & 255
+          ].join(".");
+        }
+      }
+    }
+  }
+
+  const isIP = net.isIP(cleanIp);
   if (isIP === 4) {
     for (const prefix of BLOCKED_IP_PREFIXES) {
-      if (ipAddress.startsWith(prefix)) return true;
+      if (cleanIp.startsWith(prefix)) return true;
     }
   } else if (isIP === 6) {
     if (
-      ipAddress === "::1" ||
-      ipAddress === "::" ||
-      ipAddress.startsWith("fc") ||
-      ipAddress.startsWith("fd") ||
-      ipAddress.startsWith("fe80") ||
-      ipAddress.includes("127.0.0.1") ||
-      ipAddress.includes("169.254.")
+      cleanIp === "::1" ||
+      cleanIp === "::" ||
+      cleanIp === "0:0:0:0:0:0:0:1" ||
+      cleanIp.startsWith("fc") ||
+      cleanIp.startsWith("fd") ||
+      cleanIp.startsWith("fe80") ||
+      cleanIp.includes("127.0.0.1") ||
+      cleanIp.includes("169.254.")
     ) {
       return true;
     }
@@ -76,14 +116,15 @@ export function validateUrlForSSRF(rawUrl: string): SSRFValidationResult {
   }
 
   const hostname = parsed.hostname.toLowerCase();
+  const cleanHost = hostname.replace(/^\[|\]$/g, "");
 
   // Block forbidden hostnames
-  if (BLOCKED_HOSTNAMES.includes(hostname)) {
+  if (BLOCKED_HOSTNAMES.includes(hostname) || BLOCKED_HOSTNAMES.includes(cleanHost)) {
     return { safe: false, reason: `Hostname '${hostname}' is restricted (internal loopback/metadata)` };
   }
 
   // If host is an IP address, check against banned ranges
-  if (isIpBlocked(hostname)) {
+  if (isIpBlocked(cleanHost) || isIpBlocked(hostname)) {
     return { safe: false, reason: `Access to private/internal IP address '${hostname}' is forbidden` };
   }
 
@@ -106,26 +147,64 @@ export async function validateResolvedUrlForSSRF(rawUrl: string): Promise<SSRFVa
 
   const parsed = new URL(rawUrl);
   const hostname = parsed.hostname.toLowerCase();
+  const cleanHost = hostname.replace(/^\[|\]$/g, "");
 
   // If already an IP address, preliminary check was sufficient
-  if (net.isIP(hostname)) {
+  if (net.isIP(cleanHost)) {
     return preliminary;
   }
 
   try {
     // Resolve both IPv4 and IPv6 addresses for hostname
-    const lookupResults = await dns.lookup(hostname, { all: true });
+    const lookupResults = await dns.lookup(cleanHost, { all: true });
     for (const record of lookupResults) {
       if (isIpBlocked(record.address)) {
         return {
           safe: false,
-          reason: `DNS resolution for '${hostname}' mapped to forbidden internal/private IP '${record.address}' (DNS rebinding prevention)`
+          reason: `DNS resolution for '${cleanHost}' mapped to forbidden internal/private IP '${record.address}' (DNS rebinding prevention)`
         };
       }
     }
   } catch (err: any) {
-    return { safe: false, reason: `DNS resolution failed for '${hostname}': ${err.message}` };
+    return { safe: false, reason: `DNS resolution failed for '${cleanHost}': ${err.message}` };
   }
 
   return preliminary;
+}
+
+/**
+ * Safe fetch client that validates every hop in redirect chains against SSRF.
+ */
+export async function fetchWithSSRFProtection(url: string, init?: RequestInit, maxRedirects = 5): Promise<Response> {
+  let currentUrl = url;
+  let redirectsRemaining = maxRedirects;
+
+  while (redirectsRemaining >= 0) {
+    const check = await validateResolvedUrlForSSRF(currentUrl);
+    if (!check.safe) {
+      throw new Error(`SSRF Blocked: ${check.reason} for URL ${currentUrl}`);
+    }
+
+    const response = await fetch(currentUrl, {
+      ...init,
+      redirect: "manual"
+    });
+
+    if (response.status >= 300 && response.status < 400) {
+      const location = response.headers.get("location");
+      if (!location) return response;
+      const nextUrl = new URL(location, currentUrl).toString();
+      const nextCheck = await validateResolvedUrlForSSRF(nextUrl);
+      if (!nextCheck.safe) {
+        throw new Error(`SSRF Redirect Blocked: Redirect to ${nextUrl} is forbidden (${nextCheck.reason})`);
+      }
+      currentUrl = nextUrl;
+      redirectsRemaining--;
+      continue;
+    }
+
+    return response;
+  }
+
+  throw new Error(`Too many redirects (max ${maxRedirects})`);
 }

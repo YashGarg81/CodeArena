@@ -40,7 +40,8 @@ export function isDockerSandboxEnabled(): boolean {
 }
 
 export async function isDockerAvailable(): Promise<boolean> {
-  if (process.env.MOCK_DOCKER === "true") return true;
+  const isProd = process.env.NODE_ENV === "production";
+  if (!isProd && process.env.MOCK_DOCKER === "true") return true;
   if (process.env.MOCK_DOCKER === "false") return false;
   return new Promise((resolve) => {
     const proc = spawn("docker", ["info"], { stdio: "ignore" });
@@ -63,7 +64,11 @@ export async function compileInDocker(
   compileCmd: string[],
   options: { folderPath: string; timeoutMs?: number; outputBinaryName: string }
 ): Promise<CompilationResult> {
-  if (process.env.MOCK_DOCKER === "true") {
+  const isProd = process.env.NODE_ENV === "production";
+  if (isProd && process.env.MOCK_DOCKER === "true") {
+    throw new Error("Security Violation: MOCK_DOCKER is strictly prohibited in production. Real Docker daemon is required.");
+  }
+  if (!isProd && process.env.MOCK_DOCKER === "true") {
     const targetBinary = path.join(options.folderPath, options.outputBinaryName);
     if (!fs.existsSync(targetBinary)) {
       try { fs.writeFileSync(targetBinary, "#!/bin/sh\nexit 0\n"); } catch {}
@@ -160,7 +165,19 @@ export async function runInDocker(
 ): Promise<ExecutionResult> {
   const { inputData, expectedOutput = "", timeoutMs, memoryLimitMb, folderPath } = options;
 
-  if (process.env.MOCK_DOCKER === "true") {
+  const isProd = process.env.NODE_ENV === "production";
+  if (isProd && process.env.MOCK_DOCKER === "true") {
+    return {
+      passed: false,
+      got: "",
+      expected: expectedOutput,
+      runtime: 0,
+      verdict: "RE",
+      error: "Security Violation: MOCK_DOCKER is strictly prohibited in production. Real Docker daemon is required."
+    };
+  }
+
+  if (!isProd && process.env.MOCK_DOCKER === "true") {
     return {
       passed: true,
       got: expectedOutput || "Mock Docker Output",

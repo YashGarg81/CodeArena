@@ -1,7 +1,7 @@
 # CodeArena Route & Data Map (Section 1 Inventory)
 
-**Generated**: 2026-09-12T06:43:55.714Z
-**Total Express Routes Discovered**: 187
+**Generated**: 2026-09-12T07:37:34.492Z
+**Total Express Routes Discovered**: 190
 **Total Frontend API Client Calls**: 131
 
 ## 1. Express Route Table
@@ -19,6 +19,8 @@
 | `POST` | `/api/v1/arena/matches/:matchId/progress` | `auth` | `-` | `JSON` | `backend\index.ts` |
 | `GET` | `/api/v1/admin/security/telemetry` | `adminAuth` | `-` | `JSON` | `backend\index.ts` |
 | `GET` | `/api/v1/admin/security/audit-logs` | `adminAuth` | `-` | `JSON` | `backend\index.ts` |
+| `GET` | `/api/v1/storage/files/*key` | `none` | `-` | `JSON` | `backend\index.ts` |
+| `POST` | `/api/v1/storage/upload` | `auth` | `-` | `JSON` | `backend\index.ts` |
 | `GET` | `/api/v1/social/feed` | `optionalAuth` | `-` | `{ success: true, feed: socialAndTournamentEngin...` | `backend\index.ts` |
 | `POST` | `/api/v1/social/follow/:userId` | `auth` | `-` | `JSON` | `backend\index.ts` |
 | `GET` | `/api/v1/social/discussions` | `none` | `-` | `JSON` | `backend\index.ts` |
@@ -48,6 +50,7 @@
 | `GET` | `/api/v1/auth/verification-status` | `auth` | `-` | `JSON` | `backend\index.ts` |
 | `POST` | `/api/v1/auth/2fa/setup` | `auth` | `-` | `JSON` | `backend\index.ts` |
 | `POST` | `/api/v1/auth/2fa/verify` | `auth` | `-` | `JSON` | `backend\index.ts` |
+| `POST` | `/api/v1/auth/2fa/challenge` | `none` | `-` | `JSON` | `backend\index.ts` |
 | `POST` | `/api/v1/auth/2fa/disable` | `auth` | `-` | `JSON` | `backend\index.ts` |
 | `GET` | `/api/v1/auth/sessions` | `auth` | `-` | `JSON` | `backend\index.ts` |
 | `POST` | `/api/v1/auth/logout-all` | `auth` | `-` | `JSON` | `backend\index.ts` |
@@ -198,7 +201,7 @@
 
 ## 2. Cross-Reference Analysis
 
-### Backend Routes with NO Frontend Caller (80 routes)
+### Backend Routes with NO Frontend Caller (83 routes)
 *(These may represent admin-only endpoints, internal integrations, or dead code)*
 
 | METHOD | PATH | Auth | Source File |
@@ -207,6 +210,8 @@
 | `GET` | `/api/v1/arena/history` | `none` | `backend\index.ts` |
 | `GET` | `/api/v1/admin/security/telemetry` | `adminAuth` | `backend\index.ts` |
 | `GET` | `/api/v1/admin/security/audit-logs` | `adminAuth` | `backend\index.ts` |
+| `GET` | `/api/v1/storage/files/*key` | `none` | `backend\index.ts` |
+| `POST` | `/api/v1/storage/upload` | `auth` | `backend\index.ts` |
 | `GET` | `/api/v1/social/feed` | `optionalAuth` | `backend\index.ts` |
 | `POST` | `/api/v1/social/follow/:userId` | `auth` | `backend\index.ts` |
 | `GET` | `/api/v1/social/tournaments/brackets` | `none` | `backend\index.ts` |
@@ -224,6 +229,7 @@
 | `GET` | `/api/v1/auth/verification-status` | `auth` | `backend\index.ts` |
 | `POST` | `/api/v1/auth/2fa/setup` | `auth` | `backend\index.ts` |
 | `POST` | `/api/v1/auth/2fa/verify` | `auth` | `backend\index.ts` |
+| `POST` | `/api/v1/auth/2fa/challenge` | `none` | `backend\index.ts` |
 | `POST` | `/api/v1/auth/2fa/disable` | `auth` | `backend\index.ts` |
 | `GET` | `/api/v1/auth/sessions` | `auth` | `backend\index.ts` |
 | `POST` | `/api/v1/auth/logout-all` | `auth` | `backend\index.ts` |
@@ -250,11 +256,8 @@
 | `POST` | `/forum/posts` | `none` | `backend\index.ts` |
 | `GET` | `/forum/posts/:id` | `none` | `backend\index.ts` |
 | `POST` | `/forum/posts/:id/comments` | `none` | `backend\index.ts` |
-| `POST` | `/api/v1/snippets` | `auth` | `backend\index.ts` |
-| `DELETE` | `/api/v1/snippets/:id` | `auth` | `backend\index.ts` |
-| `GET` | `/api/v1/system-design/guide` | `none` | `backend\index.ts` |
 
-*... and 30 more administrative/internal routes*
+*... and 33 more administrative/internal routes*
 
 ### Frontend Calls with NO Direct Backend Route Match (21 calls)
 *(Flagged for inspection of missing backend routes or path mismatches)*

@@ -40,16 +40,16 @@ export async function runProcessSafely(
 
     const isProd = process.env.NODE_ENV === "production";
     const isStrict = process.env.STRICT_SANDBOX === "true" || process.env.REQUIRE_DOCKER === "true";
-    const allowProcess = process.env.ALLOW_PROCESS_SANDBOX === "true" || (process.env.NODE_ENV === "test" && process.env.STRICT_SANDBOX !== "true");
+    const allowProcess = !isProd && (process.env.ALLOW_PROCESS_SANDBOX === "true" || (process.env.NODE_ENV === "test" && process.env.STRICT_SANDBOX !== "true"));
 
-    if ((isProd || isStrict) && !allowProcess) {
+    if (isProd || isStrict || !allowProcess) {
         return {
             passed: false,
             got: "",
             expected: expectedOutput,
             runtime: 0,
             verdict: "RE",
-            error: "Security Violation: Host process execution is strictly prohibited. Docker sandbox isolation is required."
+            error: "Security Violation: Host process execution is strictly prohibited in production or strict mode. Docker container isolation is required."
         };
     }
 

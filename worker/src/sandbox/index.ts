@@ -57,7 +57,7 @@ export function getSandboxMode(): "firecracker" | "docker" | "process" {
 export function getSandboxPolicy(): SandboxPolicy {
   const mode = getSandboxMode();
   const isProd = process.env.NODE_ENV === "production";
-  const strictMode = process.env.STRICT_SANDBOX === "true" || process.env.REQUIRE_DOCKER === "true" || (isProd && process.env.ALLOW_PROCESS_SANDBOX !== "true");
+  const strictMode = process.env.STRICT_SANDBOX === "true" || process.env.REQUIRE_DOCKER === "true" || isProd;
 
   return {
     mode,
@@ -86,10 +86,10 @@ export async function validateSandboxSafety(overrideMode?: "firecracker" | "dock
   const mode = overrideMode || policy.mode;
 
   const isProd = process.env.NODE_ENV === "production";
-  if (isProd && mode === "process" && process.env.ALLOW_PROCESS_SANDBOX !== "true") {
+  if (isProd && mode === "process") {
     return {
       safe: false,
-      reason: "Production Security Policy Violation: Process sandbox is unsafe for production environments. Container isolation (Docker) required.",
+      reason: "Production Security Policy Violation: Process sandbox is unsafe for production environments. Process sandbox is strictly prohibited in production. Container isolation (Docker) required.",
       policy
     };
   }
