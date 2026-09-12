@@ -41,7 +41,8 @@ export async function shouldUseDockerSandbox(): Promise<boolean> {
  * Defaults to secure "docker" container mode for verified production isolation.
  */
 export function getSandboxMode(): "firecracker" | "docker" | "process" {
-  if (process.env.SANDBOX_MODE === "process" || (process.env.NODE_ENV !== "production" && process.env.ALLOW_PROCESS_SANDBOX === "true")) {
+  const isProd = process.env.NODE_ENV === "production";
+  if (!isProd && process.env.SANDBOX_MODE === "process" && process.env.ALLOW_PROCESS_SANDBOX === "true") {
     return "process";
   }
   if (process.env.SANDBOX_MODE === "firecracker") {

@@ -31,10 +31,12 @@ export const LANGUAGE_IMAGES: Record<string, string> = {
 
 export function isDockerSandboxEnabled(): boolean {
   const isProd = process.env.NODE_ENV === "production";
+  if (isProd) return true;
+  // Raw host process execution is strictly prohibited unless ALLOW_PROCESS_SANDBOX="true" is explicitly supplied
   if (process.env.SANDBOX_MODE === "process" && process.env.ALLOW_PROCESS_SANDBOX === "true") {
     return false;
   }
-  return process.env.SANDBOX_MODE === "docker" || process.env.DOCKER_SANDBOX === "true" || isProd || !process.env.SANDBOX_MODE;
+  return true;
 }
 
 export async function isDockerAvailable(): Promise<boolean> {

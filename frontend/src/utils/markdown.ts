@@ -1,3 +1,5 @@
+import DOMPurify from "dompurify";
+
 export const escHtml = (s: string) =>
   String(s)
     .replace(/&/g, "&amp;")
@@ -8,33 +10,23 @@ export const escHtml = (s: string) =>
 
 /**
  * Strips dangerous HTML tags and event handlers (e.g. onerror, onclick, script, iframe, svg)
+ * in headless/SSR environments when browser DOM is absent.
  */
-function sanitizeHtml(rawHtml: string): string {
-  // Strip script and style blocks including their inner contents
+function sanitizeStructuralHtml(rawHtml: string): string {
   let cleaned = rawHtml.replace(/<script\b[\s\S]*?<\/script>/gi, "");
   cleaned = cleaned.replace(/<style\b[\s\S]*?<\/style>/gi, "");
-
-  // Strip remaining dangerous HTML tags
   cleaned = cleaned.replace(/<\/?(script|style|iframe|object|embed|svg|form|base|link|meta|applet)\b[^>]*>/gi, "");
-
-  // Strip inline event handlers (onerror, onload, onclick, onmouseover, etc.)
   cleaned = cleaned.replace(/\s+on[a-z]+\s*=\s*(?:'[^']*'|"[^"]*"|[^\s>]+)/gi, "");
-
-  // Strip javascript: and vbscript: URIs
   cleaned = cleaned.replace(/(href|src)\s*=\s*(?:'javascript:[^']*'|"javascript:[^"]*"|javascript:[^\s>]+)/gi, '$1="#"');
   cleaned = cleaned.replace(/(href|src)\s*=\s*(?:'vbscript:[^']*'|"vbscript:[^"]*"|vbscript:[^\s>]+)/gi, '$1="#"');
-
   return cleaned;
 }
 
 export function markdownToHtml(md: string): string {
   if (!md || typeof md !== "string") return "";
 
-  // Step 1: Pre-sanitize raw input to disarm active script/event payloads
-  const sanitizedInput = sanitizeHtml(md);
-
-  // Step 2: Convert standard markdown elements with escaped contents
-  let processed = sanitizedInput
+  // Convert standard markdown elements with escaped code blocks/inline code
+  let processed = md
     .replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => `<pre><code class="lang-${escHtml(lang)}">${escHtml(code)}</code></pre>`)
     .replace(/`([^`]+)`/g, (_, c) => `<code>${escHtml(c)}</code>`)
     .replace(/^### (.+)$/gm, (_, t) => `<h3>${escHtml(t)}</h3>`)
@@ -47,6 +39,21 @@ export function markdownToHtml(md: string): string {
     .replace(/^\d+\. (.+)$/gm, (_, t) => `<li>${escHtml(t)}</li>`)
     .replace(/\n\n/g, "<br/><br/>");
 
-  // Step 3: Final sanitization pass over generated HTML to guarantee no payload bypass
-  return sanitizeHtml(processed);
+  // DOMPurify with strict allowlist to eliminate stored and reflected XSS vectors in browser runtime
+  if (typeof window !== "undefined" && typeof DOMPurify.sanitize === "function") {
+    return DOMPurify.sanitize(processed, {
+      ALLOWED_TAGS: [
+        "h1", "h2", "h3", "h4", "h5", "h6",
+        "p", "br", "hr", "strong", "em", "b", "i", "u", "s",
+        "code", "pre", "ul", "ol", "li", "blockquote",
+        "a", "table", "thead", "tbody", "tr", "th", "td",
+        "span", "div"
+      ],
+      ALLOWED_ATTR: ["href", "target", "rel", "class", "title"],
+      ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
+    });
+  }
+
+  // Fallback for SSR and headless unit test environments
+  return sanitizeStructuralHtml(processed);
 }
