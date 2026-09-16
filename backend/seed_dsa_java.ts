@@ -71,7 +71,7 @@ Watch the full high-definition video lecture embedded above to follow along with
       },
       update: {
         title: v.title,
-        videoUrl: youtubeUrl,
+        videoId: v.videoId,
         content: lessonContent,
         estimatedMinutes: 35,
         xpReward: 50
@@ -79,7 +79,7 @@ Watch the full high-definition video lecture embedded above to follow along with
       create: {
         courseId: course.id,
         title: v.title,
-        videoUrl: youtubeUrl,
+        videoId: v.videoId,
         content: lessonContent,
         order: v.order,
         estimatedMinutes: 35,
@@ -90,4 +90,11 @@ Watch the full high-definition video lecture embedded above to follow along with
   }
 
   console.log(`✅ Successfully seeded ${count} video lessons for 'DSA in Java (from Beginning)'!`);
+}
+
+if (import.meta.main) {
+  seedDsaInJavaCourse().then(() => process.exit(0)).catch(e => {
+    console.error(e);
+    process.exit(1);
+  });
 }

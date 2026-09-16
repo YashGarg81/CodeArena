@@ -83,6 +83,7 @@ export function AdminPanelPage({ user, onToast }: { user: User | null; onToast: 
   const [addingLesson, setAddingLesson] = useState(false);
   const [lessonForm, setLessonForm] = useState({
     title: "",
+    videoId: "",
     videoUrl: "",
     durationMinutes: 15,
     content: ""
@@ -589,7 +590,7 @@ export function AdminPanelPage({ user, onToast }: { user: User | null; onToast: 
     setSelectedCourseForLessons(c);
     setShowLessonModal(true);
     setLessonsLoading(true);
-    setLessonForm({ title: "", videoUrl: "", durationMinutes: 15, content: "" });
+    setLessonForm({ title: "", videoId: "", videoUrl: "", durationMinutes: 15, content: "" });
     try {
       const res = await api.get(`/api/v1/admin/courses/${c.id}/lessons`);
       setCourseLessons(res.data.lessons || []);
@@ -607,20 +608,22 @@ export function AdminPanelPage({ user, onToast }: { user: User | null; onToast: 
       onToast("Lesson title is required", "error");
       return;
     }
-    if (!lessonForm.videoUrl.trim()) {
-      onToast("Video or Playlist URL is required", "error");
+    const videoValue = (lessonForm.videoId || lessonForm.videoUrl || "").trim();
+    if (!videoValue) {
+      onToast("YouTube Video ID or URL is required", "error");
       return;
     }
     try {
       setAddingLesson(true);
       await api.post(`/api/v1/admin/courses/${selectedCourseForLessons.id}/lessons`, {
         title: lessonForm.title,
-        videoUrl: lessonForm.videoUrl,
+        videoId: videoValue,
+        videoUrl: videoValue,
         durationMinutes: Number(lessonForm.durationMinutes) || 15,
         content: lessonForm.content
       });
       onToast("Lesson / Video added successfully! 🎬", "success");
-      setLessonForm({ title: "", videoUrl: "", durationMinutes: 15, content: "" });
+      setLessonForm({ title: "", videoId: "", videoUrl: "", durationMinutes: 15, content: "" });
       
       // Reload lessons list
       const res = await api.get(`/api/v1/admin/courses/${selectedCourseForLessons.id}/lessons`);
@@ -1620,12 +1623,12 @@ export function AdminPanelPage({ user, onToast }: { user: User | null; onToast: 
                         />
                       </div>
                       <div>
-                        <label style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", display: "block", marginBottom: 4 }}>Video / YouTube URL *</label>
+                        <label style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", display: "block", marginBottom: 4 }}>YouTube Video ID or URL *</label>
                         <input
                           className="input"
-                          placeholder="https://www.youtube.com/watch?v=... or playlist item"
-                          value={lessonForm.videoUrl}
-                          onChange={e => setLessonForm(f => ({ ...f, videoUrl: e.target.value }))}
+                          placeholder="e.g. dQw4w9WgXcQ or https://youtube.com/watch?v=..."
+                          value={lessonForm.videoId || lessonForm.videoUrl}
+                          onChange={e => setLessonForm(f => ({ ...f, videoId: e.target.value, videoUrl: e.target.value }))}
                         />
                       </div>
                       <div>
@@ -1680,35 +1683,39 @@ export function AdminPanelPage({ user, onToast }: { user: User | null; onToast: 
                           </tr>
                         </thead>
                         <tbody>
-                          {courseLessons.map((l: any, idx: number) => (
-                            <tr key={l.id || idx}>
-                              <td style={{ fontWeight: 700, color: "var(--text-muted)" }}>{l.order ?? idx + 1}</td>
-                              <td>
-                                <div style={{ fontWeight: 600 }}>{l.title}</div>
-                                {l.content && <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{l.content.slice(0, 70)}...</div>}
-                              </td>
-                              <td>
-                                {l.videoUrl ? (
-                                  <a href={l.videoUrl} target="_blank" rel="noreferrer" style={{ color: "var(--accent-primary)", display: "inline-flex", alignItems: "center", gap: 4, textDecoration: "none" }}>
-                                    <span>▶️</span> {l.videoUrl.length > 35 ? l.videoUrl.slice(0, 35) + "..." : l.videoUrl}
-                                  </a>
-                                ) : (
-                                  <span style={{ color: "var(--text-muted)" }}>No video link</span>
-                                )}
-                              </td>
-                              <td style={{ color: "var(--text-muted)" }}>{l.durationMinutes || 15} mins</td>
-                              <td style={{ textAlign: "right" }}>
-                                <button
-                                  className="btn btn-ghost btn-sm"
-                                  style={{ color: "var(--accent-red)", padding: "2px 8px" }}
-                                  onClick={() => handleDeleteLesson(l.id, l.title)}
-                                  title="Delete lesson"
-                                >
-                                  🗑️
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
+                          {courseLessons.map((l: any, idx: number) => {
+                            const vid = l.videoId || l.videoUrl;
+                            const href = vid ? (vid.startsWith("http") ? vid : `https://www.youtube.com/watch?v=${vid}`) : null;
+                            return (
+                              <tr key={l.id || idx}>
+                                <td style={{ fontWeight: 700, color: "var(--text-muted)" }}>{l.order ?? idx + 1}</td>
+                                <td>
+                                  <div style={{ fontWeight: 600 }}>{l.title}</div>
+                                  {l.content && <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{l.content.slice(0, 70)}...</div>}
+                                </td>
+                                <td>
+                                  {href ? (
+                                    <a href={href} target="_blank" rel="noreferrer" style={{ color: "var(--accent-primary)", display: "inline-flex", alignItems: "center", gap: 4, textDecoration: "none" }}>
+                                      <span>▶️</span> {vid.length > 35 ? vid.slice(0, 35) + "..." : vid}
+                                    </a>
+                                  ) : (
+                                    <span style={{ color: "var(--text-muted)" }}>No video link</span>
+                                  )}
+                                </td>
+                                <td style={{ color: "var(--text-muted)" }}>{l.durationMinutes || 15} mins</td>
+                                <td style={{ textAlign: "right" }}>
+                                  <button
+                                    className="btn btn-ghost btn-sm"
+                                    style={{ color: "var(--accent-red)", padding: "2px 8px" }}
+                                    onClick={() => handleDeleteLesson(l.id, l.title)}
+                                    title="Delete lesson"
+                                  >
+                                    🗑️
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
                         </tbody>
                       </table>
                     )}

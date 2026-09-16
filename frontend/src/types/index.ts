@@ -135,7 +135,7 @@ export interface LessonSummary {
   order: number;
   estimatedMinutes: number;
   xpReward: number;
-  videoUrl?: string | null;
+  videoId?: string | null;
   hasQuiz: boolean;
   quizQuestionCount: number;
   isCompleted: boolean;
@@ -150,7 +150,8 @@ export interface LessonDetail {
   id: string;
   title: string;
   content: string;
-  videoUrl: string | null;
+  videoId?: string | null;
+  videoUrl?: string | null;
   order: number;
   estimatedMinutes: number;
   xpReward: number;

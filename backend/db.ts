@@ -459,7 +459,7 @@ const handler: ProxyHandler<any> = {
                       if (parentCourse) {
                         const courseLessons = allLessons.filter((l: any) => l.courseId === parentCourse.id)
                           .sort((a: any, b: any) => (a.order || 0) - (b.order || 0))
-                          .map((l: any) => ({ id: l.id, title: l.title, order: l.order }));
+                          .map((l: any) => ({ id: l.id, title: l.title, order: l.order, videoId: l.videoId || l.videoUrl }));
                         return {
                           ...found,
                           progress: [],

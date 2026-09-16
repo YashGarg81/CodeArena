@@ -430,7 +430,7 @@ model Lesson {
   courseId         String
   title            String
   content          String   // Markdown content
-  videoUrl         String?
+  videoId          String? // YouTube video ID (11 chars)
   order            Int      @default(0)
   estimatedMinutes Int      @default(15)
   xpReward         Int      @default(50)

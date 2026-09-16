@@ -3803,7 +3803,15 @@ app.get("/api/v1/admin/courses/:id/lessons", adminAuth, async (req: any, res) =>
 // POST /api/v1/admin/courses/:id/lessons — Add a new video lesson directly to a course
 app.post("/api/v1/admin/courses/:id/lessons", adminAuth, async (req: any, res) => {
     const { id } = req.params;
-    const { title, videoUrl, content, estimatedMinutes = 20, xpReward = 50, order } = req.body;
+    const { title, videoUrl, videoId, content, estimatedMinutes = 20, xpReward = 50, order } = req.body;
+    // Helper to extract YouTube ID from a full URL or accept raw ID
+    const extractYouTubeId = (input?: string | null): string | null => {
+      if (!input) return null;
+      const match = input.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
+      return match && match[1] ? match[1] : input.length === 11 ? input : null;
+    };
+    const finalVideoId = videoId ? String(videoId).trim() : extractYouTubeId(videoUrl);
+
     if (!title) {
         return res.status(400).json({ error: "Lesson title is required" });
     }
@@ -3821,7 +3829,7 @@ app.post("/api/v1/admin/courses/:id/lessons", adminAuth, async (req: any, res) =
             data: {
                 courseId: course.id,
                 title: String(title).trim(),
-                videoUrl: videoUrl ? String(videoUrl).trim() : null,
+                videoId: finalVideoId,
                 content: content ? String(content).trim() : `# ${title}\n\nWatch the lecture video above and study the key topics covered in this lesson.`,
                 order: nextOrder,
                 estimatedMinutes: Number(estimatedMinutes) || 20,
@@ -3834,7 +3842,7 @@ app.post("/api/v1/admin/courses/:id/lessons", adminAuth, async (req: any, res) =
                 userId: req.userId,
                 action: "COURSE_LESSON_ADDED",
                 resourceId: lesson.id,
-                metadata: { courseId: course.id, title: lesson.title, videoUrl: lesson.videoUrl }
+                metadata: { courseId: course.id, title: lesson.title, videoId: lesson.videoId }
             }
         });
 
@@ -5281,7 +5289,7 @@ app.get("/api/v1/courses/:slugOrId", optionalAuth, async (req: any, res) => {
             order: l.order,
             estimatedMinutes: l.estimatedMinutes,
             xpReward: l.xpReward,
-            videoUrl: l.videoUrl,
+            videoId: l.videoId,
             hasQuiz: !!l.quiz,
             quizQuestionCount: l.quiz?._count?.questions || 0,
             isCompleted: req.userId && l.progress && l.progress[0]?.completed === true
@@ -5354,7 +5362,7 @@ app.get("/api/v1/lessons/:id", optionalAuth, async (req: any, res) => {
                         title: true,
                         lessons: {
                             orderBy: { order: "asc" },
-                            select: { id: true, title: true, order: true }
+                            select: { id: true, title: true, order: true, videoId: true }
                         }
                     }
                 },
@@ -5377,15 +5385,21 @@ app.get("/api/v1/lessons/:id", optionalAuth, async (req: any, res) => {
 
         const allCourseLessons = lesson.course.lessons;
         const currentIndex = allCourseLessons.findIndex((l: any) => l.id === lesson.id);
-        const prevLesson = currentIndex > 0 ? allCourseLessons[currentIndex - 1] : null;
-        const nextLesson = currentIndex < allCourseLessons.length - 1 ? allCourseLessons[currentIndex + 1] : null;
+        // Automatically skip lessons that have no video
+        const prevLesson = currentIndex > 0
+            ? allCourseLessons.slice(0, currentIndex).reverse().find((l: any) => !!l.videoId) || null
+            : null;
+        const nextLesson = currentIndex < allCourseLessons.length - 1
+            ? allCourseLessons.slice(currentIndex + 1).find((l: any) => !!l.videoId) || null
+            : null;
 
         res.json({
             lesson: {
                 id: lesson.id,
                 title: lesson.title,
                 content: lesson.content,
-                videoUrl: lesson.videoUrl,
+                videoId: lesson.videoId,
+                videoUrl: lesson.videoId ? `https://www.youtube.com/watch?v=${lesson.videoId}` : null,
                 order: lesson.order,
                 estimatedMinutes: lesson.estimatedMinutes,
                 xpReward: lesson.xpReward,

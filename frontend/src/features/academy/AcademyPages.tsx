@@ -6,6 +6,7 @@ import { api, API, getAuthHeaders } from "../../services/api";
 import type { User, CourseSummary, CourseDetail, LessonDetail, QuizData, QuizResult } from "../../types";
 import { markdownToHtml } from "../../utils/markdown";
 import { LessonCodeRunner } from "../playground/PlaygroundPage";
+import { VideoPlayer } from "../../components/VideoPlayer";
 
 // ─── PHASE 3: LEARN PAGE ───────────────────────────────────────────────────────
 
@@ -466,8 +467,6 @@ export function LessonViewerPage({ lessonId, onNavigate, user, onToast, onOpenAu
     }
   };
 
-  const embedUrl = getYouTubeEmbedUrl(lesson?.videoUrl);
-
   if (loading) {
     return (
       <div className="container" style={{ padding: "40px 24px" }}>
@@ -552,97 +551,39 @@ export function LessonViewerPage({ lessonId, onNavigate, user, onToast, onOpenAu
         </div>
 
         {/* Interactive Video Player (YouTube or HTML5) */}
-        {lesson.videoUrl && (
-          <div style={{
-            marginBottom: 32,
-            borderRadius: "var(--radius-lg)",
-            overflow: "hidden",
-            background: "#0a0c10",
-            border: "1px solid var(--border-light)",
-            boxShadow: "0 10px 30px -10px rgba(0,0,0,0.5)",
-            transition: "all 0.3s ease",
-            ...(theaterMode ? {
-              position: "relative",
-              width: "100%",
-              maxWidth: "100%",
-              margin: "0 0 32px 0",
-            } : {})
-          }}>
-            {/* Player Top Toolbar */}
-            <div style={{
-              background: "linear-gradient(90deg, #161b22, #0d1117)",
-              padding: "10px 16px",
-              borderBottom: "1px solid rgba(255,255,255,0.08)",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center"
-            }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <span style={{ fontSize: 16 }}>🎬</span>
-                <span style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>
-                  Video Lecture Player
-                </span>
-                <span className="badge badge-purple" style={{ fontSize: 10, padding: "2px 8px" }}>
-                  HD 1080p
-                </span>
-              </div>
-              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                <button
-                  className="btn btn-ghost btn-sm"
-                  onClick={() => setTheaterMode(!theaterMode)}
-                  title={theaterMode ? "Exit Theater Mode" : "Expand to Theater Mode"}
-                  style={{ fontSize: 11, padding: "4px 8px", color: "var(--text-secondary)" }}
-                >
-                  {theaterMode ? "📱 Standard View" : "📺 Theater Mode"}
-                </button>
-                <a
-                  href={lesson.videoUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn btn-ghost btn-sm"
-                  style={{ fontSize: 11, padding: "4px 8px", color: "var(--text-muted)" }}
-                  title="Open in YouTube"
-                >
-                  ↗️ YouTube
-                </a>
-              </div>
-            </div>
+        {(lesson.videoId || lesson.videoUrl) && (
+          <VideoPlayer
+            source={(() => {
+              if (lesson.videoId) {
+                const cleanId = lesson.videoId.match(/[\w-]{11}/)?.[0] || lesson.videoId;
+                return { type: "youtube", videoId: cleanId };
+              }
+              const url = lesson.videoUrl || "";
+              const ytMatch = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
+              if (ytMatch && ytMatch[1]) {
+                return { type: "youtube", videoId: ytMatch[1] };
+              }
+              return { type: "local", src: url };
+            })()}
+            title={lesson.title}
+            onNavigate={(dir) => {
+              const currentIndex = courseLessons.findIndex((l: any) => l.id === lesson.id);
+              const prevWithVideo = currentIndex > 0
+                ? [...courseLessons.slice(0, currentIndex)].reverse().find((l: any) => !!(l.videoId || l.videoUrl))
+                : null;
+              const nextWithVideo = currentIndex >= 0 && currentIndex < courseLessons.length - 1
+                ? courseLessons.slice(currentIndex + 1).find((l: any) => !!(l.videoId || l.videoUrl))
+                : null;
 
-            {/* Video Screen */}
-            <div style={{ position: "relative", width: "100%", paddingTop: theaterMode ? "60%" : "56.25%", background: "#000" }}>
-              {embedUrl ? (
-                <iframe
-                  src={embedUrl}
-                  title={lesson.title}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    width: "100%",
-                    height: "100%",
-                    border: "none"
-                  }}
-                />
-              ) : (
-                <video
-                  controls
-                  controlsList="nodownload"
-                  src={lesson.videoUrl}
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    width: "100%",
-                    height: "100%"
-                  }}
-                >
-                  Your browser does not support HTML5 video streaming.
-                </video>
-              )}
-            </div>
-          </div>
+              if (dir === "prev") {
+                const targetId = prevWithVideo?.id || lesson.prevLesson?.id;
+                if (targetId) onNavigate("lesson", targetId);
+              } else if (dir === "next") {
+                const targetId = nextWithVideo?.id || lesson.nextLesson?.id;
+                if (targetId) onNavigate("lesson", targetId);
+              }
+            }}
+          />
         )}
 
         {/* Markdown Content */}
