@@ -75,6 +75,19 @@ export function AdminPanelPage({ user, onToast }: { user: User | null; onToast: 
     difficulty: "Beginner", estimatedHours: 10, xpReward: 500, isPublished: true, tags: ""
   });
 
+  // Lessons management modal & direct video adding
+  const [showLessonModal, setShowLessonModal] = useState(false);
+  const [selectedCourseForLessons, setSelectedCourseForLessons] = useState<any | null>(null);
+  const [courseLessons, setCourseLessons] = useState<any[]>([]);
+  const [lessonsLoading, setLessonsLoading] = useState(false);
+  const [addingLesson, setAddingLesson] = useState(false);
+  const [lessonForm, setLessonForm] = useState({
+    title: "",
+    videoUrl: "",
+    durationMinutes: 15,
+    content: ""
+  });
+
   // Editor
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(defaultFormState());
@@ -114,7 +127,7 @@ export function AdminPanelPage({ user, onToast }: { user: User | null; onToast: 
   const [userRoleFilter, setUserRoleFilter] = useState("");
   const [showUserModal, setShowUserModal] = useState(false);
   const [editingUser, setEditingUser] = useState<any>(null);
-  const [userForm, setUserForm] = useState({ name: "", email: "", role: "STUDENT", bio: "" });
+  const [userForm, setUserForm] = useState({ name: "", email: "", username: "", password: "", role: "STUDENT", bio: "" });
   const [userActionLoading, setUserActionLoading] = useState<string | null>(null);
 
   // Contests Management
@@ -259,23 +272,50 @@ export function AdminPanelPage({ user, onToast }: { user: User | null; onToast: 
     setUserForm({
       name: u.name || "",
       email: u.email || "",
+      username: u.username || "",
+      password: "",
       role: u.role || "STUDENT",
       bio: u.bio || ""
     });
     setShowUserModal(true);
   };
 
+  const openCreateUser = () => {
+    setEditingUser(null);
+    setUserForm({
+      name: "",
+      email: "",
+      username: "",
+      password: "",
+      role: "STUDENT",
+      bio: ""
+    });
+    setShowUserModal(true);
+  };
+
   const handleSaveUser = async () => {
-    if (!editingUser) return;
+    if (!userForm.email.trim()) {
+      onToast("Email is required", "error");
+      return;
+    }
+    if (!editingUser && !userForm.password.trim()) {
+      onToast("Password is required for new accounts", "error");
+      return;
+    }
     try {
       setUserActionLoading("save");
-      await api.put(`/api/v1/admin/users/${editingUser.id}`, userForm);
-      onToast(`User @${editingUser.username} updated successfully ✅`, "success");
+      if (editingUser) {
+        await api.put(`/api/v1/admin/users/${editingUser.id}`, userForm);
+        onToast(`User @${editingUser.username} updated successfully ✅`, "success");
+      } else {
+        await api.post("/api/v1/admin/users", userForm);
+        onToast(`User ${userForm.email} created successfully 🚀`, "success");
+      }
       setShowUserModal(false);
       setEditingUser(null);
       loadAdminUsers();
     } catch (e: any) {
-      onToast(e.response?.data?.error || "Failed to update user", "error");
+      onToast(e.response?.data?.error || "Failed to save user", "error");
     } finally {
       setUserActionLoading(null);
     }
@@ -319,12 +359,15 @@ export function AdminPanelPage({ user, onToast }: { user: User | null; onToast: 
     }
   };
 
-  // Load Contests
   const loadAdminContests = useCallback(() => {
     setContestLoading(true);
-    api.get("/api/v1/contests")
+    api.get("/api/v1/admin/contests")
       .then(r => setAdminContests(r.data.contests || []))
-      .catch(() => onToast("Failed to load contests", "error"))
+      .catch(() => {
+        api.get("/api/v1/contests")
+          .then(r => setAdminContests(r.data.contests || []))
+          .catch(() => onToast("Failed to load contests", "error"));
+      })
       .finally(() => setContestLoading(false));
   }, [onToast]);
 
@@ -542,6 +585,67 @@ export function AdminPanelPage({ user, onToast }: { user: User | null; onToast: 
     } catch { onToast("Failed to update status", "error"); }
   };
 
+  const openCourseLessons = async (c: any) => {
+    setSelectedCourseForLessons(c);
+    setShowLessonModal(true);
+    setLessonsLoading(true);
+    setLessonForm({ title: "", videoUrl: "", durationMinutes: 15, content: "" });
+    try {
+      const res = await api.get(`/api/v1/admin/courses/${c.id}/lessons`);
+      setCourseLessons(res.data.lessons || []);
+    } catch (e: any) {
+      onToast(e.response?.data?.error || "Failed to load lessons", "error");
+      setCourseLessons([]);
+    } finally {
+      setLessonsLoading(false);
+    }
+  };
+
+  const handleAddLesson = async () => {
+    if (!selectedCourseForLessons) return;
+    if (!lessonForm.title.trim()) {
+      onToast("Lesson title is required", "error");
+      return;
+    }
+    if (!lessonForm.videoUrl.trim()) {
+      onToast("Video or Playlist URL is required", "error");
+      return;
+    }
+    try {
+      setAddingLesson(true);
+      await api.post(`/api/v1/admin/courses/${selectedCourseForLessons.id}/lessons`, {
+        title: lessonForm.title,
+        videoUrl: lessonForm.videoUrl,
+        durationMinutes: Number(lessonForm.durationMinutes) || 15,
+        content: lessonForm.content
+      });
+      onToast("Lesson / Video added successfully! 🎬", "success");
+      setLessonForm({ title: "", videoUrl: "", durationMinutes: 15, content: "" });
+      
+      // Reload lessons list
+      const res = await api.get(`/api/v1/admin/courses/${selectedCourseForLessons.id}/lessons`);
+      setCourseLessons(res.data.lessons || []);
+      loadAdminCourses(); // update counts
+    } catch (e: any) {
+      onToast(e.response?.data?.error || "Failed to add lesson", "error");
+    } finally {
+      setAddingLesson(false);
+    }
+  };
+
+  const handleDeleteLesson = async (lessonId: string, title: string) => {
+    if (!selectedCourseForLessons) return;
+    if (!confirm(`Are you sure you want to remove lesson "${title}"?`)) return;
+    try {
+      await api.delete(`/api/v1/admin/courses/${selectedCourseForLessons.id}/lessons/${lessonId}`);
+      onToast("Lesson removed 🗑️", "info");
+      setCourseLessons(prev => prev.filter(l => l.id !== lessonId));
+      loadAdminCourses();
+    } catch (e: any) {
+      onToast(e.response?.data?.error || "Failed to delete lesson", "error");
+    }
+  };
+
   // Populate editor from problem
   const startEdit = async (problemId: string) => {
     const r = await api.get(`/api/v1/problems/${problemId}`);
@@ -739,24 +843,24 @@ export function AdminPanelPage({ user, onToast }: { user: User | null; onToast: 
       {/* Header */}
       <div style={{ background: "var(--bg-secondary)", borderBottom: "1px solid var(--border)", padding: "16px 24px", display: "flex", alignItems: "center", gap: 16 }}>
         <div style={{ background: user?.role === "DEVELOPER" ? "linear-gradient(135deg, #10b981, #6366f1)" : "linear-gradient(135deg, #6366f1, #8b5cf6)", borderRadius: 10, padding: "8px 12px", fontSize: 20 }}>
-          {user?.role === "DEVELOPER" ? "🚀" : "🛠️"}
+          {user?.role === "DEVELOPER" ? "👑" : "🛠️"}
         </div>
         <div>
           <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: -0.5 }}>
-            {user?.role === "DEVELOPER" ? "Developer & Content Management Console" : "Admin Management Console"}
+            {user?.role === "DEVELOPER" ? "👑 Lead Developer & Platform Control Center" : "Admin Management Console"}
           </div>
           <div style={{ fontSize: 12, color: "var(--text-muted)" }}>
-            Full Problem Authoring, Test Cases, Revisions, Contests, Courses & User Analytics Control
+            {user?.role === "DEVELOPER" ? "Supreme Administrative Privileges, Course & Video Studio, Infrastructure, User Governance" : "Course, Problem & Contest Operations (Limited Admin Powers)"}
           </div>
         </div>
         <div style={{ marginLeft: "auto", display: "flex", gap: 8, alignItems: "center" }}>
           {user?.role === "DEVELOPER" ? (
-            <span className="badge badge-easy" style={{ padding: "6px 12px", fontWeight: 700 }}>
-              ⚡ Super Developer Access
+            <span className="badge badge-easy" style={{ padding: "6px 12px", fontWeight: 800, letterSpacing: 0.3, background: "linear-gradient(135deg, rgba(16,185,129,0.2), rgba(99,102,241,0.2))", border: "1px solid #10b981", color: "#10b981" }}>
+              👑 Lead Developer (Supreme Access)
             </span>
           ) : (
             <span className="badge" style={{ background: "rgba(99,102,241,0.15)", color: "#818cf8", border: "1px solid rgba(99,102,241,0.3)" }}>
-              👤 {user?.role || "STAFF"}
+              👤 {user?.role || "STAFF"} (Limited Powers)
             </span>
           )}
         </div>
@@ -1387,6 +1491,9 @@ export function AdminPanelPage({ user, onToast }: { user: User | null; onToast: 
                         </td>
                         <td>
                           <div style={{ display: "flex", gap: 4 }}>
+                            <button className="btn btn-ghost btn-sm" style={{ fontSize: 11, color: "var(--accent-primary)" }} onClick={() => openCourseLessons(c)}>
+                              📹 Lessons
+                            </button>
                             <button className="btn btn-ghost btn-sm" style={{ fontSize: 11 }} onClick={() => openEditCourse(c)}>✏️ Edit</button>
                             <button className="btn btn-ghost btn-sm" style={{ fontSize: 11 }} onClick={() => handleTogglePublishCourse(c)}>
                               {c.isPublished ? "⬇️ Unpub" : "🚀 Pub"}
@@ -1475,6 +1582,140 @@ export function AdminPanelPage({ user, onToast }: { user: User | null; onToast: 
                       <button className="btn btn-secondary btn-sm" onClick={() => setShowCourseModal(false)}>Cancel</button>
                       <button className="btn btn-primary btn-sm" onClick={handleSaveCourse}>{editingCourseId ? "💾 Update Course" : "🎉 Create Course"}</button>
                     </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Manage Lessons / Direct Video Adding Modal */}
+            {showLessonModal && selectedCourseForLessons && (
+              <div className="modal-backdrop" onClick={() => setShowLessonModal(false)}>
+                <div className="modal" style={{ maxWidth: 840, width: "95%", maxHeight: "90vh", display: "flex", flexDirection: "column" }} onClick={e => e.stopPropagation()}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, borderBottom: "1px solid var(--border-light)", paddingBottom: 12 }}>
+                    <div>
+                      <div className="modal-title" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <span>📹 Lessons & Videos:</span>
+                        <span style={{ color: "var(--accent-primary)" }}>{selectedCourseForLessons.title}</span>
+                      </div>
+                      <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>
+                        Directly add YouTube lectures or video URLs to this course syllabus ({courseLessons.length} total lessons)
+                      </div>
+                    </div>
+                    <button onClick={() => setShowLessonModal(false)} style={{ background: "none", border: "none", fontSize: 22, cursor: "pointer", color: "var(--text-muted)" }}>✕</button>
+                  </div>
+
+                  {/* Add Video Lesson Form */}
+                  <div style={{ background: "var(--bg-tertiary)", padding: "16px", borderRadius: "var(--radius-md)", border: "1px solid var(--border-light)", marginBottom: 16 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}>
+                      <span>⚡ Add Direct Video / Lecture</span>
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1.4fr 2fr 100px auto", gap: 10, alignItems: "flex-end" }}>
+                      <div>
+                        <label style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", display: "block", marginBottom: 4 }}>Lesson Title *</label>
+                        <input
+                          className="input"
+                          placeholder="e.g. Lecture 1: Java Basics"
+                          value={lessonForm.title}
+                          onChange={e => setLessonForm(f => ({ ...f, title: e.target.value }))}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", display: "block", marginBottom: 4 }}>Video / YouTube URL *</label>
+                        <input
+                          className="input"
+                          placeholder="https://www.youtube.com/watch?v=... or playlist item"
+                          value={lessonForm.videoUrl}
+                          onChange={e => setLessonForm(f => ({ ...f, videoUrl: e.target.value }))}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", display: "block", marginBottom: 4 }}>Duration</label>
+                        <input
+                          className="input"
+                          type="number"
+                          placeholder="Mins"
+                          value={lessonForm.durationMinutes}
+                          onChange={e => setLessonForm(f => ({ ...f, durationMinutes: Number(e.target.value) }))}
+                        />
+                      </div>
+                      <div>
+                        <button
+                          className="btn btn-primary"
+                          onClick={handleAddLesson}
+                          disabled={addingLesson}
+                          style={{ whiteSpace: "nowrap" }}
+                        >
+                          {addingLesson ? "⏳ Adding..." : "➕ Add Video"}
+                        </button>
+                      </div>
+                    </div>
+                    <div style={{ marginTop: 8 }}>
+                      <input
+                        className="input"
+                        placeholder="Optional: Brief summary notes or code references for this lesson..."
+                        value={lessonForm.content}
+                        onChange={e => setLessonForm(f => ({ ...f, content: e.target.value }))}
+                        style={{ fontSize: 12 }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Lessons List */}
+                  <div style={{ flex: 1, overflowY: "auto", border: "1px solid var(--border-light)", borderRadius: "var(--radius-md)" }}>
+                    {lessonsLoading ? (
+                      <div style={{ padding: 32, textAlign: "center", color: "var(--text-muted)" }}>⏳ Loading syllabus lessons...</div>
+                    ) : courseLessons.length === 0 ? (
+                      <div style={{ padding: 40, textAlign: "center", color: "var(--text-muted)" }}>
+                        No lessons added yet. Use the form above to add the first video lecture!
+                      </div>
+                    ) : (
+                      <table className="problem-table" style={{ width: "100%", fontSize: 12 }}>
+                        <thead>
+                          <tr style={{ background: "var(--bg-tertiary)" }}>
+                            <th style={{ width: 50 }}>#</th>
+                            <th>Lesson Title</th>
+                            <th>Video Source</th>
+                            <th>Duration</th>
+                            <th style={{ textAlign: "right", width: 80 }}>Action</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {courseLessons.map((l: any, idx: number) => (
+                            <tr key={l.id || idx}>
+                              <td style={{ fontWeight: 700, color: "var(--text-muted)" }}>{l.order ?? idx + 1}</td>
+                              <td>
+                                <div style={{ fontWeight: 600 }}>{l.title}</div>
+                                {l.content && <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{l.content.slice(0, 70)}...</div>}
+                              </td>
+                              <td>
+                                {l.videoUrl ? (
+                                  <a href={l.videoUrl} target="_blank" rel="noreferrer" style={{ color: "var(--accent-primary)", display: "inline-flex", alignItems: "center", gap: 4, textDecoration: "none" }}>
+                                    <span>▶️</span> {l.videoUrl.length > 35 ? l.videoUrl.slice(0, 35) + "..." : l.videoUrl}
+                                  </a>
+                                ) : (
+                                  <span style={{ color: "var(--text-muted)" }}>No video link</span>
+                                )}
+                              </td>
+                              <td style={{ color: "var(--text-muted)" }}>{l.durationMinutes || 15} mins</td>
+                              <td style={{ textAlign: "right" }}>
+                                <button
+                                  className="btn btn-ghost btn-sm"
+                                  style={{ color: "var(--accent-red)", padding: "2px 8px" }}
+                                  onClick={() => handleDeleteLesson(l.id, l.title)}
+                                  title="Delete lesson"
+                                >
+                                  🗑️
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
+
+                  <div style={{ marginTop: 16, display: "flex", justifyContent: "flex-end" }}>
+                    <button className="btn btn-secondary btn-sm" onClick={() => setShowLessonModal(false)}>Close</button>
                   </div>
                 </div>
               </div>
@@ -1574,13 +1815,21 @@ export function AdminPanelPage({ user, onToast }: { user: User | null; onToast: 
                   Total {usersTotal} registered users • Manage roles, edit profiles, and suspend/restrict accounts
                 </div>
               </div>
-              <button 
-                className="btn btn-secondary btn-sm" 
-                onClick={loadAdminUsers} 
-                disabled={usersLoading}
-              >
-                {usersLoading ? "⏳ Refreshing..." : "🔄 Refresh"}
-              </button>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={openCreateUser}
+                >
+                  ➕ Create User
+                </button>
+                <button 
+                  className="btn btn-secondary btn-sm" 
+                  onClick={loadAdminUsers} 
+                  disabled={usersLoading}
+                >
+                  {usersLoading ? "⏳ Refreshing..." : "🔄 Refresh"}
+                </button>
+              </div>
             </div>
 
             <div style={{ marginBottom: 16, display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -1755,19 +2004,35 @@ export function AdminPanelPage({ user, onToast }: { user: User | null; onToast: 
               )}
             </div>
 
-            {/* User Edit Modal */}
-            {showUserModal && editingUser && (
+            {/* User Edit / Create Modal */}
+            {showUserModal && (
               <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.65)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 16 }}>
                 <div className="card" style={{ maxWidth: 500, width: "100%", maxHeight: "90vh", overflowY: "auto" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, borderBottom: "1px solid var(--border-light)", paddingBottom: 12 }}>
                     <div>
-                      <h3 style={{ fontSize: 16, fontWeight: 800 }}>✏️ Edit User @{editingUser.username}</h3>
-                      <div style={{ fontSize: 11, color: "var(--text-muted)" }}>ID: {editingUser.id}</div>
+                      <h3 style={{ fontSize: 16, fontWeight: 800 }}>
+                        {editingUser ? `✏️ Edit User @${editingUser.username}` : "➕ Create New User Account"}
+                      </h3>
+                      {editingUser && (
+                        <div style={{ fontSize: 11, color: "var(--text-muted)" }}>ID: {editingUser.id}</div>
+                      )}
                     </div>
                     <button className="btn-icon" onClick={() => setShowUserModal(false)}>✕</button>
                   </div>
 
                   <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                    {!editingUser && (
+                      <div>
+                        <label style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" }}>Username *</label>
+                        <input
+                          className="input"
+                          placeholder="e.g. johndoe"
+                          value={userForm.username}
+                          onChange={e => setUserForm(f => ({ ...f, username: e.target.value }))}
+                        />
+                      </div>
+                    )}
+
                     <div>
                       <label style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" }}>Full Name</label>
                       <input
@@ -1779,7 +2044,7 @@ export function AdminPanelPage({ user, onToast }: { user: User | null; onToast: 
                     </div>
 
                     <div>
-                      <label style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" }}>Email Address</label>
+                      <label style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" }}>Email Address *</label>
                       <input
                         className="input"
                         type="email"
@@ -1789,9 +2054,22 @@ export function AdminPanelPage({ user, onToast }: { user: User | null; onToast: 
                       />
                     </div>
 
+                    {!editingUser && (
+                      <div>
+                        <label style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" }}>Initial Password *</label>
+                        <input
+                          className="input"
+                          type="password"
+                          placeholder="Minimum 6 characters"
+                          value={userForm.password}
+                          onChange={e => setUserForm(f => ({ ...f, password: e.target.value }))}
+                        />
+                      </div>
+                    )}
+
                     <div>
                       <label style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" }}>Role / Privilege Level</label>
-                      {user?.role === "ADMIN" && editingUser.role === "DEVELOPER" ? (
+                      {editingUser && user?.role === "ADMIN" && editingUser.role === "DEVELOPER" ? (
                         <div style={{ padding: "8px 12px", background: "var(--bg-tertiary)", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", fontSize: 12, color: "var(--text-muted)", marginTop: 4 }}>
                           🔒 <strong>Developer Role Protected:</strong> Admins cannot modify or revoke Developer privileges. (Only Developers have supreme role management access).
                         </div>
@@ -1800,11 +2078,11 @@ export function AdminPanelPage({ user, onToast }: { user: User | null; onToast: 
                           className="input"
                           value={userForm.role}
                           onChange={e => setUserForm(f => ({ ...f, role: e.target.value }))}
-                          disabled={user?.role === "ADMIN" && editingUser.role === "DEVELOPER"}
+                          disabled={Boolean(editingUser && user?.role === "ADMIN" && editingUser.role === "DEVELOPER")}
                         >
                           <option value="STUDENT">Student (Standard Learner)</option>
                           {(user?.role === "DEVELOPER" || user?.role === "ADMIN") && (
-                            <option value="DEVELOPER" disabled={user?.role === "ADMIN" && editingUser.role !== "DEVELOPER"}>
+                            <option value="DEVELOPER" disabled={Boolean(user?.role === "ADMIN" && editingUser?.role !== "DEVELOPER")}>
                               Developer (Workspace, Engine & Supreme Privileges)
                             </option>
                           )}
@@ -1834,7 +2112,11 @@ export function AdminPanelPage({ user, onToast }: { user: User | null; onToast: 
                         disabled={userActionLoading === "save"}
                         onClick={handleSaveUser}
                       >
-                        {userActionLoading === "save" ? "💾 Saving..." : "💾 Save Changes"}
+                        {userActionLoading === "save"
+                          ? "💾 Saving..."
+                          : editingUser
+                          ? "💾 Save Changes"
+                          : "🚀 Create Account"}
                       </button>
                     </div>
                   </div>

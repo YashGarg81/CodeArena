@@ -48,17 +48,17 @@ const inMemoryStore: Record<string, any[]> = {
   user: [
     {
       id: "usr_admin_1",
-      name: "Admin User",
+      name: "CodeArena Administrator",
       email: "admin@codearena.dev",
       username: "admin",
-      password: "$argon2id$v=19$m=65536,t=2,p=1$lNDbwp9EgEM88oHRcAPapPFn8Xx1hbtA/8D4dZSfuJc$A6nRGA8TMMmb01eEc6Z7oCXruZ5/yiWImnany4xhOP4",
+      password: "$argon2id$v=19$m=65536,t=2,p=1$JrYe/CIsywKwJc2xZEbBQRgaPkta6mwZJmB1MWjz6RQ$mgWjDpnPRuGhJHF/H6OnT5Qh5l7AnYh1XJxgWQVMHA0",
       role: "ADMIN",
       avatar: "https://avatars.githubusercontent.com/u/583231?v=4",
-      bio: "CodeArena Lead Engineer",
-      contestRating: 1850,
-      xp: 2400,
-      level: 8,
-      streak: 12,
+      bio: "CodeArena Platform Administrator & System Architect",
+      contestRating: 2100,
+      xp: 5000,
+      level: 15,
+      streak: 30,
       isEmailVerified: true,
       tokenVersion: 0,
       twoFactorEnabled: false,
@@ -68,18 +68,18 @@ const inMemoryStore: Record<string, any[]> = {
       updatedAt: new Date()
     },
     {
-      id: "usr_demo_1",
-      name: "Demo Developer",
-      email: "demo@codearena.dev",
-      username: "demo",
-      password: "$argon2id$v=19$m=65536,t=2,p=1$lNDbwp9EgEM88oHRcAPapPFn8Xx1hbtA/8D4dZSfuJc$A6nRGA8TMMmb01eEc6Z7oCXruZ5/yiWImnany4xhOP4",
+      id: "usr_dev_1",
+      name: "Lead Developer",
+      email: "developer@codearena.dev",
+      username: "developer",
+      password: "$argon2id$v=19$m=65536,t=2,p=1$ACcqx+Hkw/vrSDAZFLMpwkdHnvty8IvM7OUrULqmTrw$QqzZyo9BsdBybEDNPYZfPFsVFAlXfYGLaUDjTmA/wF4",
       role: "DEVELOPER",
       avatar: "https://lh3.googleusercontent.com/a/default-user",
-      bio: "Full Stack Software Engineer",
-      contestRating: 1520,
-      xp: 850,
-      level: 4,
-      streak: 5,
+      bio: "Core Engine Developer & CodeArena Engineer",
+      contestRating: 1850,
+      xp: 2500,
+      level: 8,
+      streak: 15,
       isEmailVerified: true,
       tokenVersion: 0,
       twoFactorEnabled: false,
@@ -89,86 +89,23 @@ const inMemoryStore: Record<string, any[]> = {
       updatedAt: new Date()
     },
     {
-      id: "usr_student_1",
-      name: "Standard Student",
+      id: "usr_user_1",
+      name: "CodeArena Student",
       email: "user@codearena.dev",
       username: "user",
-      password: "$argon2id$v=19$m=65536,t=2,p=1$lNDbwp9EgEM88oHRcAPapPFn8Xx1hbtA/8D4dZSfuJc$A6nRGA8TMMmb01eEc6Z7oCXruZ5/yiWImnany4xhOP4",
+      password: "$argon2id$v=19$m=65536,t=2,p=1$K/USjHVwyLaX38o07Uat/1cfmSjWEGHDapv4hmnt5YM$56KrBGEHqoYml7Zt0NItZ1KMCs+Wkjr4wGRi0qy6w9o",
       role: "STUDENT",
       avatar: "https://avatars.githubusercontent.com/u/9919?v=4",
-      bio: "Algorithmic Problem Solver",
+      bio: "Competitive Programmer & Algorithmic Problem Solver",
       contestRating: 1200,
-      xp: 0,
+      xp: 100,
       level: 1,
-      streak: 0,
+      streak: 3,
       isEmailVerified: true,
       tokenVersion: 0,
       twoFactorEnabled: false,
       twoFactorSecret: null,
       twoFactorBackupCodes: [],
-    },
-    {
-      id: "usr_interviewer_1",
-      name: "Interviewer User",
-      email: "interviewer@codearena.dev",
-      username: "interviewer",
-      password: "$argon2id$v=19$m=65536,t=2,p=1$lNDbwp9EgEM88oHRcAPapPFn8Xx1hbtA/8D4dZSfuJc$A6nRGA8TMMmb01eEc6Z7oCXruZ5/yiWImnany4xhOP4",
-      role: "INTERVIEWER",
-      isEmailVerified: true,
-      tokenVersion: 0,
-      isSuspended: false,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      id: "usr_instructor_1",
-      name: "Instructor User",
-      email: "instructor@codearena.dev",
-      username: "instructor",
-      password: "$argon2id$v=19$m=65536,t=2,p=1$lNDbwp9EgEM88oHRcAPapPFn8Xx1hbtA/8D4dZSfuJc$A6nRGA8TMMmb01eEc6Z7oCXruZ5/yiWImnany4xhOP4",
-      role: "INSTRUCTOR",
-      isEmailVerified: true,
-      tokenVersion: 0,
-      isSuspended: false,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      id: "usr_moderator_1",
-      name: "Moderator User",
-      email: "moderator@codearena.dev",
-      username: "moderator",
-      password: "$argon2id$v=19$m=65536,t=2,p=1$lNDbwp9EgEM88oHRcAPapPFn8Xx1hbtA/8D4dZSfuJc$A6nRGA8TMMmb01eEc6Z7oCXruZ5/yiWImnany4xhOP4",
-      role: "MODERATOR",
-      isEmailVerified: true,
-      tokenVersion: 0,
-      isSuspended: false,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      id: "usr_contest_admin_1",
-      name: "Contest Admin",
-      email: "contest_admin@codearena.dev",
-      username: "contest_admin",
-      password: "$argon2id$v=19$m=65536,t=2,p=1$lNDbwp9EgEM88oHRcAPapPFn8Xx1hbtA/8D4dZSfuJc$A6nRGA8TMMmb01eEc6Z7oCXruZ5/yiWImnany4xhOP4",
-      role: "CONTEST_ADMIN",
-      isEmailVerified: true,
-      tokenVersion: 0,
-      isSuspended: false,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      id: "usr_problem_admin_1",
-      name: "Problem Admin",
-      email: "problem_admin@codearena.dev",
-      username: "problem_admin",
-      password: "$argon2id$v=19$m=65536,t=2,p=1$lNDbwp9EgEM88oHRcAPapPFn8Xx1hbtA/8D4dZSfuJc$A6nRGA8TMMmb01eEc6Z7oCXruZ5/yiWImnany4xhOP4",
-      role: "PROBLEM_ADMIN",
-      isEmailVerified: true,
-      tokenVersion: 0,
-      isSuspended: false,
       createdAt: new Date(),
       updatedAt: new Date()
     }
@@ -263,6 +200,11 @@ const inMemoryStore: Record<string, any[]> = {
       ]
     }
   ],
+  lesson: [],
+  enrollment: [],
+  lessonprogress: [],
+  lessonquiz: [],
+  lessonquizquestion: [],
   submission: [],
   submissions: [],
   note: [],
@@ -458,6 +400,9 @@ const handler: ProxyHandler<any> = {
                       if (queryOptions.where.userId_problemId) {
                         return item.userId === queryOptions.where.userId_problemId.userId && item.problemId === queryOptions.where.userId_problemId.problemId;
                       }
+                      if (queryOptions.where.userId_courseId) {
+                        return item.userId === queryOptions.where.userId_courseId.userId && item.courseId === queryOptions.where.userId_courseId.courseId;
+                      }
                       if (queryOptions.where.userId && queryOptions.where.problemId) {
                         return item.userId === queryOptions.where.userId && item.problemId === queryOptions.where.problemId;
                       }
@@ -487,6 +432,47 @@ const handler: ProxyHandler<any> = {
                         }
                       };
                     }
+                    if (modelName === "course") {
+                      const allLessons: any[] = inMemoryStore["lesson"] || [];
+                      const allEnrollments: any[] = inMemoryStore["enrollment"] || [];
+                      // Use embedded lessons if present, else from lesson store
+                      const embeddedLessons = Array.isArray(found.lessons) ? found.lessons : [];
+                      const storeLessons = allLessons.filter((l: any) => l.courseId === found.id);
+                      const lessons = embeddedLessons.length > 0 ? embeddedLessons : storeLessons;
+                      const lessonsSorted = [...lessons].sort((a: any, b: any) => (a.order || 0) - (b.order || 0));
+                      const enrollments = allEnrollments.filter((e: any) => e.courseId === found.id);
+                      return {
+                        ...found,
+                        lessons: lessonsSorted,
+                        enrollments: enrollments,
+                        _count: {
+                          lessons: lessonsSorted.length,
+                          enrollments: enrollments.length
+                        }
+                      };
+                    }
+                    if (modelName === "lesson") {
+                      // Inject nested `course` with its lessons for the lesson detail endpoint
+                      const allCourses: any[] = inMemoryStore["course"] || [];
+                      const allLessons: any[] = inMemoryStore["lesson"] || [];
+                      const parentCourse = allCourses.find((c: any) => c.id === found.courseId);
+                      if (parentCourse) {
+                        const courseLessons = allLessons.filter((l: any) => l.courseId === parentCourse.id)
+                          .sort((a: any, b: any) => (a.order || 0) - (b.order || 0))
+                          .map((l: any) => ({ id: l.id, title: l.title, order: l.order }));
+                        return {
+                          ...found,
+                          progress: [],
+                          quiz: null,
+                          course: {
+                            id: parentCourse.id,
+                            slug: parentCourse.slug,
+                            title: parentCourse.title,
+                            lessons: courseLessons
+                          }
+                        };
+                      }
+                    }
                     return found;
                   }
                   return list[0] || null;
@@ -496,7 +482,7 @@ const handler: ProxyHandler<any> = {
                   let res = [...list];
                   const where = queryOptions.where || {};
                   if (where.isPublished !== undefined) {
-                    res = res.filter(item => item.isPublished === where.isPublished || item.isPublished === undefined);
+                    res = res.filter(item => item.isPublished === where.isPublished);
                   }
                   if (where.status) res = res.filter(item => item.status === where.status);
                   if (where.difficulty) res = res.filter(item => (item.difficulty || "").toLowerCase() === String(where.difficulty).toLowerCase());
@@ -508,6 +494,7 @@ const handler: ProxyHandler<any> = {
                   }
                   if (where.role) res = res.filter(item => item.role === where.role);
                   if (where.userId) res = res.filter(item => item.userId === where.userId);
+                  if (where.courseId) res = res.filter(item => item.courseId === where.courseId);
                   if (where.problemId) res = res.filter(item => item.problemId === where.problemId);
                   if (where.email) res = res.filter(item => item.email?.toLowerCase() === String(where.email).toLowerCase());
                   if (where.isPublic !== undefined) res = res.filter(item => item.isPublic === where.isPublic);
@@ -539,8 +526,12 @@ const handler: ProxyHandler<any> = {
                       })
                     );
                   }
-                  if (queryOptions.orderBy?.createdAt === "desc") {
-                    res.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+                  if (queryOptions.orderBy) {
+                    const orderBy = Array.isArray(queryOptions.orderBy) ? queryOptions.orderBy[0] : queryOptions.orderBy;
+                    if (orderBy?.createdAt === "desc") res.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+                    else if (orderBy?.createdAt === "asc") res.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+                    else if (orderBy?.order === "asc") res.sort((a, b) => (a.order || 0) - (b.order || 0));
+                    else if (orderBy?.order === "desc") res.sort((a, b) => (b.order || 0) - (a.order || 0));
                   }
                   if (queryOptions.skip) res = res.slice(queryOptions.skip);
                   if (queryOptions.take) res = res.slice(0, queryOptions.take);
@@ -554,6 +545,23 @@ const handler: ProxyHandler<any> = {
                         submissions: item.solveCount || 0
                       }
                     }));
+                  }
+
+                  if (modelName === "course") {
+                    const allLessons: any[] = inMemoryStore["lesson"] || [];
+                    const allEnrollments: any[] = inMemoryStore["enrollment"] || [];
+                    res = res.map(item => {
+                      // Count lessons from course's own lessons array OR from global lesson store
+                      const lessonCount = Array.isArray(item.lessons)
+                        ? item.lessons.length
+                        : allLessons.filter((l: any) => l.courseId === item.id).length;
+                      const enrollmentCount = allEnrollments.filter((e: any) => e.courseId === item.id).length;
+                      return {
+                        ...item,
+                        _count: { lessons: lessonCount, enrollments: enrollmentCount },
+                        enrollments: [] // Default empty - will be populated if userId filter provided
+                      };
+                    });
                   }
 
                   return res;
@@ -625,13 +633,19 @@ const handler: ProxyHandler<any> = {
                 }
 
                 if (methodKey === "update" || methodKey === "upsert") {
-                  const rawData = queryOptions.data || queryOptions.update || queryOptions.create || {};
                   const where = queryOptions.where || {};
+                  const updateData = methodKey === "upsert" ? (queryOptions.update || {}) : (queryOptions.data || {});
+                  const createData = methodKey === "upsert" ? (queryOptions.create || {}) : (queryOptions.data || {});
+                  const rawData = updateData;
                   const existingIndex = list.findIndex(i => {
                     if (where.id && i.id === where.id) return true;
                     if (where.slug && i.slug === where.slug) return true;
                     if (where.email && i.email === where.email) return true;
                     if (where.username && i.username === where.username) return true;
+                    if (where.userId_courseId) return i.userId === where.userId_courseId.userId && i.courseId === where.userId_courseId.courseId;
+                    if (where.userId_problemId) return i.userId === where.userId_problemId.userId && i.problemId === where.userId_problemId.problemId;
+                    if (where.courseId_order) return i.courseId === where.courseId_order.courseId && i.order === where.courseId_order.order;
+                    if (where.lessonId && i.lessonId === where.lessonId) return true;
                     return false;
                   });
                   if (existingIndex >= 0) {
@@ -650,7 +664,7 @@ const handler: ProxyHandler<any> = {
                   }
                   const newItem = {
                     id: `${modelName}_${Date.now()}_${Math.floor(Math.random()*1000)}`,
-                    ...rawData,
+                    ...createData,
                     createdAt: new Date(),
                     updatedAt: new Date()
                   };

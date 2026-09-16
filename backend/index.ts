@@ -18,6 +18,7 @@ import { sanitizeTestResults, sanitizeJudgeOutput, toOwnerSubmissionView, toPubl
 import { auditService } from "./src/audit";
 import { applyContestRatings } from "./src/ratingEngine";
 import { collaborationEngine } from "./src/collaboration";
+import { seedDsaInJavaCourse } from "./seed_dsa_java";
 
 function stripHtmlTags(input: string): string {
     return input.replace(/<[^>]*>/g, "").trim();
@@ -2082,6 +2083,12 @@ CREATE INDEX idx_urls_code ON urls(code);
         }
     }
 
+    try {
+        await seedDsaInJavaCourse();
+    } catch (err: any) {
+        console.error("Failed to seed DSA in Java course:", err.message);
+    }
+
     console.log(`Database seeded: ${problems.length} problems, ${achievements.length} achievements, ${courses.length} courses`);
 }
 
@@ -2127,7 +2134,7 @@ app.post("/api/v1/auth/signup", signupRateLimiter, async (req, res) => {
                 streak: 0
             }
         });
-        const token = jwt.sign({ userId: user.id, tokenVersion: user.tokenVersion || 0 }, JWT_SECRET, { expiresIn: "7d" });
+        const token = jwt.sign({ userId: user.id, role: user.role, email: user.email, tokenVersion: user.tokenVersion || 0 }, JWT_SECRET, { expiresIn: "7d" });
         res.json({
             token,
             user: {
@@ -2210,7 +2217,7 @@ app.post("/api/v1/auth/login", loginRateLimiter, async (req, res) => {
         // Reset failed login counter upon successful authentication
         await resetFailedLogins(cleanEmail);
 
-        const token = jwt.sign({ userId: user.id, tokenVersion: user.tokenVersion || 0 }, JWT_SECRET, { expiresIn: "7d" });
+        const token = jwt.sign({ userId: user.id, role: user.role, email: user.email, tokenVersion: user.tokenVersion || 0 }, JWT_SECRET, { expiresIn: "7d" });
         res.json({
             token,
             user: {
@@ -2298,7 +2305,7 @@ app.post("/api/v1/auth/social", authRateLimiter, async (req, res) => {
             return res.status(403).json({ error: "Account suspended. Please contact platform administration." });
         }
 
-        const token = jwt.sign({ userId: user.id, tokenVersion: user.tokenVersion || 0 }, JWT_SECRET, { expiresIn: "7d" });
+        const token = jwt.sign({ userId: user.id, role: user.role, email: user.email, tokenVersion: user.tokenVersion || 0 }, JWT_SECRET, { expiresIn: "7d" });
         res.json({
             token,
             user: {
@@ -2550,7 +2557,7 @@ app.post("/api/v1/auth/2fa/challenge", authRateLimiter, async (req, res) => {
             return res.status(400).json({ error: "Invalid two-factor authentication code" });
         }
 
-        const token = jwt.sign({ userId: user.id, tokenVersion: user.tokenVersion || 0 }, JWT_SECRET, { expiresIn: "7d" });
+        const token = jwt.sign({ userId: user.id, role: user.role, email: user.email, tokenVersion: user.tokenVersion || 0 }, JWT_SECRET, { expiresIn: "7d" });
         res.json({
             token,
             user: {
@@ -3417,6 +3424,103 @@ app.get("/api/v1/admin/users", adminAuth, async (req: any, res) => {
     } catch (err: any) { res.status(500).json({ error: safeErrorMessage(err, "Failed to fetch users") }); }
 });
 
+// POST /api/v1/admin/users — Create a new user account with specified role
+app.post("/api/v1/admin/users", adminAuth, async (req: any, res) => {
+    try {
+        const { name, email, username, password, role = "STUDENT", bio } = req.body;
+        if (!email || !password) {
+            return res.status(400).json({ error: "Email and password are required" });
+        }
+
+        const cleanEmail = String(email).trim().toLowerCase();
+        const cleanUsername = username ? String(username).trim().toLowerCase() : cleanEmail.split("@")[0];
+
+        // Hierarchy Enforcement: Admin cannot create a Developer account
+        if (req.userRole !== "DEVELOPER" && role === "DEVELOPER") {
+            return res.status(403).json({ error: "Access denied: Only Developers can provision Developer accounts." });
+        }
+
+        const existing = await prisma.user.findFirst({
+            where: {
+                OR: [
+                    { email: cleanEmail },
+                    { username: cleanUsername }
+                ]
+            }
+        });
+        if (existing) {
+            return res.status(409).json({ error: "A user with this email or username already exists" });
+        }
+
+        const passwordHash = await Bun.password.hash(password);
+        const newUser = await prisma.user.create({
+            data: {
+                name: name ? String(name).trim() : cleanUsername,
+                email: cleanEmail,
+                username: cleanUsername,
+                password: passwordHash,
+                role: role || "STUDENT",
+                bio: bio || null,
+                isEmailVerified: true,
+                contestRating: 1200,
+                xp: 0,
+                level: 1,
+                streak: 0,
+                tokenVersion: 0
+            } as any
+        });
+
+        await auditService.log("USER_CREATED_BY_ADMIN", {
+            userId: req.userId,
+            resourceId: newUser.id,
+            metadata: { targetEmail: cleanEmail, targetRole: newUser.role },
+            ipAddress: req.ip,
+            userAgent: req.headers["user-agent"]
+        });
+
+        res.status(201).json({ success: true, user: newUser });
+    } catch (err: any) {
+        res.status(500).json({ error: safeErrorMessage(err, "Failed to create user") });
+    }
+});
+
+// POST /api/v1/admin/users/:userId/delete — Permanently delete user
+app.post("/api/v1/admin/users/:userId/delete", adminAuth, async (req: any, res) => {
+    try {
+        const targetUserId = req.params.userId;
+        const user = await prisma.user.findUnique({ where: { id: targetUserId } });
+        if (!user) return res.status(404).json({ error: "User not found" });
+
+        // Hierarchy Enforcement: Admin cannot delete a Developer
+        if (req.userRole !== "DEVELOPER" && user.role === "DEVELOPER") {
+            return res.status(403).json({ error: "Access denied: Admins cannot delete or remove a Developer account." });
+        }
+
+        if (req.userId === targetUserId) {
+            return res.status(400).json({ error: "You cannot delete your own account from the admin console." });
+        }
+
+        // Delete user's sessions & related records
+        await prisma.session.deleteMany({ where: { userId: targetUserId } }).catch(() => {});
+        await prisma.refreshToken.deleteMany({ where: { userId: targetUserId } }).catch(() => {});
+        await prisma.enrollment.deleteMany({ where: { userId: targetUserId } }).catch(() => {});
+        await prisma.lessonProgress.deleteMany({ where: { userId: targetUserId } }).catch(() => {});
+        await prisma.user.delete({ where: { id: targetUserId } });
+
+        await auditService.log("USER_DELETED_BY_ADMIN", {
+            userId: req.userId,
+            resourceId: targetUserId,
+            metadata: { targetUsername: user.username, targetEmail: user.email, targetRole: user.role },
+            ipAddress: req.ip,
+            userAgent: req.headers["user-agent"]
+        });
+
+        res.json({ success: true, message: `User @${user.username} deleted permanently.` });
+    } catch (err: any) {
+        res.status(500).json({ error: safeErrorMessage(err, "Failed to delete user") });
+    }
+});
+
 // POST /api/v1/admin/users/:userId/suspend — Suspend user
 app.post("/api/v1/admin/users/:userId/suspend", adminAuth, async (req: any, res) => {
     try {
@@ -3677,7 +3781,109 @@ app.delete("/api/v1/admin/courses/:id", adminAuth, async (req: any, res) => {
     } catch (err: any) { res.status(500).json({ error: safeErrorMessage(err) }); }
 });
 
+// GET /api/v1/admin/courses/:id/lessons — Get all lessons for a course in admin
+app.get("/api/v1/admin/courses/:id/lessons", adminAuth, async (req: any, res) => {
+    const { id } = req.params;
+    try {
+        const course = await prisma.course.findFirst({
+            where: { OR: [{ id }, { slug: id }] },
+            include: {
+                lessons: {
+                    orderBy: { order: "asc" }
+                }
+            }
+        });
+        if (!course) return res.status(404).json({ error: "Course not found" });
+        res.json({ success: true, courseId: course.id, lessons: course.lessons });
+    } catch (err: any) {
+        res.status(500).json({ error: safeErrorMessage(err) });
+    }
+});
+
+// POST /api/v1/admin/courses/:id/lessons — Add a new video lesson directly to a course
+app.post("/api/v1/admin/courses/:id/lessons", adminAuth, async (req: any, res) => {
+    const { id } = req.params;
+    const { title, videoUrl, content, estimatedMinutes = 20, xpReward = 50, order } = req.body;
+    if (!title) {
+        return res.status(400).json({ error: "Lesson title is required" });
+    }
+    try {
+        const course = await prisma.course.findFirst({
+            where: { OR: [{ id }, { slug: id }] },
+            include: { _count: { select: { lessons: true } } }
+        });
+        if (!course) return res.status(404).json({ error: "Course not found" });
+
+        // Auto-calculate order if not provided
+        const nextOrder = order !== undefined ? Number(order) : (course._count.lessons + 1);
+
+        const lesson = await prisma.lesson.create({
+            data: {
+                courseId: course.id,
+                title: String(title).trim(),
+                videoUrl: videoUrl ? String(videoUrl).trim() : null,
+                content: content ? String(content).trim() : `# ${title}\n\nWatch the lecture video above and study the key topics covered in this lesson.`,
+                order: nextOrder,
+                estimatedMinutes: Number(estimatedMinutes) || 20,
+                xpReward: Number(xpReward) || 50
+            }
+        });
+
+        await prisma.auditLog.create({
+            data: {
+                userId: req.userId,
+                action: "COURSE_LESSON_ADDED",
+                resourceId: lesson.id,
+                metadata: { courseId: course.id, title: lesson.title, videoUrl: lesson.videoUrl }
+            }
+        });
+
+        res.status(201).json({ success: true, lesson });
+    } catch (err: any) {
+        res.status(500).json({ error: safeErrorMessage(err, "Failed to add lesson") });
+    }
+});
+
+// DELETE /api/v1/admin/courses/:id/lessons/:lessonId — Delete a lesson from a course
+app.delete("/api/v1/admin/courses/:id/lessons/:lessonId", adminAuth, async (req: any, res) => {
+    const { id, lessonId } = req.params;
+    try {
+        const lesson = await prisma.lesson.findFirst({
+            where: { id: lessonId, courseId: id }
+        });
+        if (!lesson) return res.status(404).json({ error: "Lesson not found in this course" });
+
+        await prisma.lesson.delete({ where: { id: lessonId } });
+
+        await prisma.auditLog.create({
+            data: {
+                userId: req.userId,
+                action: "COURSE_LESSON_DELETED",
+                resourceId: lessonId,
+                metadata: { courseId: id, title: lesson.title }
+            }
+        });
+
+        res.json({ success: true, message: "Lesson deleted successfully", lessonId });
+    } catch (err: any) {
+        res.status(500).json({ error: safeErrorMessage(err, "Failed to delete lesson") });
+    }
+});
+
 // ─── ADMIN CONTEST MANAGEMENT ───────────────────────────────────────────────
+
+// GET /api/v1/admin/contests — List all contests for admin
+app.get("/api/v1/admin/contests", adminAuth, async (_req: any, res) => {
+    try {
+        const contests = await prisma.contest.findMany({
+            orderBy: { startTime: "desc" },
+            include: { _count: { select: { participants: true, problems: true } } }
+        });
+        res.json({ success: true, contests });
+    } catch (err: any) {
+        res.status(500).json({ error: safeErrorMessage(err, "Failed to load admin contests") });
+    }
+});
 
 // POST /api/v1/admin/contests — Create a new contest
 app.post("/api/v1/admin/contests", adminAuth, async (req: any, res) => {
@@ -3700,10 +3906,16 @@ app.post("/api/v1/admin/contests", adminAuth, async (req: any, res) => {
             }
         });
 
-        // Link problems if specified
-        if (Array.isArray(problemIds) && problemIds.length > 0) {
-            for (let i = 0; i < problemIds.length; i++) {
-                const pid = problemIds[i];
+        // Link problems if specified (accepts array or comma-separated string)
+        const pids = Array.isArray(problemIds)
+            ? problemIds
+            : typeof problemIds === "string"
+            ? problemIds.split(",").map((s: string) => s.trim()).filter(Boolean)
+            : [];
+
+        if (pids.length > 0) {
+            for (let i = 0; i < pids.length; i++) {
+                const pid = pids[i];
                 const problemExists = await prisma.problems.findFirst({ where: { OR: [{ id: pid }, { slug: pid }] } });
                 if (problemExists) {
                     await prisma.contestProblem.create({
@@ -3761,10 +3973,16 @@ app.put("/api/v1/admin/contests/:id", adminAuth, async (req: any, res) => {
             data: updateData
         });
 
-        if (Array.isArray(problemIds)) {
+        const pids = Array.isArray(problemIds)
+            ? problemIds
+            : typeof problemIds === "string"
+            ? problemIds.split(",").map((s: string) => s.trim()).filter(Boolean)
+            : null;
+
+        if (pids !== null) {
             await prisma.contestProblem.deleteMany({ where: { contestId: id } });
-            for (let i = 0; i < problemIds.length; i++) {
-                const pid = problemIds[i];
+            for (let i = 0; i < pids.length; i++) {
+                const pid = pids[i];
                 const problemExists = await prisma.problems.findFirst({ where: { OR: [{ id: pid }, { slug: pid }] } });
                 if (problemExists) {
                     await prisma.contestProblem.create({

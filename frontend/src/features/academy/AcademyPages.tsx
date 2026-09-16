@@ -408,6 +408,21 @@ export function LessonViewerPage({ lessonId, onNavigate, user, onToast, onOpenAu
   const [loading, setLoading] = useState(true);
   const [completing, setCompleting] = useState(false);
   const [showQuiz, setShowQuiz] = useState(false);
+  const [theaterMode, setTheaterMode] = useState(false);
+
+  // Helper to extract YouTube video ID from various URL formats
+  const getYouTubeEmbedUrl = (url: string | undefined | null): string | null => {
+    if (!url) return null;
+    try {
+      const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
+      if (match && match[1]) {
+        return `https://www.youtube-nocookie.com/embed/${match[1]}?autoplay=0&rel=0&modestbranding=1&enablejsapi=1`;
+      }
+    } catch {
+      // ignore
+    }
+    return null;
+  };
 
   const fetchLesson = useCallback(() => {
     setLoading(true);
@@ -450,6 +465,8 @@ export function LessonViewerPage({ lessonId, onNavigate, user, onToast, onOpenAu
       setCompleting(false);
     }
   };
+
+  const embedUrl = getYouTubeEmbedUrl(lesson?.videoUrl);
 
   if (loading) {
     return (
@@ -534,10 +551,97 @@ export function LessonViewerPage({ lessonId, onNavigate, user, onToast, onOpenAu
           </h1>
         </div>
 
-        {/* Video Embed Placeholder (if videoUrl is configured) */}
+        {/* Interactive Video Player (YouTube or HTML5) */}
         {lesson.videoUrl && (
-          <div style={{ marginBottom: 28, borderRadius: "var(--radius-lg)", overflow: "hidden", background: "#000", aspectRatio: "16/9", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <span style={{ fontSize: 14, color: "var(--text-muted)" }}>🎬 Video Lecture Available</span>
+          <div style={{
+            marginBottom: 32,
+            borderRadius: "var(--radius-lg)",
+            overflow: "hidden",
+            background: "#0a0c10",
+            border: "1px solid var(--border-light)",
+            boxShadow: "0 10px 30px -10px rgba(0,0,0,0.5)",
+            transition: "all 0.3s ease",
+            ...(theaterMode ? {
+              position: "relative",
+              width: "100%",
+              maxWidth: "100%",
+              margin: "0 0 32px 0",
+            } : {})
+          }}>
+            {/* Player Top Toolbar */}
+            <div style={{
+              background: "linear-gradient(90deg, #161b22, #0d1117)",
+              padding: "10px 16px",
+              borderBottom: "1px solid rgba(255,255,255,0.08)",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center"
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ fontSize: 16 }}>🎬</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>
+                  Video Lecture Player
+                </span>
+                <span className="badge badge-purple" style={{ fontSize: 10, padding: "2px 8px" }}>
+                  HD 1080p
+                </span>
+              </div>
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <button
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => setTheaterMode(!theaterMode)}
+                  title={theaterMode ? "Exit Theater Mode" : "Expand to Theater Mode"}
+                  style={{ fontSize: 11, padding: "4px 8px", color: "var(--text-secondary)" }}
+                >
+                  {theaterMode ? "📱 Standard View" : "📺 Theater Mode"}
+                </button>
+                <a
+                  href={lesson.videoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-ghost btn-sm"
+                  style={{ fontSize: 11, padding: "4px 8px", color: "var(--text-muted)" }}
+                  title="Open in YouTube"
+                >
+                  ↗️ YouTube
+                </a>
+              </div>
+            </div>
+
+            {/* Video Screen */}
+            <div style={{ position: "relative", width: "100%", paddingTop: theaterMode ? "60%" : "56.25%", background: "#000" }}>
+              {embedUrl ? (
+                <iframe
+                  src={embedUrl}
+                  title={lesson.title}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    height: "100%",
+                    border: "none"
+                  }}
+                />
+              ) : (
+                <video
+                  controls
+                  controlsList="nodownload"
+                  src={lesson.videoUrl}
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    height: "100%"
+                  }}
+                >
+                  Your browser does not support HTML5 video streaming.
+                </video>
+              )}
+            </div>
           </div>
         )}
 

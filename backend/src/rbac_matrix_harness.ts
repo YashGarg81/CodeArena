@@ -156,7 +156,7 @@ async function runRbacMatrix() {
       let shouldBeDenied = false;
 
       if (route.auth === "adminAuth") {
-        shouldBeDenied = !((role as string) === "ADMIN" || (role as string) === "PLATFORM_ADMIN");
+        shouldBeDenied = !((role as string) === "ADMIN" || (role as string) === "PLATFORM_ADMIN" || (role as string) === "DEVELOPER");
         expectedStatusDesc = shouldBeDenied ? "403 Forbidden" : "Allowed (non-403)";
       } else if (route.auth === "developerAuth") {
         shouldBeDenied = !((role as string) === "DEVELOPER" || (role as string) === "ADMIN" || (role as string) === "PLATFORM_ADMIN");

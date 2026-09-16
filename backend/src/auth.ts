@@ -197,9 +197,9 @@ export async function adminAuth(req: AuthenticatedRequest, res: Response, next: 
       return;
     }
 
-    const adminRoles = ["ADMIN", "PLATFORM_ADMIN"];
+    const adminRoles = ["ADMIN", "PLATFORM_ADMIN", "DEVELOPER"];
     if (!adminRoles.includes(user.role)) {
-      res.status(403).json({ error: "Administrative privileges required (ADMIN or PLATFORM_ADMIN)" });
+      res.status(403).json({ error: "Administrative privileges required (ADMIN, PLATFORM_ADMIN, or DEVELOPER)" });
       return;
     }
 

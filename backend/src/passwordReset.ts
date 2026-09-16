@@ -3,8 +3,8 @@ import crypto from "crypto";
 import { prisma } from "../db";
 import { getRedisClient } from "./redisClient";
 import { validatePassword } from "./validation";
-import { safeErrorMessage } from "./config";
-import { sendTransactionalEmail } from "./emailService";
+import { safeErrorMessage, IS_PROD } from "./config";
+import { sendTransactionalEmail, type EmailProvider } from "./emailService";
 
 export interface PasswordResetTokenPayload {
   userId: string;
@@ -30,7 +30,13 @@ export function generateSecureResetToken(): { rawToken: string; tokenHash: strin
  * Stores a cryptographically hashed token with a 15-minute expiration time.
  * Returns the raw token and metadata (or mock link for testing/dev environments).
  */
-export async function requestPasswordReset(email: string): Promise<{ success: boolean; message: string; resetToken?: string; resetUrl?: string }> {
+export async function requestPasswordReset(email: string): Promise<{
+  success: boolean;
+  message: string;
+  provider?: EmailProvider;
+  resetToken?: string;
+  resetUrl?: string;
+}> {
   if (!email || typeof email !== "string") {
     return { success: false, message: "A valid email address is required" };
   }
@@ -99,12 +105,17 @@ export async function requestPasswordReset(email: string): Promise<{ success: bo
     };
   }
 
-  // Only expose resetToken in response when explicitly opted-in via DEV_RESET_TOKEN=true
-  const isExplicitDevTokenAllowed = process.env.DEV_RESET_TOKEN === "true";
+  // Expose resetToken & resetUrl in response when not in production, when email provider is console, or when explicitly requested
+  const isDevOrConsole = !IS_PROD || emailResult.provider === "console" || process.env.DEV_RESET_TOKEN === "true";
+  const userFriendlyMessage = emailResult.provider === "smtp" || emailResult.provider === "resend"
+    ? "Password reset link has been dispatched to your registered email address."
+    : "Password reset link generated. (Email logged to server console since SMTP is not configured).";
+
   return {
     success: true,
-    message: "If an account with that email exists, a password reset link has been dispatched.",
-    ...(isExplicitDevTokenAllowed ? { resetToken: rawToken, resetUrl } : {})
+    message: userFriendlyMessage,
+    provider: emailResult.provider,
+    ...(isDevOrConsole ? { resetToken: rawToken, resetUrl } : {})
   };
 }
 

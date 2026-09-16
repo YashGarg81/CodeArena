@@ -111,24 +111,29 @@ describe("Granular RBAC Module", () => {
     expect(hasPermission("CONTEST_ADMIN", "user:ban")).toBe(false);
   });
 
-  test("DEVELOPER has developer tools permissions but NO administrative permissions", () => {
+  test("DEVELOPER has full administrative and developer privileges", () => {
     expect(hasPermission("DEVELOPER", "developer:api")).toBe(true);
     expect(hasPermission("DEVELOPER", "developer:debug")).toBe(true);
     expect(hasPermission("DEVELOPER", "developer:plugins")).toBe(true);
     expect(hasPermission("DEVELOPER", "developer:telemetry")).toBe(true);
-    // Strict admin segregation
-    expect(hasPermission("DEVELOPER", "user:ban")).toBe(false);
-    expect(hasPermission("DEVELOPER", "user:suspend")).toBe(false);
-    expect(hasPermission("DEVELOPER", "system:manage")).toBe(false);
-    expect(hasPermission("DEVELOPER", "audit:view")).toBe(false);
+    expect(hasPermission("DEVELOPER", "user:ban")).toBe(true);
+    expect(hasPermission("DEVELOPER", "user:suspend")).toBe(true);
+    expect(hasPermission("DEVELOPER", "system:manage")).toBe(true);
+    expect(hasPermission("DEVELOPER", "audit:view")).toBe(true);
+    expect(hasPermission("DEVELOPER", "problem:publish")).toBe(true);
+    expect(hasPermission("DEVELOPER", "course:manage")).toBe(true);
   });
 
-  test("ADMIN has full permissions matrix including developer tools", () => {
+  test("ADMIN has standard operational permissions with developer tools restricted", () => {
     expect(hasPermission("ADMIN", "problem:create")).toBe(true);
     expect(hasPermission("ADMIN", "contest:end")).toBe(true);
-    expect(hasPermission("ADMIN", "user:ban")).toBe(true);
-    expect(hasPermission("ADMIN", "system:manage")).toBe(true);
-    expect(hasPermission("ADMIN", "developer:telemetry")).toBe(true);
+    expect(hasPermission("ADMIN", "user:suspend")).toBe(true);
+    expect(hasPermission("ADMIN", "course:manage")).toBe(true);
+    // Developer-exclusive tooling restricted from Admin
+    expect(hasPermission("ADMIN", "developer:api")).toBe(false);
+    expect(hasPermission("ADMIN", "developer:debug")).toBe(false);
+    expect(hasPermission("ADMIN", "developer:plugins")).toBe(false);
+    expect(hasPermission("ADMIN", "system:manage")).toBe(false);
   });
 });
 

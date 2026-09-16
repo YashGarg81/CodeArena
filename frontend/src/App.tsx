@@ -20,6 +20,7 @@ import { NotFoundPage } from "./components/common/NotFoundPage";
 // Modular Feature Views
 import { AuthModal } from "./features/auth/AuthModal";
 import { EmailVerificationPage } from "./features/auth/EmailVerificationPage";
+import { ResetPasswordPage } from "./features/auth/ResetPasswordPage";
 import { LandingPage } from "./features/problems/LandingPage";
 import { ProblemsPage } from "./features/problems/ProblemsPage";
 import { ProblemDetailPage } from "./features/problems/ProblemDetailPage";
@@ -251,6 +252,14 @@ export default function App() {
               user={user}
               onNavigate={navigate}
               onToast={showToast}
+            />
+          )}
+          {page === "reset-password" && (
+            <ResetPasswordPage
+              token={subPage}
+              onNavigate={navigate}
+              onToast={showToast}
+              onOpenLogin={() => setAuthModal("login")}
             />
           )}
           {page === "collab" && <CollabStudioPage roomId={subPage} user={user} onToast={showToast} onNavigate={navigate} />}

@@ -32,6 +32,9 @@ export function parseLocationToRoute(pathname: string): { page: string; subPage:
   if (first === "verify-email") {
     return { page: "verify-email", subPage: second || (typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("token") || "" : "") };
   }
+  if (first === "reset-password") {
+    return { page: "reset-password", subPage: second || (typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("token") || "" : "") };
+  }
   if (first === "arena") return { page: "arena", subPage: second || "" };
   if (first === "collab") return { page: "collab", subPage: second || "" };
   if (first === "notes") return { page: "notes", subPage: "" };
@@ -60,6 +63,7 @@ export function routeToUrl(page: string, subPage?: string): string {
   if (page === "submission-share") return subPage ? `/submissions/${subPage}` : "/problems";
   if (page === "system-design") return subPage ? `/system-design/${subPage}` : "/system-design";
   if (page === "verify-email") return subPage ? `/verify-email?token=${subPage}` : "/verify-email";
+  if (page === "reset-password") return subPage ? `/reset-password?token=${subPage}` : "/reset-password";
   if (page === "arena") return "/arena";
   if (page === "collab") return subPage ? `/collab/${subPage}` : "/collab";
   if (page === "notes") return "/notes";

@@ -1,0 +1,602 @@
+[
+  {
+    "order": 1,
+    "videoId": "X2NVOSNBbxU",
+    "title": "DSA Complete Series 🚀 : Data Structures & Algorithms || 150 day Challenge",
+    "duration": "30:00"
+  },
+  {
+    "order": 2,
+    "videoId": "qnDhYSj4uv0",
+    "title": "Lecture 1: Flowchart & Pseudocode + Basics || DSA Series by Babbar || Java",
+    "duration": "30:00"
+  },
+  {
+    "order": 3,
+    "videoId": "n_5IuAS0PWI",
+    "title": "Lecture 2: How a Java Program Run || DSA Series by Babbar",
+    "duration": "30:00"
+  },
+  {
+    "order": 4,
+    "videoId": "8wg2xhs5At0",
+    "title": "Lecture 3: IDE Setup for Coding || DSA Series by Babbar || Java",
+    "duration": "30:00"
+  },
+  {
+    "order": 5,
+    "videoId": "A7SWYqH4VSk",
+    "title": "Lecture 4: Write your FIRST Java Program || DSA Series by Babbar",
+    "duration": "30:00"
+  },
+  {
+    "order": 6,
+    "videoId": "6WOkDnYr-Ow",
+    "title": "Lecture 5: VARIABLES in Java || DSA Series by Babbar",
+    "duration": "30:00"
+  },
+  {
+    "order": 7,
+    "videoId": "JT-MZoicmsk",
+    "title": "Lecture 6: DataTypes in Java || DSA Series by Babbar",
+    "duration": "30:00"
+  },
+  {
+    "order": 8,
+    "videoId": "1CJJ61ga0JU",
+    "title": "Lecture 7: Operators in Java || DSA Series by Babbar",
+    "duration": "30:00"
+  },
+  {
+    "order": 9,
+    "videoId": "MmATIPs1gEk",
+    "title": "Lecture 8: Input/Output in Java || DSA Series by Babbar",
+    "duration": "30:00"
+  },
+  {
+    "order": 10,
+    "videoId": "Xy18VW4oB1Q",
+    "title": "Lecture 9: Conditionals in Java || DSA Series by Babbar",
+    "duration": "30:00"
+  },
+  {
+    "order": 11,
+    "videoId": "gc5p4SW71P8",
+    "title": "Lecture 10: Loops in Java || DSA Series by Babbar",
+    "duration": "30:00"
+  },
+  {
+    "order": 12,
+    "videoId": "AWHn2IimUiY",
+    "title": "Lecture 11: Solve any PATTERN Printing Problem using this TRICK || DSA Series by Babbar",
+    "duration": "30:00"
+  },
+  {
+    "order": 13,
+    "videoId": "JHx9WFdWhTk",
+    "title": "Lecture 12: Methods in Java || DSA Series by Babbar",
+    "duration": "30:00"
+  },
+  {
+    "order": 14,
+    "videoId": "mY1o1bZyfzE",
+    "title": "Lecture 13: Arrays in Java || DSA Series by Babbar",
+    "duration": "30:00"
+  },
+  {
+    "order": 15,
+    "videoId": "_hvBbiMRoo0",
+    "title": "Lecture 14: Strings in Java || DSA Series by Babbar",
+    "duration": "30:00"
+  },
+  {
+    "order": 16,
+    "videoId": "ktEyWsU7G94",
+    "title": "Lecture 15: Basic Maths needed for DSA || DSA Series by Babbar",
+    "duration": "30:00"
+  },
+  {
+    "order": 17,
+    "videoId": "wsJCFDhBy1M",
+    "title": "Lecture 16: Intro to OOPs Concepts || DSA Series by Babbar",
+    "duration": "30:00"
+  },
+  {
+    "order": 18,
+    "videoId": "S3MX5AU2hw4",
+    "title": "Lecture 17: Classes, Objects, Constructors, Object Lifecycle in JAVA || DSA Series by Babbar",
+    "duration": "30:00"
+  },
+  {
+    "order": 19,
+    "videoId": "8cAMhZ8ErsA",
+    "title": "Lecture 18: Encapsulation in JAVA || DSA Series by Babbar",
+    "duration": "30:00"
+  },
+  {
+    "order": 20,
+    "videoId": "7dA6Q_MQUdc",
+    "title": "Lecture 19: Inheritance in Java || DSA Series by Babbar",
+    "duration": "30:00"
+  },
+  {
+    "order": 21,
+    "videoId": "hF48nbTIvMM",
+    "title": "Lecture 20: Polymorphism in Java || DSA Series by Babbar",
+    "duration": "30:00"
+  },
+  {
+    "order": 22,
+    "videoId": "KR6s0uWRllw",
+    "title": "Lecture 21: Abstraction in Java || DSA Series by Babbar",
+    "duration": "30:00"
+  },
+  {
+    "order": 23,
+    "videoId": "VAu-w8lCoF8",
+    "title": "Lecture 22: Time & Space Complexity || DSA Series by Babbar",
+    "duration": "30:00"
+  },
+  {
+    "order": 24,
+    "videoId": "Reaqf3_V108",
+    "title": "Lecture 23: Java Collection Framework ( Part-1 ) || DSA Series by Babbar",
+    "duration": "30:00"
+  },
+  {
+    "order": 25,
+    "videoId": "7a7G84jLQrc",
+    "title": "Lecture 24: Java Collection Framework ( Part-2 ) || DSA Series by Babbar",
+    "duration": "30:00"
+  },
+  {
+    "order": 26,
+    "videoId": "hSx-mQOoAkQ",
+    "title": "Lecture 25: Java Collection Framework ( Part-3 ) || DSA Series by Babbar",
+    "duration": "30:00"
+  },
+  {
+    "order": 27,
+    "videoId": "MBv6HPXKUjU",
+    "title": "Lecture 26: Bitwise Operators in Java || DSA Series by Babbar",
+    "duration": "30:00"
+  },
+  {
+    "order": 28,
+    "videoId": "YOiBIsSkNLo",
+    "title": "Lecture 27: Array Problem Solving Part-1 || DSA Series by Babbar",
+    "duration": "30:00"
+  },
+  {
+    "order": 29,
+    "videoId": "qB781Qqi4Cg",
+    "title": "Lecture 28: Array Manipulation Problems || DSA Series by Babbar",
+    "duration": "30:00"
+  },
+  {
+    "order": 30,
+    "videoId": "L3y6eelqmlQ",
+    "title": "Lecture 29: Array Problem Solving Part-3 || DSA Series by Babbar",
+    "duration": "30:00"
+  },
+  {
+    "order": 31,
+    "videoId": "YNPgWjmztIg",
+    "title": "Lecture 30: Array Problem Solving Part-4 || DSA Series by Babbar",
+    "duration": "30:00"
+  },
+  {
+    "order": 32,
+    "videoId": "GS-7B21Ouh8",
+    "title": "Lecture 31: Missing Elements from an Array of Duplicates || Array Problem || DSA Series by Babbar",
+    "duration": "30:00"
+  },
+  {
+    "order": 33,
+    "videoId": "1EK1D1b9mB8",
+    "title": "Lecture 32: Maximum Sum Contiguous SubArray || Kadane's Algorithm || DSA Series by Babbar",
+    "duration": "30:00"
+  },
+  {
+    "order": 34,
+    "videoId": "XE-f4jKCsak",
+    "title": "Lecture 33: Solving 2D Array Problems || DSA Series by Babbar",
+    "duration": "30:00"
+  },
+  {
+    "order": 35,
+    "videoId": "iTr-6bF2y0Y",
+    "title": "Lecture 34: Rotate and Spiral Print a Matrix || DSA Series by Babbar",
+    "duration": "30:00"
+  },
+  {
+    "order": 36,
+    "videoId": "K1au0inlPdI",
+    "title": "Lecture 35: Sorting Algorithms || DSA Series by Babbar",
+    "duration": "30:00"
+  },
+  {
+    "order": 37,
+    "videoId": "LfeH5aFeP7E",
+    "title": "Lecture 36: Binary Search in 1 Video || DSA Series by Babbar",
+    "duration": "30:00"
+  },
+  {
+    "order": 38,
+    "videoId": "vIWRqAmDJdc",
+    "title": "Lecture 37: Upper/Lower Bound, Number of Occurrences Binary Search || DSA Series by Babbar",
+    "duration": "30:00"
+  },
+  {
+    "order": 39,
+    "videoId": "vwtqP7nPaRc",
+    "title": "Lecture 38: Find PEAK of MOUNTAIN Array || DSA Series by Babbar",
+    "duration": "30:00"
+  },
+  {
+    "order": 40,
+    "videoId": "FygrNNhVXq4",
+    "title": "Lecture 39: Search in a Rotated Sorted Array || DSA Series by Babbar",
+    "duration": "30:00"
+  },
+  {
+    "order": 41,
+    "videoId": "llTL_-2DEXI",
+    "title": "Lecture 40: Binary Search on Answers PATTERN || DSA Series by Babbar",
+    "duration": "30:00"
+  },
+  {
+    "order": 42,
+    "videoId": "_7bkkij2cQg",
+    "title": "Lecture 41: Book Allocation Problem || Min-Max Binary Search Pattern || DSA Series by Babbar",
+    "duration": "30:00"
+  },
+  {
+    "order": 43,
+    "videoId": "MR2Dh6NeB0U",
+    "title": "Lecture 42: Painter's Partition Problem || DSA Series by Babbar",
+    "duration": "30:00"
+  },
+  {
+    "order": 44,
+    "videoId": "0CePBBw3Y7Y",
+    "title": "Lecture 43: Aggressive Cows Problem || DSA Series by Babbar",
+    "duration": "30:00"
+  },
+  {
+    "order": 45,
+    "videoId": "3trrBWeSUgg",
+    "title": "Lecture 44: EKO SPOJ Problem || Binary Search || DSA Series by Babbar",
+    "duration": "30:00"
+  },
+  {
+    "order": 46,
+    "videoId": "iRsXiG07OU4",
+    "title": "Lecture 45: ROTI PRATA SPOJ Problem || DSA Series by Babbar",
+    "duration": "30:00"
+  },
+  {
+    "order": 47,
+    "videoId": "VvQ6l6-ZYPY",
+    "title": "Lecture 46: Search in Nearly Sorted Array || Binary Search || DSA Series by Babbar",
+    "duration": "30:00"
+  },
+  {
+    "order": 48,
+    "videoId": "Ln6WkllbTaU",
+    "title": "Lecture 47: Find Single Non-Duplicate element using Binary Search || DSA Series by Babbar",
+    "duration": "30:00"
+  },
+  {
+    "order": 49,
+    "videoId": "d4xNruN2h28",
+    "title": "Lecture 48: Search in 2D Matrix I and II (Binary Search) || DSA Series by Babbar",
+    "duration": "30:00"
+  },
+  {
+    "order": 50,
+    "videoId": "hwWZkhuCCl4",
+    "title": "Lecture 49: Row with Maximum 1's || Binary Search || DSA Series by Babbar",
+    "duration": "30:00"
+  },
+  {
+    "order": 51,
+    "videoId": "geZpWIk5jNU",
+    "title": "Lecture 50: Unbounded Search using Binary Search Concept || DSA Series by Babbar",
+    "duration": "30:00"
+  },
+  {
+    "order": 52,
+    "videoId": "HdXJAEVmTcU",
+    "title": "Lecture 51: Reverse Words in a Strings || DSA Series by Babbar",
+    "duration": "30:00"
+  },
+  {
+    "order": 53,
+    "videoId": "5WlHeImp0UY",
+    "title": "Lecture 52: String Interview Questions Part-2 || DSA Series by Babbar",
+    "duration": "30:00"
+  },
+  {
+    "order": 54,
+    "videoId": "iFAVFUkwwC8",
+    "title": "Lecture 53: String Interview Problems Part-3 || DSA Series by Babbar",
+    "duration": "30:00"
+  },
+  {
+    "order": 55,
+    "videoId": "2kS5XRW6cpY",
+    "title": "Lecture 54: Recursion Basics || Recursion Series Day-1 || DSA Series by Babbar",
+    "duration": "30:00"
+  },
+  {
+    "order": 56,
+    "videoId": "4kNOQkZp_L8",
+    "title": "Lecture 55: Recursive Time & Space Complexity || Recursion Series Day-2 || DSA Series by Babbar",
+    "duration": "30:00"
+  },
+  {
+    "order": 57,
+    "videoId": "3EcFfRqsQnQ",
+    "title": "Lecture 56: Climbing Stairs problem || Recursion Series Day-3",
+    "duration": "30:00"
+  },
+  {
+    "order": 58,
+    "videoId": "1QWwgXNYxs8",
+    "title": "Lecture 57: Recursion Basics || Recursion Day-4",
+    "duration": "30:00"
+  },
+  {
+    "order": 59,
+    "videoId": "Ikw9lsaizzY",
+    "title": "Lecture 58: Recursive BINARY SEARCH || Recursion Day-5",
+    "duration": "30:00"
+  },
+  {
+    "order": 60,
+    "videoId": "DWDGmqyRcs0",
+    "title": "Lecture 59: Subsequences of String || Recursion Series Day-6",
+    "duration": "30:00"
+  },
+  {
+    "order": 61,
+    "videoId": "GnX6acHco0A",
+    "title": "Lecture 60: House Robber Problem || Recursion Series Day-7",
+    "duration": "30:00"
+  },
+  {
+    "order": 62,
+    "videoId": "TTC7ACw__Mk",
+    "title": "Lecture 61: Coin Change 2 Problem || Recursion Series Day-8",
+    "duration": "30:00"
+  },
+  {
+    "order": 63,
+    "videoId": "YfsWiDHc5RI",
+    "title": "Lecture 62: COin Change I Problem || Recursion Series Day-9",
+    "duration": "30:00"
+  },
+  {
+    "order": 64,
+    "videoId": "cVKdceGm-TA",
+    "title": "Lecture 64: Minimize the Difference Between Target and Chosen Elements || Recursion Series Day-11",
+    "duration": "30:00"
+  },
+  {
+    "order": 65,
+    "videoId": "KZ0_89LiVcM",
+    "title": "Lecture 63: Partition Equal Subset Sum Problem || Recursion Series Day-10",
+    "duration": "30:00"
+  },
+  {
+    "order": 66,
+    "videoId": "97G8rpG6CQg",
+    "title": "Lecture 65: Jump Game Problem || Recursion Series Day-12",
+    "duration": "30:00"
+  },
+  {
+    "order": 67,
+    "videoId": "0iS131QbA5I",
+    "title": "Lecture 66: Leetcode Triangle Problem || Recursive Series Day-13",
+    "duration": "30:00"
+  },
+  {
+    "order": 68,
+    "videoId": "4RPLst4lOFs",
+    "title": "Lecture 67: Subsequences with Sum K || Recursion Series Day-14",
+    "duration": "30:00"
+  },
+  {
+    "order": 69,
+    "videoId": "_5HVq-TrK1g",
+    "title": "Lecture 68: Subsets 1 & Subsets II Problem || Recursion Series Day-15",
+    "duration": "30:00"
+  },
+  {
+    "order": 70,
+    "videoId": "0erjAUWGOVo",
+    "title": "Lecture 69: Combination Sum (All 3 *variants*) || Recursion Series Day-16",
+    "duration": "30:00"
+  },
+  {
+    "order": 71,
+    "videoId": "Gt0fu5k8r2c",
+    "title": "Lecture 70: Permutations of String || Recursion Series Day-17",
+    "duration": "30:00"
+  },
+  {
+    "order": 72,
+    "videoId": "Xkxf5Hy10_8",
+    "title": "Lecture 71: Intro to Backtracking || Recursion Series Day-18",
+    "duration": "30:00"
+  },
+  {
+    "order": 73,
+    "videoId": "j1B33d0HGm4",
+    "title": "Lecture 72: Phone Keypad Problem || Recursion Series Day-19",
+    "duration": "30:00"
+  },
+  {
+    "order": 74,
+    "videoId": "kZjxszWt8L0",
+    "title": "Lecture 73: N-Queen Problem || Recursion Series Day-20",
+    "duration": "30:00"
+  },
+  {
+    "order": 75,
+    "videoId": "cpc875-ZBtk",
+    "title": "Lecture 74: Sudoku Solver Problem || Recursion Series Day-21",
+    "duration": "30:00"
+  },
+  {
+    "order": 76,
+    "videoId": "WPGl4veiXWc",
+    "title": "Lecture 75: Merge Sort in 1 Video || Recursion Series Day-22",
+    "duration": "30:00"
+  },
+  {
+    "order": 77,
+    "videoId": "uaCWwfRXLt4",
+    "title": "Lecture 76: Inversion Count in an Array || Recursion Day-23",
+    "duration": "30:00"
+  },
+  {
+    "order": 78,
+    "videoId": "9lbH539MrgU",
+    "title": "Lecture 77: Quick Sort in 1 Video || Recursion Day - 24",
+    "duration": "30:00"
+  },
+  {
+    "order": 79,
+    "videoId": "5EACmuKiacQ",
+    "title": "Lecture 78: Starting Linked List Series || Day - 1",
+    "duration": "30:00"
+  },
+  {
+    "order": 80,
+    "videoId": "Z-F1UYNWEFk",
+    "title": "Lecture 79: All about Doubly Linked List || Linked List Series Day - 2",
+    "duration": "30:00"
+  },
+  {
+    "order": 81,
+    "videoId": "HLePdJRTMaA",
+    "title": "Lecture 80: Circular Linked List || Linked List Series Day-3",
+    "duration": "30:00"
+  },
+  {
+    "order": 82,
+    "videoId": "RPPgszbdYqQ",
+    "title": "Lecture 81: Reverse a Linked List || Linked List Series Day-4",
+    "duration": "30:00"
+  },
+  {
+    "order": 83,
+    "videoId": "1mDsJYnZhz0",
+    "title": "Lecture 82: Middle Node of Linked List || Linked List Series Day-5",
+    "duration": "30:00"
+  },
+  {
+    "order": 84,
+    "videoId": "fAd9WD6w7zU",
+    "title": "Lecture 83: Check Palindrome Linked List  || Linked List Series Day-6",
+    "duration": "30:00"
+  },
+  {
+    "order": 85,
+    "videoId": "k7ZG0_-ZEI0",
+    "title": "Lecture 84: Check Cycle in Linked List || Linked List Series Day-7",
+    "duration": "30:00"
+  },
+  {
+    "order": 86,
+    "videoId": "Bgntszo4uOw",
+    "title": "Lecture 86: Remove Duplicate Nodes from LL || Linked List Series Day-9",
+    "duration": "30:00"
+  },
+  {
+    "order": 87,
+    "videoId": "WN7Otgiz73s",
+    "title": "Lecture 87: Kth node from end of LL || Linked List Series Day-10",
+    "duration": "30:00"
+  },
+  {
+    "order": 88,
+    "videoId": "rqhZ583Oz5A",
+    "title": "Lecture 88: Odd-Even Linked List || Linked List Series Day-11",
+    "duration": "30:00"
+  },
+  {
+    "order": 89,
+    "videoId": "XczkfrvIYgE",
+    "title": "Lecture 89: Merge Nodes in between Zeroes || Linked List Series Day-12",
+    "duration": "30:00"
+  },
+  {
+    "order": 90,
+    "videoId": "CVH2AmSqzO4",
+    "title": "Lecture 90: Add 1 to LL || Linked List Series Day-13",
+    "duration": "30:00"
+  },
+  {
+    "order": 91,
+    "videoId": "FzTPjnEgm10",
+    "title": "Lecture 91: Intersection of 2 Linked List || Linked List Series Day-14",
+    "duration": "30:00"
+  },
+  {
+    "order": 92,
+    "videoId": "h2aG3n-6N4M",
+    "title": "Lecture 92: Rotate Linked List || Linked List Series Day-15",
+    "duration": "30:00"
+  },
+  {
+    "order": 93,
+    "videoId": "NEP0Gz_bfsc",
+    "title": "Lecture 93: Sort LL of 0's, 1's and 2's || Linked List Series Day-16",
+    "duration": "30:00"
+  },
+  {
+    "order": 94,
+    "videoId": "cMrPYH-y16g",
+    "title": "Lecture 94: Swap Nodes in LL || Linked List Series day-17",
+    "duration": "30:00"
+  },
+  {
+    "order": 95,
+    "videoId": "wTGDgVffk_I",
+    "title": "Lecture 95: Delete N Nodes After M Nodes || Linked List Series Day-18",
+    "duration": "30:00"
+  },
+  {
+    "order": 96,
+    "videoId": "R5P_tR8kyWY",
+    "title": "Lecture 97: DETECT Starting Node of CYCLE in Linked List || LL Series Day-20",
+    "duration": "30:00"
+  },
+  {
+    "order": 97,
+    "videoId": "w1taOUmWOKI",
+    "title": "Lecture 98: Partition a Linked List || LL Series Day-22",
+    "duration": "30:00"
+  },
+  {
+    "order": 98,
+    "videoId": "S6ArmZGnRaA",
+    "title": "Lecture 96: Add 2 numbers in Linked List || LL Series Day-19",
+    "duration": "30:00"
+  },
+  {
+    "order": 99,
+    "videoId": "oTmf3l6J6k4",
+    "title": "Lecture 99: Split a LL into Parts || Linked List Series Day-22",
+    "duration": "30:00"
+  },
+  {
+    "order": 100,
+    "videoId": "_qmmR-F8Y4A",
+    "title": "Lecture 100: Reverse LL in Groups of K || Linked List Series Day-23",
+    "duration": "30:00"
+  }
+]

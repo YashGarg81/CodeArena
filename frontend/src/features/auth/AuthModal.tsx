@@ -341,7 +341,21 @@ export function AuthModal({ mode, onClose, onSuccess }: {
         )}
 
         {error && <div style={{ color: "var(--accent-red)", fontSize: 13, marginBottom: 12, padding: "8px 12px", background: "rgba(248,81,73,0.1)", borderRadius: 6 }}>{error}</div>}
-        {successMsg && <div style={{ color: "var(--accent-green)", fontSize: 13, marginBottom: 12, padding: "8px 12px", background: "rgba(63,185,80,0.1)", borderRadius: 6 }}>{successMsg}</div>}
+        {successMsg && (
+          <div style={{ color: "var(--accent-green)", fontSize: 13, marginBottom: 12, padding: "10px 12px", background: "rgba(63,185,80,0.1)", borderRadius: 6, lineHeight: 1.4 }}>
+            <div>{successMsg}</div>
+            {tab === "forgot" && form.resetToken && (
+              <button
+                type="button"
+                className="btn btn-primary btn-sm w-full"
+                style={{ marginTop: 10, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+                onClick={() => { setTab("reset"); setError(""); setSuccessMsg(""); }}
+              >
+                Proceed to Set New Password →
+              </button>
+            )}
+          </div>
+        )}
 
         <button className="btn btn-primary w-full" style={{ marginBottom: 16 }} onClick={submit} disabled={loading}>
           {loading ? <span className="animate-spin">⚙</span> :
