@@ -7219,7 +7219,7 @@ app.get("/ready", async (_req, res) => {
     } catch {
         checks.redis = "unavailable";
     }
-    const ready = checks.postgres === "ok";
+    const ready = checks.postgres === "ok" && checks.redis === "ok";
     res.status(ready ? 200 : 503).json({ ready, checks, time: new Date().toISOString() });
 });
 

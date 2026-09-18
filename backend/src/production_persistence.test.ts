@@ -40,6 +40,21 @@ const pg = pgHostPort();
 const redisEp = redisHostPort();
 const pgUp = await tcpReachable(pg.host, pg.port);
 const redisUp = await tcpReachable(redisEp.host, redisEp.port);
+
+if (pgUp) {
+  try {
+    Bun.spawnSync([process.execPath, "x", "prisma", "db", "push", "--skip-generate"], {
+      cwd: path.join(import.meta.dir, ".."),
+      env: {
+        ...process.env,
+        DATABASE_URL: process.env.DATABASE_URL || "postgresql://postgres:postgrespassword@localhost:5432/codearena?schema=public",
+      },
+    });
+  } catch (err: any) {
+    console.warn("Notice: Prisma schema sync in test setup:", err?.message || err);
+  }
+}
+
 const dockerUp = (() => {
   try {
     const p = Bun.spawnSync(["docker", "info"]);
@@ -133,6 +148,10 @@ async function signup(base: string, tag: string) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ name: "Persist Gate", email: `${stamp}@codearena.test`, password: "password12345", username: stamp }),
   });
+  if (res.status !== 200) {
+    const text = await res.text();
+    console.error(`signup failed at ${base}: status ${res.status}, body: ${text}`);
+  }
   expect(res.status).toBe(200);
   return res.json();
 }
