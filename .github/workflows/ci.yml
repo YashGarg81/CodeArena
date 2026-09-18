@@ -71,6 +71,7 @@ jobs:
           (cd worker && bunx prisma generate)
           (cd backend && bunx prisma db push --accept-data-loss)
           docker pull oven/bun:1-alpine || true
+          docker pull python:3.12-alpine || true
 
       - name: 3. Static Typecheck
         run: |
@@ -111,7 +112,6 @@ jobs:
         env:
           NODE_ENV: test
           SANDBOX_MODE: docker
-          MOCK_DOCKER: "true"
 
       - name: 6.1. Frontend Unit & Sanitizer Tests
         run: |

@@ -17,5 +17,7 @@ COPY backend/src/judgePrivacy.ts ./backend/src/judgePrivacy.ts
 COPY backend/drivers.ts ./backend/drivers.ts
 
 WORKDIR /app/worker
+# Generate Prisma client for the container architecture
+RUN bunx prisma generate
 ENV NODE_ENV=production
 CMD ["bun", "run", "index.ts"]

@@ -1,6 +1,8 @@
 import { PrismaClient } from "./generated/prisma";
 import { PrismaPg } from "@prisma/adapter-pg";
 
+console.log("[Worker DB] Module loading...");
+
 const rawDbUrl = process.env.DATABASE_URL || "postgresql://postgres:postgrespassword@localhost:5432/codearena?schema=public";
 // In Docker compose, the worker must connect to the postgres container by name.
 // Only rewrite @postgres: to @localhost: when running locally outside compose (dev mode).
@@ -8,6 +10,9 @@ const isInCompose = process.env.DOCKER_COMPOSE === "true" || process.env.IN_DOCK
 const dbUrl = (!isInCompose && rawDbUrl.includes("@postgres:")) ? rawDbUrl.replace("@postgres:", "@localhost:") : rawDbUrl;
 
 console.log("[Worker DB] Connecting to:", dbUrl.replace(/:[^:]+@/, ":****@"));
+console.log("[Worker DB] DOCKER_COMPOSE:", process.env.DOCKER_COMPOSE);
+console.log("[Worker DB] IN_DOCKER:", process.env.IN_DOCKER);
+console.log("[Worker DB] isInCompose:", isInCompose);
 
 let rawPrisma: any;
 try {
@@ -16,9 +21,12 @@ try {
   console.log("[Worker DB] PrismaPg adapter connected successfully");
 } catch (e: any) {
   console.error("[Worker DB] PrismaPg adapter failed:", e.message);
+  console.error("[Worker DB] PrismaPg adapter stack:", e.stack);
   try {
     rawPrisma = new PrismaClient();
-  } catch {
+    console.log("[Worker DB] Fallback PrismaClient created");
+  } catch (e2: any) {
+    console.error("[Worker DB] Fallback PrismaClient failed:", e2.message);
     rawPrisma = {};
   }
 }

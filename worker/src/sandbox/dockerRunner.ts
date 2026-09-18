@@ -314,6 +314,15 @@ export async function compileInDocker(
   }
   const timeoutMs = options.timeoutMs || 15000;
 
+  try {
+    fs.chmodSync(hostPath, 0o777);
+    if (fs.existsSync(hostPath) && fs.statSync(hostPath).isDirectory()) {
+      for (const f of fs.readdirSync(hostPath)) {
+        try { fs.chmodSync(path.join(hostPath, f), 0o666); } catch {}
+      }
+    }
+  } catch {}
+
   await ensureLanguageVolumes(languageKey);
 
   const dockerArgs = [
@@ -439,6 +448,15 @@ export async function runInDocker(
     hostPath = path.resolve(folderPath);
   }
   const memory = `${memoryLimitMb || 256}m`;
+
+  try {
+    fs.chmodSync(hostPath, 0o777);
+    if (fs.existsSync(hostPath) && fs.statSync(hostPath).isDirectory()) {
+      for (const f of fs.readdirSync(hostPath)) {
+        try { fs.chmodSync(path.join(hostPath, f), 0o666); } catch {}
+      }
+    }
+  } catch {}
 
   await ensureLanguageVolumes(languageKey);
 
