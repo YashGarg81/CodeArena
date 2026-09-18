@@ -275,8 +275,9 @@ async function runRbacMatrix() {
   // CI gate: a failing combination must fail the workflow, not just the report.
   if (failedCount > 0) {
     console.error(`RBAC gate FAILED with ${failedCount} mismatches — see ${outPath}`);
-    process.exitCode = 1;
+    process.exit(1);
   }
+  process.exit(0);
 }
 
 runRbacMatrix().catch((err) => {

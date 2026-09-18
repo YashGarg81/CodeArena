@@ -1,6 +1,6 @@
 # RBAC Runtime Matrix Report (Automated HTTP Execution)
 
-**Generated**: 2026-09-18T13:34:00.944Z
+**Generated**: 2026-09-18T15:41:41.934Z
 **Total Combinations Evaluated**: 1880 (8 roles x 235 routes)
 **Passed**: 1880
 **Failed**: 0
@@ -310,7 +310,7 @@
 | `POST` | `/api/v1/auth/resend-verification` | `INSTRUCTOR` | `none` | Public / Optional | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
 | `POST` | `/api/v1/auth/resend-verification` | `MODERATOR` | `none` | Public / Optional | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
 | `POST` | `/api/v1/auth/resend-verification` | `CONTEST_ADMIN` | `none` | Public / Optional | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
-| `POST` | `/api/v1/auth/resend-verification` | `PROBLEM_ADMIN` | `none` | Public / Optional | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/auth/resend-verification` | `PROBLEM_ADMIN` | `none` | Public / Optional | `429` | ✅ PASS | Authorized access reached application layer (HTTP 429) |
 | `POST` | `/api/v1/auth/resend-verification` | `ADMIN` | `none` | Public / Optional | `429` | ✅ PASS | Authorized access reached application layer (HTTP 429) |
 | `POST` | `/api/v1/auth/verify-email` | `STUDENT` | `none` | Public / Optional | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
 | `POST` | `/api/v1/auth/verify-email` | `DEVELOPER` | `none` | Public / Optional | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
@@ -440,22 +440,22 @@
 | `GET` | `/api/v1/problems/liked` | `CONTEST_ADMIN` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/problems/liked` | `PROBLEM_ADMIN` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/problems/liked` | `ADMIN` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `GET` | `/api/v1/problems/:problemId` | `STUDENT` | `optionalAuth` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
-| `GET` | `/api/v1/problems/:problemId` | `DEVELOPER` | `optionalAuth` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
-| `GET` | `/api/v1/problems/:problemId` | `INTERVIEWER` | `optionalAuth` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
-| `GET` | `/api/v1/problems/:problemId` | `INSTRUCTOR` | `optionalAuth` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
-| `GET` | `/api/v1/problems/:problemId` | `MODERATOR` | `optionalAuth` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
-| `GET` | `/api/v1/problems/:problemId` | `CONTEST_ADMIN` | `optionalAuth` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
-| `GET` | `/api/v1/problems/:problemId` | `PROBLEM_ADMIN` | `optionalAuth` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
-| `GET` | `/api/v1/problems/:problemId` | `ADMIN` | `optionalAuth` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
-| `POST` | `/api/v1/problems/:problemId/like` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
-| `POST` | `/api/v1/problems/:problemId/like` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
-| `POST` | `/api/v1/problems/:problemId/like` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
-| `POST` | `/api/v1/problems/:problemId/like` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
-| `POST` | `/api/v1/problems/:problemId/like` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
-| `POST` | `/api/v1/problems/:problemId/like` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
-| `POST` | `/api/v1/problems/:problemId/like` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
-| `POST` | `/api/v1/problems/:problemId/like` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/problems/:problemId` | `STUDENT` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/problems/:problemId` | `DEVELOPER` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/problems/:problemId` | `INTERVIEWER` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/problems/:problemId` | `INSTRUCTOR` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/problems/:problemId` | `MODERATOR` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/problems/:problemId` | `CONTEST_ADMIN` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/problems/:problemId` | `PROBLEM_ADMIN` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/problems/:problemId` | `ADMIN` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/problems/:problemId/like` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/problems/:problemId/like` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/problems/:problemId/like` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/problems/:problemId/like` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/problems/:problemId/like` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/problems/:problemId/like` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/problems/:problemId/like` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/problems/:problemId/like` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/problems/:problemId/submissions` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/problems/:problemId/submissions` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/problems/:problemId/submissions` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
@@ -472,14 +472,14 @@
 | `GET` | `/problems` | `CONTEST_ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/problems` | `PROBLEM_ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/problems` | `ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `GET` | `/problems/:id` | `STUDENT` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
-| `GET` | `/problems/:id` | `DEVELOPER` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
-| `GET` | `/problems/:id` | `INTERVIEWER` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
-| `GET` | `/problems/:id` | `INSTRUCTOR` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
-| `GET` | `/problems/:id` | `MODERATOR` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
-| `GET` | `/problems/:id` | `CONTEST_ADMIN` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
-| `GET` | `/problems/:id` | `PROBLEM_ADMIN` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
-| `GET` | `/problems/:id` | `ADMIN` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/problems/:id` | `STUDENT` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/problems/:id` | `DEVELOPER` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/problems/:id` | `INTERVIEWER` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/problems/:id` | `INSTRUCTOR` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/problems/:id` | `MODERATOR` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/problems/:id` | `CONTEST_ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/problems/:id` | `PROBLEM_ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/problems/:id` | `ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/admin/dashboard` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/dashboard` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/admin/dashboard` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
