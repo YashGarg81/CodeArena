@@ -1,5 +1,6 @@
 import { createClient } from "redis";
 import fs from "fs";
+import path from "path";
 import { prisma, assertWorkerPostgres, isProductionStrict } from "./db";
 import { DRIVERS } from "./drivers";
 import { LanguageAdapterRegistry, buildCodeWithDriver } from "./src/adapters";
@@ -346,7 +347,7 @@ connectWorkerRedis()
                     // the problem author's limits untouched.
                     const budgets = LanguageAdapterRegistry.resolveBudgets(language, problem.timeLimit, problem.memoryLimit);
                     const execResult = await LanguageAdapterRegistry.executeCode(language, {
-                        folderPath,
+                        folderPath: folderPath!,
                         codeWithDriver,
                         inputData: tc.input,
                         expectedOutput: tc.output,
