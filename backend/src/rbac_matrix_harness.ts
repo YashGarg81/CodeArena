@@ -259,6 +259,11 @@ async function runRbacMatrix() {
   fs.writeFileSync(outPath, report, "utf8");
   console.log(`\nRBAC matrix generated successfully at: ${outPath}`);
   console.log(`Results: ${passedCount} passed, ${failedCount} failed, total ${results.length}`);
+  // CI gate: a failing combination must fail the workflow, not just the report.
+  if (failedCount > 0) {
+    console.error(`RBAC gate FAILED with ${failedCount} mismatches — see ${outPath}`);
+    process.exitCode = 1;
+  }
 }
 
 runRbacMatrix().catch((err) => {

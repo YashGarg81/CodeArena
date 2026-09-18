@@ -55,3 +55,8 @@ Thumbs.db
 
 # Temporary execution snippets & runner scratch files
 worker/code/*.tmp
+
+# Scraper dumps and intermediate crawl data
+backend/playlist_dump.html
+backend/ytInitialData.json
+*.dump

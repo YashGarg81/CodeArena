@@ -35,3 +35,8 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 .DS_Store
 
 /generated/prisma
+
+# Scraper dumps
+playlist_dump.html
+ytInitialData.json
+*.html
