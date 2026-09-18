@@ -6,7 +6,7 @@ import "./index.css";
 import type { User, Problem } from "./types";
 
 // Services & Utilities
-import { API } from "./services/api";
+import { API, storeTokens, clearTokens, getStoredRefreshToken, refreshAccessToken } from "./services/api";
 import { parseLocationToRoute, routeToUrl } from "./utils/routes";
 
 // Layout & Common Components
@@ -99,25 +99,45 @@ export default function App() {
   // Restore authenticated user session on mount or page refresh
   useEffect(() => {
     const token = localStorage.getItem("ca_token");
-    if (!token) return;
+    const refreshToken = getStoredRefreshToken();
+    if (!token && !refreshToken) return;
 
-    axios.get(`${API}/api/v1/auth/me`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-      .then(res => {
+    const fetchMe = (accessToken: string) =>
+      axios.get(`${API}/api/v1/auth/me`, { headers: { Authorization: `Bearer ${accessToken}` } });
+
+    const restore = async () => {
+      try {
+        const activeToken = token || (await refreshAccessToken());
+        if (!activeToken) throw new Error("no-token");
+        const res = await fetchMe(activeToken);
         if (res?.data?.user) {
           setUser(res.data.user);
           localStorage.setItem("ca_user", JSON.stringify(res.data.user));
         }
-      })
-      .catch(err => {
-        // If token is invalid or expired (401/403), clear persisted session
-        if (err.response?.status === 401 || err.response?.status === 403) {
-          localStorage.removeItem("ca_token");
-          localStorage.removeItem("ca_user");
-          setUser(null);
+      } catch (err: any) {
+        const status = err?.response?.status;
+        if (status === 401 && refreshToken) {
+          // Access token expired — attempt a silent refresh and retry once.
+          const refreshed = await refreshAccessToken();
+          if (refreshed) {
+            try {
+              const res = await fetchMe(refreshed);
+              if (res?.data?.user) {
+                setUser(res.data.user);
+                localStorage.setItem("ca_user", JSON.stringify(res.data.user));
+                return;
+              }
+            } catch {
+              // fall through to cleanup
+            }
+          }
         }
-      });
+        clearTokens();
+        setUser(null);
+      }
+    };
+
+    restore();
   }, []);
 
   // Synchronize browser URL and back/forward history navigation
@@ -130,6 +150,18 @@ export default function App() {
 
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
+  // Global Keyboard Shortcuts
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setCmdOpen(prev => !prev);
+      }
+    };
+    window.addEventListener("keydown", handleGlobalKeyDown);
+    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
   }, []);
 
   const navigate = (p: string, s?: string, replace = false) => {
@@ -147,9 +179,9 @@ export default function App() {
 
   const showToast = useCallback((msg: string, type: string) => { setToast({ msg, type }); }, []);
 
-  const handleAuthSuccess = (u: User, token: string) => {
+  const handleAuthSuccess = (u: User, token: string, refreshToken?: string) => {
     setUser(u);
-    localStorage.setItem("ca_token", token);
+    storeTokens(token, refreshToken);
     localStorage.setItem("ca_user", JSON.stringify(u));
     setAuthModal(null);
     showToast(`Welcome back, ${u.name}! 👋`, "success");
@@ -158,8 +190,9 @@ export default function App() {
   const handleLogout = async () => {
     try {
       const token = localStorage.getItem("ca_token");
+      const refreshToken = getStoredRefreshToken();
       if (token) {
-        await axios.post(`${API}/api/v1/auth/logout`, {}, {
+        await axios.post(`${API}/api/v1/auth/logout`, refreshToken ? { refreshToken } : {}, {
           headers: { Authorization: `Bearer ${token}` }
         });
       }
@@ -167,8 +200,7 @@ export default function App() {
       console.error("Logout API error:", err.message);
     }
     setUser(null);
-    localStorage.removeItem("ca_token");
-    localStorage.removeItem("ca_user");
+    clearTokens();
     navigate("home");
     showToast("Signed out successfully", "info");
   };
@@ -237,7 +269,7 @@ export default function App() {
           {page === "leaderboard" && <LeaderboardPage user={user} />}
           {page === "community" && <CommunityPage user={user} onToast={showToast} />}
           {page === "roadmap" && <RoadmapPage onNavigate={navigate} />}
-          {page === "contests" && <ContestsPage user={user} onToast={showToast} />}
+          {page === "contests" && <ContestsPage user={user} onToast={showToast} onNavigate={navigate} />}
           {page === "learn" && <LearnPage onNavigate={navigate} user={user} onOpenAuth={m => setAuthModal(m)} />}
           {page === "course" && <CourseDetailPage courseId={subPage} onNavigate={navigate} user={user} onToast={showToast} onOpenAuth={m => setAuthModal(m)} />}
           {page === "lesson" && <LessonViewerPage lessonId={subPage} onNavigate={navigate} user={user} onToast={showToast} onOpenAuth={m => setAuthModal(m)} />}

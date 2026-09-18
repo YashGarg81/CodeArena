@@ -181,10 +181,11 @@ export async function resetPasswordWithToken(rawToken: string, newPassword: stri
   try {
     const passwordHash = await Bun.password.hash(newPassword);
 
-    // 1. Update user password
+    // 1. Update user password AND bump tokenVersion so outstanding access
+    // tokens (up to 15 min) are invalidated alongside sessions/refresh tokens.
     await prisma.user.update({
       where: { id: verification.userId },
-      data: { password: passwordHash }
+      data: { password: passwordHash, tokenVersion: { increment: 1 } }
     });
 
     // 2. Security requirement: Revoke all active sessions & refresh tokens

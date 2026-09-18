@@ -19,7 +19,10 @@
     "test:frontend": "cd frontend && bun test",
     "test:e2e": "cd frontend && bunx playwright test",
     "test:rbac": "cd backend && bun run src/rbac_matrix_harness.ts",
-    "test:all": "bun run test && bun run test:e2e && bun run test:rbac"
+    "test:all": "bun run test && bun run test:e2e && bun run test:rbac",
+    "backup:db": "bash scripts/pg-backup.sh",
+    "restore:db": "bash scripts/pg-restore.sh",
+    "maintenance:prune-caches": "cd worker && bun run pull_images.ts --prune-only"
   },
   "keywords": [
     "coding-platform",

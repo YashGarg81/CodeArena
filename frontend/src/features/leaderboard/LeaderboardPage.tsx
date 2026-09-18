@@ -58,7 +58,7 @@ export function LeaderboardPage({ user }: { user: User | null }) {
                 <td><div className={`rank-cell rank-${i + 1}`}>{i < 3 ? medals[i] : `#${i + 1}`}</div></td>
                 <td>
                   <div className="user-cell">
-                    <div className="user-avatar-lb">{u.name.charAt(0).toUpperCase()}</div>
+                    <div className="user-avatar-lb">{(u.name ?? "?").charAt(0).toUpperCase()}</div>
                     <div>
                       <div style={{ fontWeight: 600, fontSize: 14 }}>{u.name}</div>
                       <div style={{ fontSize: 12, color: "var(--text-muted)" }}>@{u.username}</div>

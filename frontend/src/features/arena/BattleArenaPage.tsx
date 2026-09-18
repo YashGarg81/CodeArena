@@ -4,6 +4,7 @@ import { Icons } from "../../components/ui/Icons";
 import { StateView } from "../../components/common/StateView";
 import { api, API, getAuthHeaders } from "../../services/api";
 import type { User } from "../../types";
+import { LANGUAGE_OPTIONS } from "../../utils/languages";
 
 // ─── 1V1 BATTLE ARENA PAGE ──────────────────────────────────────────────────
 
@@ -12,15 +13,35 @@ export function BattleArenaPage({ user, onToast }: { user: User | null; onToast:
   const [searching, setSearching] = useState(false);
   const [gameMode, setGameMode] = useState<"classic" | "speed" | "score" | "best_of_3" | "survival">("classic");
   const [difficulty, setDifficulty] = useState<"All" | "Easy" | "Medium" | "Hard">("All");
-  const [arenaLanguage, setArenaLanguage] = useState<"py" | "js" | "cpp" | "java" | "go">("js");
+  const [arenaLanguage, setArenaLanguage] = useState<string>("js");
   const [roomCodeInput, setRoomCodeInput] = useState("");
   
   const ARENA_TEMPLATES: Record<string, string> = {
-    js: `function twoSum(nums, target) {\n    const map = new Map();\n    for (let i = 0; i < nums.length; i++) {\n        const complement = target - nums[i];\n        if (map.has(complement)) {\n            return [map.get(complement), i];\n        }\n        map.set(nums[i], i);\n    }\n    return [];\n}`,
-    py: `def twoSum(nums: list[int], target: int) -> list[int]:\n    seen = {}\n    for i, num in enumerate(nums):\n        comp = target - num\n        if comp in seen:\n            return [seen[comp], i]\n        seen[num] = i\n    return []`,
-    cpp: `#include <vector>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> twoSum(vector<int>& nums, int target) {\n        unordered_map<int, int> seen;\n        for (int i = 0; i < nums.size(); i++) {\n            int comp = target - nums[i];\n            if (seen.count(comp)) return {seen[comp], i};\n            seen[nums[i]] = i;\n        }\n        return {};\n    }\n};`,
-    java: `import java.util.*;\n\nclass Solution {\n    public int[] twoSum(int[] nums, int target) {\n        Map<Integer, Integer> map = new HashMap<>();\n        for (int i = 0; i < nums.length; i++) {\n            int comp = target - nums[i];\n            if (map.containsKey(comp)) return new int[]{map.get(comp), i};\n            map.put(nums[i], i);\n        }\n        return new int[]{};\n    }\n}`,
-    go: `package main\n\nfunc twoSum(nums []int, target int) []int {\n    seen := make(map[int]int)\n    for i, num := range nums {\n        if idx, ok := seen[target-num]; ok {\n            return []int{idx, i}\n        }\n        seen[num] = i\n    }\n    return nil\n}`
+    js: `function twoSum(nums, target) {\n    // Write your code here\n    \n}`,
+    ts: `function twoSum(nums: number[], target: number): number[] {\n    // Write your code here\n    return [];\n}`,
+    py: `def twoSum(nums: list[int], target: int) -> list[int]:\n    # Write your code here\n    pass`,
+    cpp: `#include <vector>\n#include <unordered_map>\nusing namespace std;\n\nvector<int> twoSum(vector<int>& nums, int target) {\n    // Write your code here\n    return {};\n}`,
+    c: `#include <stdio.h>\n#include <stdlib.h>\n\n// Return indices via out-parameters; set *returnSize = 2\nint* twoSum(int* nums, int numsSize, int target, int* returnSize) {\n    // Write your code here\n    *returnSize = 0;\n    return NULL;\n}`,
+    java: `import java.util.*;\n\nclass Solution {\n    public int[] twoSum(int[] nums, int target) {\n        // Write your code here\n        return new int[]{};\n    }\n}`,
+    go: `func twoSum(nums []int, target int) []int {\n    // Write your code here\n    return nil\n}`,
+    rust: `fn two_sum(nums: Vec<i32>, target: i32) -> Vec<i32> {\n    // Write your code here\n    vec![]\n}`,
+    cs: `using System.Collections.Generic;\n\nclass Solution {\n    public int[] TwoSum(int[] nums, int target) {\n        // Write your code here\n        return new int[0];\n    }\n}`,
+    kt: `fun twoSum(nums: IntArray, target: Int): IntArray {\n    // Write your code here\n    return intArrayOf()\n}`,
+    swift: `func twoSum(_ nums: [Int], _ target: Int) -> [Int] {\n    // Write your code here\n    return []\n}`,
+    ruby: `def two_sum(nums, target)\n  # Write your code here\nend`,
+    php: `<?php\nfunction twoSum($nums, $target) {\n    // Write your code here\n}`,
+    scala: `def twoSum(nums: Array[Int], target: Int): Array[Int] = {\n  // Write your code here\n  Array()\n}`,
+    dart: `List<int> twoSum(List<int> nums, int target) {\n  // Write your code here\n  return [];\n}`,
+    r: `two_sum <- function(nums, target) {\n  # Write your code here\n}`,
+    perl: `sub two_sum {\n  my ($nums, $target) = @_;\n  # Write your code here\n}`,
+    bash: `#!/usr/bin/env bash\n# Read nums + target from stdin, print indices\n# Write your code here`,
+    hs: `twoSum :: [Int] -> Int -> [Int]\ntwoSum nums target =\n  -- Write your code here\n  []`,
+    ex: `defmodule Solution do\n  def two_sum(nums, target) do\n    # Write your code here\n  end\nend`,
+    erl: `#!/usr/bin/env escript\nmain(_) ->\n  %% Write your code here\n  ok.`,
+    clj: `(defn two-sum [nums target]\n  ;; Write your code here\n  [])`,
+    groovy: `static int[] twoSum(int[] nums, int target) {\n    // Write your code here\n    return [] as int[]\n}`,
+    jl: `function two_sum(nums, target)\n    # Write your code here\nend`,
+    nim: `proc twoSum(nums: seq[int], target: int): seq[int] =\n  # Write your code here\n  @[]`,
   };
 
   const [code, setCode] = useState<string>(ARENA_TEMPLATES.js || "");
@@ -35,6 +56,70 @@ export function BattleArenaPage({ user, onToast }: { user: User | null; onToast:
 
   const [timeLeft, setTimeLeft] = useState<number>(900);
 
+  // Load recent global clashes for the lobby (backend seeds + records history)
+  useEffect(() => {
+    let cancelled = false;
+    api.get("/api/v1/arena/history")
+      .then((res) => {
+        if (!cancelled && Array.isArray(res.data?.history)) {
+          setBattleHistory(res.data.history);
+        }
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
+  // Runnable duel problems: published catalog problems the judge can execute.
+  // The lobby pick becomes round 1 (and pads best_of_3 / survival waves).
+  const [arenaProblems, setArenaProblems] = useState<Array<{ id: string; title: string; difficulty: string; category: string }>>([]);
+  const [problemSearch, setProblemSearch] = useState("");
+  const [arenaProblemId, setArenaProblemId] = useState<string>("two-sum");
+
+  useEffect(() => {
+    let cancelled = false;
+    api.get("/api/v1/arena/problems")
+      .then((res) => {
+        if (!cancelled && Array.isArray(res.data?.problems)) {
+          setArenaProblems(res.data.problems);
+        }
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
+  const filteredArenaProblems = arenaProblems.filter((p) => {
+    const q = problemSearch.trim().toLowerCase();
+    if (!q) return true;
+    return p.title.toLowerCase().includes(q) || p.id.toLowerCase().includes(q);
+  });
+
+  // Current round's problem (server-driven for best_of_3 / survival waves)
+  const roundIdx = Math.max(0, (matchState?.currentRound || 1) - 1);
+  const roundProblemRef = matchState?.problems?.[roundIdx];
+  const duelProblemId: string = roundProblemRef?.id || arenaProblemId || "two-sum";
+
+  // Round problem detail: templates + first public test case for the judge.
+  const [duelProblem, setDuelProblem] = useState<any>(null);
+  useEffect(() => {
+    if (!matchState?.matchId) return;
+    let cancelled = false;
+    api.get(`/api/v1/problems/${duelProblemId}`)
+      .then((res) => {
+        if (cancelled) return;
+        const detail = res.data?.problem;
+        setDuelProblem(detail || null);
+        const tpl = detail?.templates?.[arenaLanguage] || ARENA_TEMPLATES[arenaLanguage] || "";
+        lastTemplateRef.current = tpl;
+        setCode(tpl);
+        setRunLogs("");
+      })
+      .catch(() => {
+        if (!cancelled) setDuelProblem(null);
+      });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [matchState?.matchId, duelProblemId]);
+
   // Poll room state when waiting for player 2 in private rooms
   useEffect(() => {
     if (!matchState?.matchId) return;
@@ -48,22 +133,33 @@ export function BattleArenaPage({ user, onToast }: { user: User | null; onToast:
       }
     }, 1000);
 
-    // Room sync polling
+    // Room sync polling — server is authoritative for both players' progress.
+    // This also handles best_of_3 round resets driven by the backend.
     const pollInterval = setInterval(async () => {
       try {
         const res = await api.get(`/api/v1/arena/matches/${matchState.matchId}`);
-        if (res.data.match) {
-          if (matchState.status === "waiting" && res.data.match.status === "active") {
+        const serverMatch = res.data.match;
+        if (serverMatch) {
+          if (matchState.status === "waiting" && serverMatch.status === "active") {
             onToast("⚔️ Opponent connected! Duel timer started!", "success");
-            setStartTime(res.data.match.startTime || Date.now());
+            setStartTime(serverMatch.startTime || Date.now());
           }
-          setMatchState(res.data.match);
-          if (res.data.match.player2?.testsPassed !== undefined) {
-            const oppTests = res.data.match.player1.id === user?.id 
-              ? res.data.match.player2.testsPassed 
-              : res.data.match.player1.testsPassed;
-            setOpponentTests(oppTests);
+          if (matchState.status !== "completed" && serverMatch.status === "completed") {
+            const iWon = serverMatch.winnerId === user?.id;
+            setMatchResult({
+              won: iWon,
+              timeTakenSec: Math.max(1, Math.round((Date.now() - startTime) / 1000)),
+              deltaElo: iWon ? 28 : -12,
+              newElo: (user?.contestRating || 1500) + (iWon ? 28 : -12),
+              speedAccuracy: iWon ? "⚡ Opponent solved first — wait, you won!" : "Opponent solved first. GG!",
+            });
+            onToast(iWon ? "VICTORY! 🏆" : "Defeat — opponent solved first.", iWon ? "success" : "error");
           }
+          setMatchState(serverMatch);
+          const me = serverMatch.player1?.id === user?.id ? serverMatch.player1 : serverMatch.player2;
+          const opp = serverMatch.player1?.id === user?.id ? serverMatch.player2 : serverMatch.player1;
+          if (typeof me?.testsPassed === "number") setTestsPassed(me.testsPassed);
+          if (typeof opp?.testsPassed === "number") setOpponentTests(opp.testsPassed);
         }
       } catch {}
     }, 2000);
@@ -72,18 +168,30 @@ export function BattleArenaPage({ user, onToast }: { user: User | null; onToast:
       clearInterval(timerInterval);
       clearInterval(pollInterval);
     };
-  }, [matchState?.matchId, matchState?.status, matchState?.startTime, matchState?.durationSeconds, user?.id]);
+  }, [matchState?.matchId, matchState?.status, matchState?.startTime, matchState?.durationSeconds, user?.id, startTime]);
 
-  const handleLanguageChange = (lang: "py" | "js" | "cpp" | "java" | "go") => {
+  const lastTemplateRef = useRef<string>(ARENA_TEMPLATES.js || "");
+  const handleLanguageChange = (lang: string) => {
     setArenaLanguage(lang);
-    setCode(ARENA_TEMPLATES[lang] || "");
+    const nextTemplate = duelProblem?.templates?.[lang] || ARENA_TEMPLATES[lang] || "";
+    // Don't wipe code the user has already edited — only swap the scaffold
+    // when the editor still holds the previous template (or is empty).
+    setCode((prev) => {
+      if (!prev.trim() || prev === lastTemplateRef.current) {
+        lastTemplateRef.current = nextTemplate;
+        return nextTemplate;
+      }
+      lastTemplateRef.current = nextTemplate;
+      onToast(`Language switched to ${lang.toUpperCase()} — your code was kept.`, "info");
+      return prev;
+    });
   };
 
   const startMatchmaking = async () => {
     if (!user) { onToast("Please sign in to enter the 1v1 Battle Arena", "error"); return; }
     setSearching(true);
     try {
-      const res = await api.post("/api/v1/arena/matchmake", { gameMode, difficulty, language: arenaLanguage });
+      const res = await api.post("/api/v1/arena/matchmake", { gameMode, difficulty, language: arenaLanguage, problemIds: [arenaProblemId] });
       if (res.data.match) {
         setMatchState(res.data.match);
         setSearching(false);
@@ -106,7 +214,7 @@ export function BattleArenaPage({ user, onToast }: { user: User | null; onToast:
   const handleCreatePrivateRoom = async () => {
     if (!user) { onToast("Please sign in to create a private room", "error"); return; }
     try {
-      const res = await api.post("/api/v1/arena/rooms", { gameMode, difficulty, language: arenaLanguage });
+      const res = await api.post("/api/v1/arena/rooms", { gameMode, difficulty, language: arenaLanguage, problemIds: [arenaProblemId] });
       setMatchState(res.data.match);
       setStartTime(Date.now());
       setPasteEvents(0);
@@ -134,14 +242,19 @@ export function BattleArenaPage({ user, onToast }: { user: User | null; onToast:
     if (!matchState?.matchId) return;
     try {
       const res = await api.post(`/api/v1/arena/matches/${matchState.matchId}/rematch`, {});
-      setMatchState(res.data.match);
+      const next = res.data.match;
+      setMatchState(next);
+      if (next?.status === "rematch_requested") {
+        onToast("Rematch requested! Waiting for opponent to accept… 🔄", "info");
+        return;
+      }
       setTestsPassed(0);
       setOpponentTests(0);
       setMatchResult(null);
       setRunLogs("");
       setStartTime(Date.now());
       setPasteEvents(0);
-      onToast("Rematch requested! 🔄", "info");
+      onToast("Rematch accepted — new duel started! 🔄", "success");
     } catch {
       onToast("Failed to request rematch", "error");
     }
@@ -169,10 +282,15 @@ export function BattleArenaPage({ user, onToast }: { user: User | null; onToast:
 
     const timeTakenSec = Math.max(1, Math.round((Date.now() - startTime) / 1000));
 
-    // 1. Anti-Cheat Real-Time Inspection
+    // Judge the current round's problem (works for any catalog problem, not just two-sum).
+    const visibleTCs = Array.isArray(duelProblem?.testCases) ? duelProblem.testCases.filter((tc: any) => !tc.isHidden) : [];
+    const judgeInput = visibleTCs[0]?.input ?? "";
+    const judgeExpected = visibleTCs[0]?.output ?? visibleTCs[0]?.expectedOutput ?? "";
+
+    // 1. Anti-Cheat Real-Time Inspection (non-blocking: never fail silently)
     try {
       const auditRes = await api.post("/api/v1/contests/anti-cheat/analyze", {
-        problemId: "two-sum",
+        problemId: duelProblemId,
         code,
         timeTakenSec,
         pasteEventDetected: pasteEvents > 0,
@@ -182,16 +300,18 @@ export function BattleArenaPage({ user, onToast }: { user: User | null; onToast:
       if (auditRes.data.audit?.isFlagged) {
         onToast("⚠️ Anti-Cheat Telemetry: Unnatural solve pattern detected", "error");
       }
-    } catch {}
+    } catch {
+      onToast("Anti-cheat service unavailable — continuing without telemetry", "info");
+    }
 
     // 2. Real Sandboxed Compilation & Test Execution
     try {
       const runRes = await api.post("/api/v1/submissions/run", {
-        problemId: "two-sum",
+        problemId: duelProblemId,
         code,
         language: arenaLanguage,
-        input: "[2,7,11,15]\n9",
-        expected: "[0,1]"
+        input: judgeInput,
+        expectedOutput: judgeExpected
       });
 
       const passed = runRes.data.result?.passed || runRes.data.result?.status === "Accepted" || runRes.data.result?.status === "Success";
@@ -200,21 +320,42 @@ export function BattleArenaPage({ user, onToast }: { user: User | null; onToast:
       
       setRunLogs(passed 
         ? `✅ Testcase ${nextPassed}/5 Accepted! Runtime: ${runRes.data.result?.runtimeMs || 18}ms`
-        : `❌ Output Mismatch: Got ${runRes.data.result?.got || 'Error'} (Expected: ${runRes.data.result?.expected || '[0,1]'})`
+        : (runRes.data.result?.error 
+           ? `❌ Error: ${runRes.data.result.error}`
+           : `❌ Output Mismatch: Got ${runRes.data.result?.got || 'Error'} (Expected: ${runRes.data.result?.expected || judgeExpected || '?'})`)
       );
 
-      // Opponent progress simulation
-      if (Math.random() > 0.4) {
-        setOpponentTests(p => Math.min(5, p + 1));
-      }
-
       if (matchState?.matchId) {
-        await api.post(`/api/v1/arena/matches/${matchState.matchId}/progress`, {
+        const progressRes = await api.post(`/api/v1/arena/matches/${matchState.matchId}/progress`, {
           testsPassed: nextPassed,
           totalTests: 5
         });
-
-        if (nextPassed === 5) {
+        const serverMatch = progressRes.data?.match;
+        if (serverMatch) {
+          setMatchState(serverMatch);
+          const me = serverMatch.player1?.id === user?.id ? serverMatch.player1 : serverMatch.player2;
+          const opp = serverMatch.player1?.id === user?.id ? serverMatch.player2 : serverMatch.player1;
+          if (typeof me?.testsPassed === "number") setTestsPassed(me.testsPassed);
+          if (typeof opp?.testsPassed === "number") setOpponentTests(opp.testsPassed);
+          // Server is authoritative: only declare victory if WE are the recorded winner.
+          if (serverMatch.status === "completed") {
+            const iWon = serverMatch.winnerId === user?.id;
+            const delta = iWon ? 28 : -12;
+            setMatchResult({
+              won: iWon,
+              timeTakenSec,
+              deltaElo: delta,
+              newElo: (user?.contestRating || 1500) + delta,
+              speedAccuracy: iWon
+                ? `⚡ Solved in ${timeTakenSec}s with 100% test accuracy!`
+                : "Opponent solved first. GG — queue again!",
+            });
+            onToast(
+              iWon ? "VICTORY! 🏆 You solved all testcases first!" : "Defeat — opponent solved first.",
+              iWon ? "success" : "error"
+            );
+          }
+        } else if (nextPassed === 5) {
           const delta = 28;
           setMatchResult({
             won: true,
@@ -226,21 +367,10 @@ export function BattleArenaPage({ user, onToast }: { user: User | null; onToast:
           onToast("VICTORY! 🏆 You solved all testcases first with highest accuracy!", "success");
         }
       }
-    } catch {
-      // Fallback local test step
-      const nextPassed = Math.min(5, testsPassed + 1);
-      setTestsPassed(nextPassed);
-      setRunLogs(`✅ Testcase ${nextPassed}/5 verified via local runtime checker.`);
-      if (nextPassed === 5) {
-        setMatchResult({
-          won: true,
-          timeTakenSec,
-          deltaElo: 28,
-          newElo: (user?.contestRating || 1500) + 28,
-          speedAccuracy: `⚡ Solved in ${timeTakenSec}s with 100% accuracy!`
-        });
-        onToast("VICTORY! 🏆 Duel completed!", "success");
-      }
+    } catch (e: any) {
+      // No fake progress: judge unreachable means no verified tests.
+      setRunLogs(`❌ Judge unreachable: ${e?.response?.data?.error || e?.message || "network error"}. Your code was kept — retry.`);
+      onToast("Judge unreachable — code kept, retry shortly", "error");
     } finally {
       setCompiling(false);
     }
@@ -260,9 +390,23 @@ export function BattleArenaPage({ user, onToast }: { user: User | null; onToast:
             <button className="btn btn-secondary" onClick={handleCreatePrivateRoom}>
               🔒 Create Private Room
             </button>
-            <button className="btn btn-primary btn-lg" onClick={startMatchmaking} disabled={searching}>
-              {searching ? "⏳ Finding Opponent..." : "⚡ Ranked Quick Match"}
-            </button>
+            {searching ? (
+              <>
+                <span className="badge badge-yellow" style={{ padding: "8px 16px", fontSize: 13 }}>
+                  ⏳ Searching for opponent...
+                </span>
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => { setSearching(false); onToast("Matchmaking cancelled", "info"); }}
+                >
+                  Cancel
+                </button>
+              </>
+            ) : (
+              <button className="btn btn-primary btn-lg" onClick={startMatchmaking}>
+                ⚡ Ranked Quick Match
+              </button>
+            )}
           </div>
         ) : (
           <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
@@ -296,6 +440,34 @@ export function BattleArenaPage({ user, onToast }: { user: User | null; onToast:
         <div>
           {/* Game Modes & Settings Bar */}
           <div className="card" style={{ marginBottom: 24, padding: 20 }}>
+            <div style={{ marginBottom: 16 }}>
+              <label className="label" style={{ fontSize: 13, fontWeight: 700 }}>
+                Duel Problem — any runnable catalog problem (round 1; waves pad best_of_3 / survival)
+              </label>
+              <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                <input
+                  className="input input-sm"
+                  placeholder="🔍 Search duel problems..."
+                  style={{ width: 220 }}
+                  value={problemSearch}
+                  onChange={e => setProblemSearch(e.target.value)}
+                />
+                <select
+                  className="select"
+                  value={arenaProblemId}
+                  onChange={e => setArenaProblemId(e.target.value)}
+                  style={{ minWidth: 240 }}
+                  title="Problem to duel on"
+                >
+                  {filteredArenaProblems.map(p => (
+                    <option key={p.id} value={p.id}>
+                      {p.title} · {p.difficulty}
+                    </option>
+                  ))}
+                </select>
+                <span className="badge badge-gray">{arenaProblems.length} runnable</span>
+              </div>
+            </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr auto", gap: 16, alignItems: "center" }}>
               <div>
                 <label className="label" style={{ fontSize: 13, fontWeight: 700 }}>Select Game Mode</label>
@@ -321,17 +493,11 @@ export function BattleArenaPage({ user, onToast }: { user: User | null; onToast:
               <div>
                 <label className="label" style={{ fontSize: 13, fontWeight: 700 }}>Language Constraint</label>
                 <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-                  {[
-                    { key: "js", label: "JS" },
-                    { key: "py", label: "Python" },
-                    { key: "cpp", label: "C++" },
-                    { key: "java", label: "Java" },
-                    { key: "go", label: "Go" }
-                  ].map(l => (
+                  {LANGUAGE_OPTIONS.map(l => (
                     <button
                       key={l.key}
                       className={`btn btn-sm ${arenaLanguage === l.key ? "btn-primary" : "btn-secondary"}`}
-                      onClick={() => handleLanguageChange(l.key as any)}
+                      onClick={() => handleLanguageChange(l.key)}
                     >
                       {l.label}
                     </button>
@@ -430,6 +596,7 @@ export function BattleArenaPage({ user, onToast }: { user: User | null; onToast:
                 <span style={{ fontWeight: 800 }}>🔑 Room Code:</span>
                 <span style={{ fontFamily: "var(--font-mono)", fontSize: 16, fontWeight: 900, color: "var(--accent-primary)" }}>{matchState.roomCode}</span>
                 <span className="badge badge-gray" style={{ textTransform: "uppercase" }}>Language: {arenaLanguage}</span>
+                <span className="badge badge-gray" style={{ textTransform: "uppercase" }}>Problem: {duelProblemId}</span>
               </div>
               <span style={{ fontSize: 12, color: "var(--text-muted)" }}>Share this code with a friend or spectator to join.</span>
             </div>
@@ -450,7 +617,7 @@ export function BattleArenaPage({ user, onToast }: { user: User | null; onToast:
 
               <div>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6, fontWeight: 700, fontSize: 13 }}>
-                  <span style={{ color: "var(--accent-red)" }}>⚔️ Opponent (@{matchState.player2?.username || 'Challenger'})</span>
+                  <span style={{ color: "var(--accent-red)" }}>⚔️ Opponent (@{(matchState.player1?.id === user?.id ? matchState.player2 : matchState.player1)?.username || 'Challenger'})</span>
                   <span>{opponentTests}/5 Tests ({Math.round((opponentTests / 5) * 100)}%)</span>
                 </div>
                 <div style={{ height: 10, background: "var(--bg-tertiary)", borderRadius: 99, overflow: "hidden" }}>
@@ -462,12 +629,19 @@ export function BattleArenaPage({ user, onToast }: { user: User | null; onToast:
 
           {/* Code Workspace & Problem */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
-            <div className="card">
-              <span className="badge badge-easy" style={{ marginBottom: 8 }}>Two Sum · Round {matchState.currentRound || 1}/{matchState.totalRounds || 1}</span>
-              <h3 style={{ fontSize: 18, fontWeight: 800, margin: "8px 0" }}>Two Sum ({matchState.gameMode?.toUpperCase()} Arena)</h3>
-              <p style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.6 }}>
-                Given an array of integers <code>nums</code> and an integer <code>target</code>, return indices of the two numbers such that they add up to <code>target</code>.
-              </p>
+            <div className="card" style={{ height: "calc(100vh - 220px)", overflowY: "auto" }}>
+              {(() => {
+                const roundIdx = Math.max(0, (matchState.currentRound || 1) - 1);
+                const roundProblem = matchState.problems?.[roundIdx];
+                const pTitle = roundProblem?.title || "Two Sum";
+                const pDesc = roundProblem?.description || "Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.";
+                const pDiff = roundProblem?.difficulty || matchState.difficulty || "Easy";
+                return (<>
+                  <span className="badge badge-easy" style={{ marginBottom: 8 }}>{pTitle} · Round {matchState.currentRound || 1}/{matchState.totalRounds || 1} · {pDiff}</span>
+                  <h3 style={{ fontSize: 18, fontWeight: 800, margin: "8px 0" }}>{pTitle} ({matchState.gameMode?.toUpperCase()} Arena)</h3>
+                  <p style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.6 }}>{pDesc}</p>
+                </>);
+              })()}
               
               {/* Compiler Live Status Pane */}
               {runLogs && (
@@ -488,30 +662,51 @@ export function BattleArenaPage({ user, onToast }: { user: User | null; onToast:
                   🚪 Forfeit / Back to Arena
                 </button>
               </div>
+              {/* Editor Workspace */}
             </div>
 
-            <div className="card" style={{ padding: 0, overflow: "hidden" }}>
-              <div style={{ padding: "8px 14px", background: "var(--bg-tertiary)", borderBottom: "1px solid var(--border-light)", fontSize: 12, fontWeight: 600, color: "var(--text-muted)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div className="card" style={{ padding: 0, display: "flex", flexDirection: "column", height: "calc(100vh - 220px)", overflow: "hidden" }}>
+              <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center", background: "var(--bg-secondary)" }}>
                 <span>BATTLE SCRATCHPAD ({arenaLanguage.toUpperCase()})</span>
                 <div style={{ display: "flex", gap: 4 }}>
-                  {(["js", "py", "cpp", "java", "go"] as const).map(lang => (
+                  {LANGUAGE_OPTIONS.map(l => (
                     <button
-                      key={lang}
-                      className={`btn btn-sm ${arenaLanguage === lang ? "btn-primary" : "btn-secondary"}`}
+                      key={l.key}
+                      className={`btn btn-sm ${arenaLanguage === l.key ? "btn-primary" : "btn-secondary"}`}
                       style={{ padding: "2px 8px", fontSize: 10 }}
-                      onClick={() => handleLanguageChange(lang)}
+                      onClick={() => handleLanguageChange(l.key)}
                     >
-                      {lang.toUpperCase()}
+                      {l.key.toUpperCase()}
                     </button>
                   ))}
                 </div>
               </div>
               <textarea
                 className="code-textarea"
-                style={{ minHeight: 340, border: "none", borderRadius: 0, padding: 14, fontFamily: "var(--font-mono)", fontSize: 13 }}
+                style={{ minHeight: 340, border: "none", borderRadius: 0, padding: 14, fontFamily: "var(--font-mono)", fontSize: 13, whiteSpace: "pre", overflowX: "auto" }}
                 value={code}
+                spellCheck={false}
+                autoCapitalize="off"
+                autoCorrect="off"
+                wrap="off"
+                placeholder="// Write your solution here — Ctrl+Enter to compile & verify"
                 onPaste={() => setPasteEvents(p => p + 1)}
                 onChange={e => setCode(e.target.value)}
+                onKeyDown={e => {
+                  const el = e.target as HTMLTextAreaElement;
+                  if (e.key === "Tab") {
+                    e.preventDefault();
+                    const start = el.selectionStart ?? code.length;
+                    const end = el.selectionEnd ?? code.length;
+                    setCode(code.slice(0, start) + "  " + code.slice(end));
+                    requestAnimationFrame(() => {
+                      try { el.selectionStart = el.selectionEnd = start + 2; } catch {}
+                    });
+                  } else if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+                    e.preventDefault();
+                    handleRunBattleTest();
+                  }
+                }}
               />
             </div>
           </div>
@@ -538,40 +733,4 @@ export function BattleArenaPage({ user, onToast }: { user: User | null; onToast:
       )}
     </div>
   );
-}
-
-// ─── SYSTEM DESIGN PAGE ─────────────────────────────────────────────────────
-
-// ─── SYSTEM DESIGN STUDIO ───────────────────────────────────────────────────
-
-interface SDNode {
-  id: string;
-  label: string;
-  type: string;
-  x: number;
-  y: number;
-  icon: string;
-  tech?: string;
-  instances?: string;
-}
-
-interface SDConnection {
-  from: string;
-  to: string;
-  label?: string;
-}
-
-interface SDTemplate {
-  id: string;
-  title: string;
-  icon: string;
-  difficulty: string;
-  desc: string;
-  rps: string;
-  storage: string;
-  readWriteRatio: string;
-  latencyTarget: string;
-  tradeOffs: string[];
-  nodes: SDNode[];
-  connections: SDConnection[];
 }

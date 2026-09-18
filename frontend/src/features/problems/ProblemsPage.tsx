@@ -28,10 +28,12 @@ export function ProblemsPage({ onNavigate, user, onToast }: { onNavigate: (p: st
     api.get("/api/v1/problems?limit=1000").then(r => {
       const ps: Problem[] = r.data.problems || [];
       setProblems(ps);
-      // Pick a deterministic daily problem based on date
+      // Deterministic daily problem based on day-of-year (stable across the year)
       if (ps.length > 0) {
-        const idx = new Date().getDate() % ps.length;
-        setDailyProblem(ps[idx] || null);
+        const now = new Date();
+        const start = new Date(now.getFullYear(), 0, 0);
+        const dayOfYear = Math.floor((now.getTime() - start.getTime()) / 86400000);
+        setDailyProblem(ps[dayOfYear % ps.length] || null);
       }
       setLoading(false);
     }).catch(() => setLoading(false));
@@ -54,18 +56,21 @@ export function ProblemsPage({ onNavigate, user, onToast }: { onNavigate: (p: st
     if (filters.difficulty && p.difficulty !== filters.difficulty) return false;
     if (filters.category && p.category !== filters.category) return false;
     if (filters.company && !p.companies?.includes(filters.company)) return false;
-    if (filters.search && !p.title.toLowerCase().includes(filters.search.toLowerCase())) return false;
+    if (filters.search && !(p.title ?? "").toLowerCase().includes(filters.search.toLowerCase())) return false;
     if (filters.solved === "solved" && !solvedIds.has(p.id)) return false;
     if (filters.solved === "unsolved" && solvedIds.has(p.id)) return false;
     return true;
   });
 
+  const [likePending, setLikePending] = useState<Set<string>>(new Set());
   const handleLike = async (e: React.MouseEvent, problemId: string) => {
     e.stopPropagation();
     if (!user) {
       onToast("Please sign in to like problems", "warning");
       return;
     }
+    if (likePending.has(problemId)) return;
+    setLikePending(prev => new Set([...prev, problemId]));
     try {
       const { data } = await api.post(`/api/v1/problems/${problemId}/like`, {});
       if (data.liked) {
@@ -80,6 +85,12 @@ export function ProblemsPage({ onNavigate, user, onToast }: { onNavigate: (p: st
     } catch (err) {
       console.error("Like error:", err);
       onToast("Unable to update like state", "error");
+    } finally {
+      setLikePending(prev => {
+        const next = new Set(prev);
+        next.delete(problemId);
+        return next;
+      });
     }
   };
 
@@ -142,7 +153,7 @@ export function ProblemsPage({ onNavigate, user, onToast }: { onNavigate: (p: st
                   <span className="daily-badge" style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase" }}>
                     Daily Challenge · {new Date().toLocaleDateString("en-US", { month: "long", day: "numeric" })}
                   </span>
-                  <span className={`badge badge-${dailyProblem.difficulty.toLowerCase()}`}>{dailyProblem.difficulty}</span>
+                  <span className={`badge badge-${(dailyProblem.difficulty ?? "medium").toLowerCase()}`}>{dailyProblem.difficulty}</span>
                   <span style={{ fontSize: 12, color: "var(--text-muted)" }}>⏱ ~20 min</span>
                 </div>
                 <div style={{ fontSize: 16, fontWeight: 700, color: "var(--text-primary)" }}>
@@ -273,7 +284,7 @@ export function ProblemsPage({ onNavigate, user, onToast }: { onNavigate: (p: st
                         </div>
                       </td>
                       <td>
-                        <span className={`badge badge-${p.difficulty.toLowerCase()}`}>{p.difficulty}</span>
+                        <span className={`badge badge-${(p.difficulty ?? "medium").toLowerCase()}`}>{p.difficulty}</span>
                       </td>
                       <td style={{ color: "var(--text-secondary)", fontSize: 13 }}>{p.category}</td>
                       <td>

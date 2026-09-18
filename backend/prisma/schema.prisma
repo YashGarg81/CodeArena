@@ -114,6 +114,8 @@ model User {
   aiConversations     AIConversation[]
   aiUsages            AIUsage[]
   subscriptions       UserSubscription[]
+  sdProjects          SDProject[]
+  sdLessonProgress    SDLessonProgress[]
 
   @@index([username])
   @@index([email])
@@ -937,4 +939,103 @@ model UserSubscription {
 
   @@index([userId])
   @@index([planId])
+}
+
+// ─── SYSTEM DESIGN (PHASE C) ──────────────────────────────────────────────────
+
+enum SDLevel {
+  Beginner
+  Intermediate
+  Advanced
+  Staff
+}
+
+model SDProject {
+  id          String   @id @default(uuid())
+  title       String
+  description String   @default("")
+  templateId  String?
+  ownerId     String
+  isPublic    Boolean  @default(false)
+  shareToken  String   @unique
+  nodes       Json
+  connections Json
+  version     Int      @default(1)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  owner   User              @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  versions SDProjectVersion[]
+
+  @@index([ownerId])
+  @@index([isPublic])
+}
+
+model SDProjectVersion {
+  id            String   @id @default(uuid())
+  projectId     String
+  versionNumber Int
+  message       String
+  nodes         Json
+  connections   Json
+  createdAt     DateTime @default(now())
+
+  project SDProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, versionNumber])
+  @@index([projectId])
+}
+
+model SDSection {
+  id          String   @id @default(uuid())
+  slug        String   @unique
+  title       String
+  level       SDLevel
+  icon        String   @default("📘")
+  description String
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  lessons SDLesson[]
+
+  @@index([level])
+  @@index([order])
+}
+
+model SDLesson {
+  id            String   @id @default(uuid())
+  sectionId     String
+  slug          String
+  title         String
+  summary       String
+  content       String   // Markdown lesson body
+  keyConcepts   String[] @default([])
+  checklist     String[] @default([])
+  quiz          Json?    // [{ question, options[], correct, explanation }]
+  resources     String[] @default([])
+  order         Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  section  SDSection        @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  @@unique([sectionId, slug])
+  @@unique([sectionId, order])
+  @@index([sectionId])
+}
+
+model SDLessonProgress {
+  id          String    @id @default(uuid())
+  userId      String
+  lessonId    String    // Stable slug id: "<sectionSlug>/<lessonSlug>"
+  completed   Boolean   @default(false)
+  score       Int?      // Quiz score 0-100
+  completedAt DateTime?
+  updatedAt   DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId])
+  @@index([userId])
+  @@index([lessonId])
 }

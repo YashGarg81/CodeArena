@@ -1,6 +1,7 @@
 import { Router, type Request, type Response } from 'express';
 import crypto from 'crypto';
 import { auth, type AuthenticatedRequest } from './auth';
+import { prisma } from '../db';
 
 export const systemDesignRouter = Router();
 
@@ -556,7 +557,7 @@ systemDesignRouter.post('/score', (req: Request, res: Response) => {
   });
 });
 
-// ─── PERSISTENT SYSTEM DESIGN PROJECTS LIFECYCLE ─────────────────────────────
+// ─── PERSISTENT SYSTEM DESIGN PROJECTS LIFECYCLE (PostgreSQL via Prisma) ──────
 
 export interface SDProjectVersion {
   id: string;
@@ -583,34 +584,78 @@ export interface SDProject {
   updatedAt: string;
 }
 
-const sdProjectsStore = new Map<string, SDProject>();
+// Converts a Prisma SDProject row (+ versions) into the public API shape.
+function projectFromRow(row: any, versions: any[] = []): SDProject {
+  return {
+    id: row.id,
+    title: row.title,
+    description: row.description ?? "",
+    templateId: row.templateId ?? undefined,
+    ownerId: row.ownerId,
+    isPublic: row.isPublic,
+    shareToken: row.shareToken,
+    nodes: Array.isArray(row.nodes) ? row.nodes : [],
+    connections: Array.isArray(row.connections) ? row.connections : [],
+    version: row.version,
+    versions: versions.map(v => ({
+      id: v.id,
+      versionNumber: v.versionNumber,
+      message: v.message,
+      nodes: Array.isArray(v.nodes) ? v.nodes : [],
+      connections: Array.isArray(v.connections) ? v.connections : [],
+      createdAt: v.createdAt.toISOString(),
+    })),
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+  };
+}
 
-// Seed default sample project for persistence verification
-const defaultProjectId = "proj_sample_url_shortener";
-sdProjectsStore.set(defaultProjectId, {
-  id: defaultProjectId,
-  title: "Production URL Shortener Architecture",
-  description: "Enterprise multi-tier URL shortener with distributed cache and read replicas",
-  templateId: "url-shortener",
-  ownerId: "system",
-  isPublic: true,
-  shareToken: "share_url_shortener_demo",
-  nodes: TEMPLATES[0]!.nodes,
-  connections: TEMPLATES[0]!.connections,
-  version: 1,
-  versions: [
-    {
-      id: "v1_init",
-      versionNumber: 1,
-      message: "Initial blueprint architecture",
-      nodes: TEMPLATES[0]!.nodes,
-      connections: TEMPLATES[0]!.connections,
-      createdAt: new Date().toISOString()
-    }
-  ],
-  createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString()
-});
+async function loadProjectVersions(projectId: string): Promise<any[]> {
+  try {
+    return await prisma.sdProjectVersion.findMany({
+      where: { projectId },
+      orderBy: { versionNumber: 'desc' },
+    });
+  } catch {
+    return [];
+  }
+}
+
+// Seeds a public demo project so `/projects` is never empty on a fresh DB.
+async function ensureDemoProject(): Promise<void> {
+  try {
+    const tmpl = TEMPLATES.find(t => t.id === 'url-shortener');
+    if (!tmpl) return;
+    const existing = await prisma.sdProject.findUnique({
+      where: { id: 'proj_sample_url_shortener' },
+    });
+    if (existing) return;
+    await prisma.sdProject.create({
+      data: {
+        id: 'proj_sample_url_shortener',
+        title: 'Production URL Shortener Architecture',
+        description: 'Enterprise multi-tier URL shortener with distributed cache and read replicas',
+        templateId: 'url-shortener',
+        ownerId: 'system',
+        isPublic: true,
+        shareToken: 'share_url_shortener_demo',
+        nodes: tmpl.nodes as any,
+        connections: tmpl.connections as any,
+        version: 1,
+        versions: {
+          create: [{
+            versionNumber: 1,
+            message: 'Initial blueprint architecture',
+            nodes: tmpl.nodes as any,
+            connections: tmpl.connections as any,
+          }],
+        },
+      },
+    });
+  } catch {
+    // DB unavailable — projects are not yet persistent.
+  }
+}
 
 // Helper for schema validation
 function validateDiagramPayload(nodes: any[], connections: any[]): { valid: boolean; error?: string } {
@@ -628,14 +673,27 @@ function validateDiagramPayload(nodes: any[], connections: any[]): { valid: bool
 }
 
 // GET /api/v1/system-design/projects (list user projects)
-systemDesignRouter.get('/projects', auth, (req: AuthenticatedRequest, res: Response) => {
+systemDesignRouter.get('/projects', auth, async (req: AuthenticatedRequest, res: Response) => {
   const userId = req.userId || "anonymous";
-  const userProjects = Array.from(sdProjectsStore.values()).filter(p => p.ownerId === userId || p.ownerId === "system");
-  res.json({ projects: userProjects });
+  try {
+    await ensureDemoProject();
+    const rows = await prisma.sdProject.findMany({
+      where: { OR: [{ ownerId: userId }, { ownerId: 'system' }] },
+      orderBy: { updatedAt: 'desc' },
+    });
+    const projects: SDProject[] = [];
+    for (const row of rows) {
+      const versions = await loadProjectVersions(row.id);
+      projects.push(projectFromRow(row, versions));
+    }
+    res.json({ projects });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Failed to load projects', detail: err?.message });
+  }
 });
 
 // POST /api/v1/system-design/projects (create project)
-systemDesignRouter.post('/projects', auth, (req: AuthenticatedRequest, res: Response) => {
+systemDesignRouter.post('/projects', auth, async (req: AuthenticatedRequest, res: Response) => {
   const userId = req.userId || "anonymous";
   const { title, description = "", templateId, nodes = [], connections = [], isPublic = false } = req.body;
 
@@ -648,40 +706,38 @@ systemDesignRouter.post('/projects', auth, (req: AuthenticatedRequest, res: Resp
     return res.status(400).json({ error: validation.error });
   }
 
-  const id = `proj_${crypto.randomBytes(8).toString("hex")}`;
-  const shareToken = crypto.randomBytes(12).toString("hex");
-
-  const newProject: SDProject = {
-    id,
-    title,
-    description,
-    templateId,
-    ownerId: userId,
-    isPublic: !!isPublic,
-    shareToken,
-    nodes,
-    connections,
-    version: 1,
-    versions: [
-      {
-        id: `v_${Date.now()}`,
-        versionNumber: 1,
-        message: "Project created",
-        nodes,
-        connections,
-        createdAt: new Date().toISOString()
-      }
-    ],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  };
-
-  sdProjectsStore.set(id, newProject);
-  res.status(201).json({ project: newProject });
+  try {
+    const shareToken = crypto.randomBytes(12).toString('hex');
+    const created = await prisma.sdProject.create({
+      data: {
+        title,
+        description: String(description),
+        templateId: templateId || null,
+        ownerId: userId,
+        isPublic: !!isPublic,
+        shareToken,
+        nodes: nodes as any,
+        connections: connections as any,
+        version: 1,
+        versions: {
+          create: [{
+            versionNumber: 1,
+            message: 'Project created',
+            nodes: nodes as any,
+            connections: connections as any,
+          }],
+        },
+      },
+    });
+    const versions = await loadProjectVersions(created.id);
+    res.status(201).json({ project: projectFromRow(created, versions) });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Failed to create project', detail: err?.message });
+  }
 });
 
 // GET /api/v1/system-design/projects/:id (get project by id or share token)
-systemDesignRouter.get('/projects/:id', (req: Request, res: Response) => {
+systemDesignRouter.get('/projects/:id', async (req: Request, res: Response) => {
   const token = req.headers.authorization?.split(" ")[1];
   let currentUserId: string | null = null;
   if (token) {
@@ -692,106 +748,139 @@ systemDesignRouter.get('/projects/:id', (req: Request, res: Response) => {
   }
 
   const id = String(req.params.id);
-  const project = sdProjectsStore.get(id) || Array.from(sdProjectsStore.values()).find(p => p.shareToken === id);
+  try {
+    const row = await prisma.sdProject.findUnique({ where: { id } })
+      || await prisma.sdProject.findFirst({ where: { shareToken: id } });
 
-  if (!project) {
-    return res.status(404).json({ error: "Project not found" });
+    if (!row) {
+      return res.status(404).json({ error: "Project not found" });
+    }
+
+    // Permissions: public, share-token access, owner, or system demo project.
+    if (!row.isPublic && row.ownerId !== "system" && row.shareToken !== id && row.ownerId !== currentUserId) {
+      return res.status(403).json({ error: "Access denied. Private system design project." });
+    }
+
+    const versions = await loadProjectVersions(row.id);
+    res.json({ project: projectFromRow(row, versions) });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Failed to load project', detail: err?.message });
   }
-
-  // Permissions check: must be public, accessed via shareToken, owner, or system
-  if (!project.isPublic && project.ownerId !== "system" && project.shareToken !== id && project.ownerId !== currentUserId) {
-    return res.status(403).json({ error: "Access denied. Private system design project." });
-  }
-
-  res.json({ project });
 });
 
 // PUT /api/v1/system-design/projects/:id (update/autosave project)
-systemDesignRouter.put('/projects/:id', auth, (req: AuthenticatedRequest, res: Response) => {
+systemDesignRouter.put('/projects/:id', auth, async (req: AuthenticatedRequest, res: Response) => {
   const userId = req.userId || "anonymous";
   const id = String(req.params.id);
-  const project = sdProjectsStore.get(id);
 
-  if (!project) {
-    return res.status(404).json({ error: "Project not found" });
-  }
+  try {
+    const project = await prisma.sdProject.findUnique({ where: { id } });
+    if (!project) {
+      return res.status(404).json({ error: "Project not found" });
+    }
+    if (project.ownerId !== userId && project.ownerId !== "system") {
+      return res.status(403).json({ error: "Only the project owner can modify this architecture" });
+    }
 
-  if (project.ownerId !== userId && project.ownerId !== "system") {
-    return res.status(403).json({ error: "Only the project owner can modify this architecture" });
-  }
+    const { title, description, nodes, connections, isPublic, commitMessage } = req.body;
+    const currentNodes = Array.isArray(project.nodes) ? project.nodes : [];
+    const currentConnections = Array.isArray(project.connections) ? project.connections : [];
 
-  const { title, description, nodes, connections, isPublic, commitMessage } = req.body;
-
-  if (nodes || connections) {
-    const validation = validateDiagramPayload(nodes || project.nodes, connections || project.connections);
+    const nextNodes = nodes ?? currentNodes;
+    const nextConnections = connections ?? currentConnections;
+    const validation = validateDiagramPayload(nextNodes, nextConnections);
     if (!validation.valid) {
       return res.status(400).json({ error: validation.error });
     }
+
+    const nodesChanged = JSON.stringify(nextNodes) !== JSON.stringify(currentNodes);
+    const connsChanged = JSON.stringify(nextConnections) !== JSON.stringify(currentConnections);
+    const nextVersion = project.version + (nodesChanged || connsChanged ? 1 : 0);
+
+    const updated = await prisma.sdProject.update({
+      where: { id },
+      data: {
+        title: title ?? project.title,
+        description: description !== undefined ? String(description) : project.description,
+        isPublic: isPublic !== undefined ? !!isPublic : project.isPublic,
+        nodes: nextNodes as any,
+        connections: nextConnections as any,
+        version: nextVersion,
+      },
+    });
+
+    if (nodesChanged || connsChanged) {
+      await prisma.sdProjectVersion.create({
+        data: {
+          projectId: id,
+          versionNumber: nextVersion,
+          message: commitMessage || `Revision v${nextVersion}`,
+          nodes: nextNodes as any,
+          connections: nextConnections as any,
+        },
+      });
+    }
+
+    // Keep 50 history entries per project
+    const stale = await prisma.sdProjectVersion.findMany({
+      where: { projectId: id },
+      orderBy: { versionNumber: 'desc' },
+      skip: 50,
+    });
+    if (stale.length) {
+      await prisma.sdProjectVersion.deleteMany({ where: { id: { in: stale.map((s: { id: string }) => s.id) } } });
+    }
+
+    const versions = await loadProjectVersions(id);
+    res.json({ project: projectFromRow(updated, versions), version: nextVersion });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Failed to update project', detail: err?.message });
   }
-
-  if (title) project.title = title;
-  if (description !== undefined) project.description = description;
-  if (isPublic !== undefined) project.isPublic = !!isPublic;
-
-  const nodesChanged = nodes && JSON.stringify(nodes) !== JSON.stringify(project.nodes);
-  const connsChanged = connections && JSON.stringify(connections) !== JSON.stringify(project.connections);
-
-  if (nodesChanged || connsChanged) {
-    project.nodes = nodes || project.nodes;
-    project.connections = connections || project.connections;
-    project.version += 1;
-
-    // Create immutable revision history entry
-    const newVersion: SDProjectVersion = {
-      id: `v_${Date.now()}`,
-      versionNumber: project.version,
-      message: commitMessage || `Revision v${project.version}`,
-      nodes: project.nodes,
-      connections: project.connections,
-      createdAt: new Date().toISOString()
-    };
-
-    project.versions.unshift(newVersion);
-    if (project.versions.length > 50) project.versions.pop(); // Keep 50 history entries
-  }
-
-  project.updatedAt = new Date().toISOString();
-  sdProjectsStore.set(id, project);
-
-  res.json({ project, version: project.version });
 });
 
 // POST /api/v1/system-design/projects/:id/rollback/:versionNumber (revert to version)
-systemDesignRouter.post('/projects/:id/rollback/:versionNumber', auth, (req: AuthenticatedRequest, res: Response) => {
+systemDesignRouter.post('/projects/:id/rollback/:versionNumber', auth, async (req: AuthenticatedRequest, res: Response) => {
   const userId = req.userId || "anonymous";
   const id = String(req.params.id);
   const versionNum = parseInt(String(req.params.versionNumber), 10);
-  const project = sdProjectsStore.get(id);
 
-  if (!project) return res.status(404).json({ error: "Project not found" });
-  if (project.ownerId !== userId && project.ownerId !== "system") {
-    return res.status(403).json({ error: "Permission denied" });
+  try {
+    const project = await prisma.sdProject.findUnique({ where: { id } });
+    if (!project) return res.status(404).json({ error: "Project not found" });
+    if (project.ownerId !== userId && project.ownerId !== "system") {
+      return res.status(403).json({ error: "Permission denied" });
+    }
+
+    const targetVer = await prisma.sdProjectVersion.findFirst({
+      where: { projectId: id, versionNumber: versionNum },
+    });
+    if (!targetVer) return res.status(404).json({ error: "Version not found in history" });
+
+    const nextVersion = project.version + 1;
+    await prisma.sdProjectVersion.create({
+      data: {
+        projectId: id,
+        versionNumber: nextVersion,
+        message: `Rolled back to revision v${versionNum}`,
+        nodes: targetVer.nodes as any,
+        connections: targetVer.connections as any,
+      },
+    });
+
+    const updated = await prisma.sdProject.update({
+      where: { id },
+      data: {
+        nodes: targetVer.nodes as any,
+        connections: targetVer.connections as any,
+        version: nextVersion,
+      },
+    });
+
+    const versions = await loadProjectVersions(id);
+    res.json({ project: projectFromRow(updated, versions), restoredVersion: versionNum });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Failed to rollback project', detail: err?.message });
   }
-
-  const targetVer = project.versions.find(v => v.versionNumber === versionNum);
-  if (!targetVer) return res.status(404).json({ error: "Version not found in history" });
-
-  project.nodes = targetVer.nodes;
-  project.connections = targetVer.connections;
-  project.version += 1;
-  project.updatedAt = new Date().toISOString();
-
-  project.versions.unshift({
-    id: `v_${Date.now()}`,
-    versionNumber: project.version,
-    message: `Rolled back to revision v${versionNum}`,
-    nodes: project.nodes,
-    connections: project.connections,
-    createdAt: new Date().toISOString()
-  });
-
-  sdProjectsStore.set(id, project);
-  res.json({ project, restoredVersion: versionNum });
 });
 
 // POST /api/v1/system-design/validate (validate imported JSON spec)
@@ -803,5 +892,9 @@ systemDesignRouter.post('/validate', (req: Request, res: Response) => {
   }
   res.json({ valid: true, nodeCount: nodes.length, connectionCount: connections.length });
 });
+
+// Step-by-step learning curriculum + progress tracking.
+import { registerCurriculumRoutes } from './systemDesignCurriculumRoutes';
+registerCurriculumRoutes(systemDesignRouter);
 
 

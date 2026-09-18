@@ -16,8 +16,8 @@ import { MurphysChaosLab } from "./components/system-design/MurphysChaosLab";
 import { DatabaseSchemaLab } from "./components/system-design/DatabaseSchemaLab";
 import { ReferenceSolutionModal } from "./components/system-design/ReferenceSolutionModal";
 import { Icons } from "./components/ui/Icons";
-
-const API = (typeof process !== "undefined" && process.env?.API_URL) || "http://localhost:3000";
+import { API } from "./services/api";
+import { SystemDesignLearnPage } from "./features/system-design/SystemDesignLearnPage";
 
 const getAuthHeaders = () => {
   const t = localStorage.getItem("ca_token");
@@ -38,6 +38,10 @@ export function SystemDesignStudio({ onToast }: { onToast: (m: string, t: string
   const initialTemplate = DEFAULT_TEMPLATES[0]!;
   const [nodes, setNodes] = useState<SDNode[]>(initialTemplate.nodes);
   const [connections, setConnections] = useState<SDConnection[]>(initialTemplate.connections);
+
+  // Live mirror of the latest canvas state so history helpers never use stale closures
+  const stateRef = useRef({ nodes, connections });
+  stateRef.current = { nodes, connections };
   
   const [activeTab, setActiveTab] = useState<"studio" | "chaos" | "schema" | "learn" | "casestudies" | "estimation" | "concepts" | "interview" | "progress">("studio");
   const [showAnswerKeyModal, setShowAnswerKeyModal] = useState(false);
@@ -109,16 +113,20 @@ export function SystemDesignStudio({ onToast }: { onToast: (m: string, t: string
   const [undoStack, setUndoStack] = useState<Array<{ nodes: SDNode[]; connections: SDConnection[] }>>([]);
   const [redoStack, setRedoStack] = useState<Array<{ nodes: SDNode[]; connections: SDConnection[] }>>([]);
 
-  const pushState = (newNodes: SDNode[], newConns: SDConnection[]) => {
-    setUndoStack(prev => [...prev.slice(-25), { nodes, connections }]);
+  // Capture the DAG before a mutation so undo/redo can restore it exactly
+  const pushState = (fromNodes?: SDNode[], fromConns?: SDConnection[]) => {
+    const snap = { nodes: fromNodes ?? stateRef.current.nodes, connections: fromConns ?? stateRef.current.connections };
+    setUndoStack(prev => [...prev.slice(-49), snap]);
     setRedoStack([]);
   };
 
   const handleUndo = () => {
     if (undoStack.length === 0) return;
     const prev = undoStack[undoStack.length - 1]!;
+    const curNodes = stateRef.current.nodes;
+    const curConns = stateRef.current.connections;
     setUndoStack(undoStack.slice(0, -1));
-    setRedoStack(r => [{ nodes, connections }, ...r]);
+    setRedoStack(r => [...r.slice(-49), { nodes: curNodes, connections: curConns }]);
     setNodes(prev.nodes);
     setConnections(prev.connections);
     onToast("Action undone ↩", "info");
@@ -126,9 +134,11 @@ export function SystemDesignStudio({ onToast }: { onToast: (m: string, t: string
 
   const handleRedo = () => {
     if (redoStack.length === 0) return;
-    const next = redoStack[0]!;
-    setRedoStack(redoStack.slice(1));
-    setUndoStack(u => [...u, { nodes, connections }]);
+    const next = redoStack[redoStack.length - 1]!;
+    const curNodes = stateRef.current.nodes;
+    const curConns = stateRef.current.connections;
+    setRedoStack(redoStack.slice(0, -1));
+    setUndoStack(u => [...u.slice(-49), { nodes: curNodes, connections: curConns }]);
     setNodes(next.nodes);
     setConnections(next.connections);
     onToast("Action redone ↪", "info");
@@ -188,6 +198,7 @@ export function SystemDesignStudio({ onToast }: { onToast: (m: string, t: string
     try {
       const res = await api.post(`/api/v1/system-design/projects/${currentProjectId}/rollback/${vNum}`, {});
       if (res.data?.project) {
+        pushState();
         setNodes(res.data.project.nodes);
         setConnections(res.data.project.connections);
         setProjectVersion(res.data.project.version);
@@ -202,6 +213,7 @@ export function SystemDesignStudio({ onToast }: { onToast: (m: string, t: string
 
   // Load project from cloud
   const handleLoadProject = async (proj: SDProject) => {
+    pushState();
     setCurrentProjectId(proj.id);
     localStorage.setItem("ca_sd_active_project_id", proj.id);
     setProjectTitle(proj.title);
@@ -266,7 +278,7 @@ export function SystemDesignStudio({ onToast }: { onToast: (m: string, t: string
 
   // Load template on selection
   const handleSelectTemplate = (tmpl: SDTemplate) => {
-    pushState(nodes, connections);
+    pushState();
     setActiveTemplateId(tmpl.id);
     setNodes(tmpl.nodes);
     setConnections(tmpl.connections);
@@ -318,10 +330,13 @@ export function SystemDesignStudio({ onToast }: { onToast: (m: string, t: string
   }, [trafficMultiplier, injectedFailure]);
 
   // Canvas Node Dragging
+  const dragStartRef = useRef<{ nodes: SDNode[]; connections: SDConnection[] } | null>(null);
+
   const handleNodeMouseDown = (e: React.MouseEvent, node: SDNode) => {
     e.stopPropagation();
     setSelectedNodeId(node.id);
     setDraggingNodeId(node.id);
+    dragStartRef.current = { nodes: stateRef.current.nodes, connections: stateRef.current.connections };
     const rect = canvasRef.current?.getBoundingClientRect();
     if (rect) {
       setDragOffset({
@@ -347,7 +362,16 @@ export function SystemDesignStudio({ onToast }: { onToast: (m: string, t: string
   };
 
   const handleCanvasMouseUp = () => {
-    if (draggingNodeId) setDraggingNodeId(null);
+    if (draggingNodeId) {
+      const start = dragStartRef.current;
+      const moved = start?.nodes.find(n => n.id === draggingNodeId);
+      const cur = stateRef.current.nodes.find(n => n.id === draggingNodeId);
+      if (start && moved && cur && (moved.x !== cur.x || moved.y !== cur.y)) {
+        pushState(start.nodes, start.connections);
+      }
+      dragStartRef.current = null;
+      setDraggingNodeId(null);
+    }
     if (isPanning) setIsPanning(false);
   };
 
@@ -366,6 +390,7 @@ export function SystemDesignStudio({ onToast }: { onToast: (m: string, t: string
       eviction: "LRU",
       failurePolicy: "Fail-open"
     };
+    pushState();
     setNodes(prev => [...prev, newNode]);
     setSelectedNodeId(id);
     setArchitectureTimeline(prev => [
@@ -377,6 +402,7 @@ export function SystemDesignStudio({ onToast }: { onToast: (m: string, t: string
 
   const deleteSelectedNode = () => {
     if (!selectedNodeId) return;
+    pushState();
     setNodes(prev => prev.filter(n => n.id !== selectedNodeId));
     setConnections(prev => prev.filter(c => c.from !== selectedNodeId && c.to !== selectedNodeId));
     setSelectedNodeId(null);
@@ -385,6 +411,7 @@ export function SystemDesignStudio({ onToast }: { onToast: (m: string, t: string
 
   const updateSelectedNode = (updated: Partial<SDNode>) => {
     if (!selectedNodeId) return;
+    pushState();
     setNodes(prev => prev.map(n => n.id === selectedNodeId ? { ...n, ...updated } : n));
   };
 
@@ -635,48 +662,7 @@ export function SystemDesignStudio({ onToast }: { onToast: (m: string, t: string
 
       {/* ─── TAB 2: ACADEMY CURRICULUM (LEARN) ─────────────────────────────── */}
       {activeTab === "learn" && (
-        <div className="container" style={{ padding: "28px 24px", maxWidth: 960 }}>
-          <h1 style={{ fontSize: 24, fontWeight: 800, marginBottom: 6, letterSpacing: "-0.02em" }}>
-            System Design Academy Curriculum
-          </h1>
-          <p style={{ color: "var(--text-secondary)", fontSize: 14, marginBottom: 24 }}>
-            Structured 10-level progressive curriculum from System Foundations to Staff/Principal Architect.
-          </p>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            {[
-              { level: "LEVEL 0", title: "Foundations & Networking", topics: ["Client-Server Model", "HTTP/1.1 vs HTTP/2 vs HTTP/3", "DNS & Anycast", "REST vs gRPC vs GraphQL"], progress: 100 },
-              { level: "LEVEL 1", title: "Core Traffic & Edge Infrastructure", topics: ["CDN Edge Caching", "Layer 4 vs Layer 7 Load Balancing", "API Gateways", "Rate Limiting Algorithms"], progress: 90 },
-              { level: "LEVEL 2", title: "Databases & Storage", topics: ["SQL vs NoSQL", "B-Tree vs LSM Indexes", "ACID Isolation Levels", "Read Replicas & Sharding"], progress: 75 },
-              { level: "LEVEL 3", title: "Caching & Fast-Path", topics: ["Cache-Aside vs Write-Through", "Cache Invalidation & Stampedes", "Redis Clustering & Eviction"], progress: 80 },
-              { level: "LEVEL 4", title: "Distributed Systems & Consensus", topics: ["CAP & PACELC Theorems", "Eventual vs Strong Consistency", "Raft & Paxos Consensus", "Distributed Locks"], progress: 60 },
-              { level: "LEVEL 5", title: "Asynchronous Messaging & Queues", topics: ["Kafka Log Partitions", "RabbitMQ AMQP", "At-Least-Once Delivery & Idempotency"], progress: 50 },
-              { level: "LEVEL 6", title: "Scalability & Load Shedding", topics: ["Horizontal Auto-Scaling", "Stateless Architecture", "Connection Pooling", "Circuit Breakers"], progress: 40 },
-              { level: "LEVEL 7", title: "Reliability & Multi-Region", topics: ["Multi-AZ vs Multi-Region", "Disaster Recovery (RPO/RTO)", "Chaos Engineering"], progress: 30 },
-              { level: "LEVEL 8", title: "Advanced Architecture Patterns", topics: ["CQRS & Event Sourcing", "Saga Pattern for Transactions", "Change Data Capture (CDC)"], progress: 20 },
-              { level: "LEVEL 9", title: "Staff/Principal Engineering", topics: ["Capacity Planning", "Cost Optimization", "SLO/SLI Error Budgets", "Architecture Governance"], progress: 15 },
-            ].map((lvl, idx) => (
-              <div key={idx} className="card" style={{ padding: 16, margin: 0 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                    <span className="badge badge-blue">{lvl.level}</span>
-                    <span style={{ fontSize: 15, fontWeight: 700, color: "var(--text-primary)" }}>{lvl.title}</span>
-                  </div>
-                  <span style={{ fontSize: 12.5, color: "var(--accent-primary)", fontWeight: 700, fontFamily: "var(--font-mono)" }}>
-                    {lvl.progress}% Mastered
-                  </span>
-                </div>
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
-                  {lvl.topics.map((t, i) => (
-                    <span key={i} style={{ background: "var(--bg-tertiary)", padding: "3px 8px", borderRadius: 4, fontSize: 11.5, color: "var(--text-secondary)", border: "1px solid var(--border-light)" }}>
-                      ✓ {t}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        <SystemDesignLearnPage onToast={(m, t) => onToast(m, t || "info")} />
       )}
 
       {/* ─── TAB 3: CASE STUDIES ───────────────────────────────────────────── */}

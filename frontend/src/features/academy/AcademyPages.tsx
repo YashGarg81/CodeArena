@@ -38,7 +38,7 @@ export function LearnPage({ onNavigate, user, onOpenAuth }: {
     }
     if (search.trim()) {
       const q = search.toLowerCase();
-      return c.title.toLowerCase().includes(q) || c.description.toLowerCase().includes(q) || c.tags.some(t => t.toLowerCase().includes(q));
+      return (c.title ?? "").toLowerCase().includes(q) || (c.description ?? "").toLowerCase().includes(q) || (c.tags ?? []).some((t: string) => t.toLowerCase().includes(q));
     }
     return true;
   });
@@ -361,7 +361,17 @@ export function CourseDetailPage({ courseId, onNavigate, user, onToast, onOpenAu
             <div
               key={lesson.id}
               className={`lesson-card-item ${lesson.isCompleted ? "completed" : ""}`}
-              onClick={() => onNavigate("lesson", lesson.id)}
+              onClick={() => {
+                if (!user) {
+                  onOpenAuth("login");
+                  return;
+                }
+                if (!course.isEnrolled) {
+                  onToast("Please enroll in the course to access lessons! 🚀", "error");
+                  return;
+                }
+                onNavigate("lesson", lesson.id);
+              }}
             >
               <div className="lesson-order-badge">
                 {lesson.isCompleted ? "✓" : idx + 1}
@@ -410,6 +420,10 @@ export function LessonViewerPage({ lessonId, onNavigate, user, onToast, onOpenAu
   const [completing, setCompleting] = useState(false);
   const [showQuiz, setShowQuiz] = useState(false);
   const [theaterMode, setTheaterMode] = useState(false);
+  const videoSectionRef = useRef<HTMLDivElement>(null);
+  const activeSidebarItemRef = useRef<HTMLButtonElement>(null);
+  // true only on the very first load — subsequent lesson switches keep layout mounted
+  const isFirstLoad = useRef(true);
 
   // Helper to extract YouTube video ID from various URL formats
   const getYouTubeEmbedUrl = (url: string | undefined | null): string | null => {
@@ -442,9 +456,27 @@ export function LessonViewerPage({ lessonId, onNavigate, user, onToast, onOpenAu
   }, [lessonId, user]);
 
   useEffect(() => {
+    if (!user) {
+      onToast("Please log in to access this lesson", "error");
+      onNavigate("academy");
+      return;
+    }
     fetchLesson();
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [fetchLesson]);
+  }, [fetchLesson, user, onNavigate, onToast]);
+
+  // After lesson loads: mark first load done, scroll video into view, highlight sidebar item
+  useEffect(() => {
+    if (!loading && lesson) {
+      isFirstLoad.current = false;
+      const t = setTimeout(() => {
+        // Bring the video section smoothly into view (not a jump)
+        videoSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        // Scroll the sidebar so the active lesson item is visible
+        activeSidebarItemRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }, 80);
+      return () => clearTimeout(t);
+    }
+  }, [loading, lesson?.id]);
 
   const handleMarkComplete = async () => {
     if (!user) {
@@ -467,7 +499,10 @@ export function LessonViewerPage({ lessonId, onNavigate, user, onToast, onOpenAu
     }
   };
 
-  if (loading) {
+  // Only show full-page skeleton on the very first ever load.
+  // Subsequent lesson switches keep the layout mounted to avoid page-height collapse
+  // (which was causing the browser to auto-scroll to top on every lesson click).
+  if (loading && isFirstLoad.current) {
     return (
       <div className="container" style={{ padding: "40px 24px" }}>
         <div className="skeleton" style={{ height: 40, width: 240, marginBottom: 20 }} />
@@ -476,7 +511,7 @@ export function LessonViewerPage({ lessonId, onNavigate, user, onToast, onOpenAu
     );
   }
 
-  if (!lesson) {
+  if (!loading && !lesson) {
     return (
       <div className="container" style={{ padding: "60px 24px", textAlign: "center" }}>
         <h2>Lesson not found</h2>
@@ -487,14 +522,19 @@ export function LessonViewerPage({ lessonId, onNavigate, user, onToast, onOpenAu
     );
   }
 
+  // During lesson-to-lesson transitions `loading` is true while the previous
+  // lesson is still mounted, so `lesson` is only null before the first fetch
+  // (handled above) or after a failed load (handled above). Narrow the type.
+  if (!lesson) return null;
+
   return (
-    <div className="lesson-viewer-layout">
+    <div className={`lesson-viewer-layout ${theaterMode ? "theater-active" : ""}`}>
       {/* Left Sidebar: Course Curriculum */}
       <aside className="lesson-viewer-sidebar">
         <button
           className="btn btn-ghost btn-sm"
           style={{ marginBottom: 16, justifyContent: "flex-start", padding: "6px 8px" }}
-          onClick={() => onNavigate("course", lesson.course.slug)}
+          onClick={() => onNavigate("course", lesson?.course?.slug ?? "")}
         >
           ← {lesson.course.title}
         </button>
@@ -509,6 +549,7 @@ export function LessonViewerPage({ lessonId, onNavigate, user, onToast, onOpenAu
             return (
               <button
                 key={l.id}
+                ref={isActive ? activeSidebarItemRef : null}
                 className={`lesson-sidebar-item ${isActive ? "active" : ""}`}
                 onClick={() => onNavigate("lesson", l.id)}
               >
@@ -530,8 +571,38 @@ export function LessonViewerPage({ lessonId, onNavigate, user, onToast, onOpenAu
         </div>
       </aside>
 
-      {/* Right Main Viewer */}
-      <main className="lesson-viewer-main">
+      {/* Right Main Viewer — keep mounted during transitions, just fade slightly */}
+      <main
+        className="lesson-viewer-main"
+        style={{
+          opacity: loading ? 0.45 : 1,
+          transition: "opacity 0.2s ease",
+          pointerEvents: loading ? "none" : undefined,
+        }}
+      >
+        {/* Thin animated progress bar during lesson transitions */}
+        {loading && (
+          <div style={{
+            position: "sticky",
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 3,
+            marginBottom: 8,
+            borderRadius: 99,
+            background: "var(--bg-tertiary)",
+            overflow: "hidden",
+            zIndex: 10,
+          }}>
+            <div style={{
+              height: "100%",
+              background: "linear-gradient(90deg, var(--accent-primary), var(--accent-purple))",
+              animation: "lesson-progress-bar 1.2s ease-in-out infinite",
+              borderRadius: 99,
+            }} />
+          </div>
+        )}
+
         {/* Lesson Header */}
         <div style={{ borderBottom: "1px solid var(--border-light)", paddingBottom: 24, marginBottom: 28 }}>
           <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 12 }}>
@@ -550,7 +621,8 @@ export function LessonViewerPage({ lessonId, onNavigate, user, onToast, onOpenAu
           </h1>
         </div>
 
-        {/* Interactive Video Player (YouTube or HTML5) */}
+        {/* Interactive Video Player (CodeXtrms & CodeArena Studio) */}
+        <div ref={videoSectionRef} style={{ scrollMarginTop: 16 }}>
         {(lesson.videoId || lesson.videoUrl) && (
           <VideoPlayer
             source={(() => {
@@ -566,6 +638,13 @@ export function LessonViewerPage({ lessonId, onNavigate, user, onToast, onOpenAu
               return { type: "local", src: url };
             })()}
             title={lesson.title}
+            lessonNumber={lesson.order}
+            xpReward={lesson.xpReward}
+            theaterMode={theaterMode}
+            onToggleTheater={(th) => setTheaterMode(th)}
+            courseTitle={lesson.course?.title}
+            onBackToCourse={() => onNavigate("course", lesson.course?.slug || "")}
+            onComplete={!lesson.isCompleted ? handleMarkComplete : undefined}
             onNavigate={(dir) => {
               const currentIndex = courseLessons.findIndex((l: any) => l.id === lesson.id);
               const prevWithVideo = currentIndex > 0
@@ -585,6 +664,7 @@ export function LessonViewerPage({ lessonId, onNavigate, user, onToast, onOpenAu
             }}
           />
         )}
+        </div>
 
         {/* Markdown Content */}
         <div

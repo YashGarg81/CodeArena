@@ -16,10 +16,14 @@ export class RubyAdapter implements ILanguageAdapter {
     }
 
     async execute(options: ExecutionOptions): Promise<ExecutionResult> {
-        const sourceFilePath = path.join(options.folderPath, `solution.${this.fileExtension}`);
+        const sourceFileName = `solution.${this.fileExtension}`;
+        const sourceFilePath = path.join(options.folderPath, sourceFileName);
         fs.writeFileSync(sourceFilePath, options.codeWithDriver, "utf-8");
 
-        return runProcessSafely("ruby", [sourceFilePath], {
+        // Relative name (not absolute host path): the Docker sandbox mounts the
+        // folder at /sandbox and runs with cwd=/sandbox, so a bare file name is
+        // required for in-container resolution.
+        return runProcessSafely("ruby", [sourceFileName], {
             ...options,
             languageKey: "ruby"
         });

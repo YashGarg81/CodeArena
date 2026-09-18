@@ -26,8 +26,14 @@ function functionSignature(template: unknown, language: string): string {
   };
   const pattern = patterns[language] || patterns.js;
   if (!pattern) return "";
-  const signature = lines.find(line => pattern.test(line));
-  return signature ? signature.trim() : "";
+  const signatureLine = lines.find(line => pattern.test(line));
+  if (!signatureLine) return "";
+  
+  const sig = signatureLine.trim();
+  if (language === "py") {
+    return `${sig}\n    # Write your code here\n    pass`;
+  }
+  return `${sig}\n    // Write your code here\n}`;
 }
 
 export function publicFunctionTemplates(templates: unknown): Record<string, string> {

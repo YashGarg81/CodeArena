@@ -3,8 +3,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Icons } from "../ui/Icons";
 import type { ReferenceSolution } from "./types";
-
-const API = (typeof process !== "undefined" && process.env?.API_URL) || "http://localhost:3000";
+import { API } from "../../services/api";
 
 export function ReferenceSolutionModal({
   templateId,

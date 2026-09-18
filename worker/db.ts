@@ -12,6 +12,18 @@ try {
   rawPrisma = new PrismaClient();
 }
 
+export function isProductionStrict(): boolean {
+  return process.env.NODE_ENV === "production" && process.env.ALLOW_IN_MEMORY_DB !== "true";
+}
+
+export async function assertWorkerPostgres(): Promise<void> {
+  try {
+    await rawPrisma.$queryRaw`SELECT 1`;
+  } catch (err: any) {
+    throw new Error(`Production Database Error: PostgreSQL is unavailable: ${err?.message || err}`);
+  }
+}
+
 const workerStore: Record<string, any[]> = {
   submission: [],
   problems: []
@@ -31,11 +43,15 @@ const handler: ProxyHandler<any> = {
       get(modelTarget, methodKey: string) {
         const modelMethod = modelTarget[methodKey];
         return async function (...args: any[]) {
+          const strictProd = isProductionStrict();
           try {
             if (typeof modelMethod === "function") {
               return await modelMethod.apply(modelTarget, args);
             }
           } catch (err: any) {
+            // Fail closed in production: never serve the empty local store
+            // when PostgreSQL is unreachable (dev/test keep the fallback).
+            if (strictProd) throw err;
             // Fallback
           }
 

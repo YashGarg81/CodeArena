@@ -6,7 +6,7 @@ import type { User } from "../../types";
 // ─── AUTH MODAL ───────────────────────────────────────────────────────────────
 
 export function AuthModal({ mode, onClose, onSuccess }: {
-  mode: "login" | "signup"; onClose: () => void; onSuccess: (user: User, token: string) => void;
+  mode: "login" | "signup"; onClose: () => void; onSuccess: (user: User, token: string, refreshToken?: string) => void;
 }) {
   const [tab, setTab] = useState<"login" | "signup" | "forgot" | "reset">(mode);
   const [form, setForm] = useState({ name: "", email: "", password: "", confirmPassword: "", username: "", resetToken: "" });
@@ -15,6 +15,33 @@ export function AuthModal({ mode, onClose, onSuccess }: {
   const [successMsg, setSuccessMsg] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [twoFactorToken, setTwoFactorToken] = useState("");
+  const [totpCode, setTotpCode] = useState("");
+
+  const submitTwoFactor = async () => {
+    if (!totpCode.trim()) {
+      setError("Enter the 6-digit code from your authenticator app.");
+      return;
+    }
+    setLoading(true); setError("");
+    try {
+      const { data } = await axios.post(`${API}/api/v1/auth/2fa/challenge`, {
+        tempToken: twoFactorToken,
+        totpCode: totpCode.trim()
+      });
+      if (data?.user && data?.token) {
+        onSuccess(data.user, data.token, data.refreshToken);
+      } else {
+        setError(data?.error || "Two-factor verification failed.");
+      }
+    } catch (e: any) {
+      setError(e.response?.data?.error || "Invalid two-factor authentication code.");
+    } finally { setLoading(false); }
+  };
+
+  const getEnv = (key: string) => typeof process !== "undefined" ? process.env[key] : undefined;
+  const GITHUB_CLIENT_ID = getEnv("GITHUB_CLIENT_ID") || (import.meta as any).env?.VITE_GITHUB_CLIENT_ID || "Ov23liF0fGFCD7B4EmN9";
+  const GOOGLE_CLIENT_ID = getEnv("GOOGLE_CLIENT_ID") || (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID || "94571532695-ts7o7itqu4ciah05jh6slpj0r2jdtl7c.apps.googleusercontent.com";
 
   const submit = async () => {
     if (tab === "forgot") {
@@ -100,8 +127,12 @@ export function AuthModal({ mode, onClose, onSuccess }: {
             password: form.password
           };
       const { data } = await axios.post(`${API}${endpoint}`, payload);
-      if (data?.user && data?.token) {
-        onSuccess(data.user, data.token);
+      if (data?.requires2FA && data?.tempToken) {
+        setError("");
+        setSuccessMsg("");
+        setTwoFactorToken(data.tempToken);
+      } else if (data?.user && data?.token) {
+        onSuccess(data.user, data.token, data.refreshToken);
       } else {
         setError(data?.error || "Authentication failed. Please check your credentials.");
       }
@@ -115,14 +146,10 @@ export function AuthModal({ mode, onClose, onSuccess }: {
 
     // Real OAuth UI Flow:
     // 1. Check for configured client IDs in environment or build define
-    const GITHUB_CLIENT_ID = (typeof process !== "undefined" && process.env?.GITHUB_CLIENT_ID) ||
-      (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_GITHUB_CLIENT_ID) ||
-      "";
-    const GOOGLE_CLIENT_ID = (typeof process !== "undefined" && process.env?.GOOGLE_CLIENT_ID) || 
-      (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID) ||
-      "";
+    const GITHUB_CLIENT_ID_LOCAL = getEnv("GITHUB_CLIENT_ID") || (import.meta as any).env?.VITE_GITHUB_CLIENT_ID || "Ov23liF0fGFCD7B4EmN9";
+    const GOOGLE_CLIENT_ID_LOCAL = getEnv("GOOGLE_CLIENT_ID") || (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID || "94571532695-ts7o7itqu4ciah05jh6slpj0r2jdtl7c.apps.googleusercontent.com";
 
-    const clientId = provider === "github" ? GITHUB_CLIENT_ID : GOOGLE_CLIENT_ID;
+    const clientId = provider === "github" ? GITHUB_CLIENT_ID_LOCAL : GOOGLE_CLIENT_ID_LOCAL;
 
     if (!clientId) {
       setLoading(false);
@@ -242,6 +269,26 @@ export function AuthModal({ mode, onClose, onSuccess }: {
           </div>
         )}
 
+        {twoFactorToken && (
+          <div className="form-group">
+            <label className="label" htmlFor="auth-totp">Authenticator Code</label>
+            <input
+              id="auth-totp"
+              className="input"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              maxLength={6}
+              placeholder="123456"
+              value={totpCode}
+              onChange={e => { setTotpCode(e.target.value.replace(/\D/g, "")); setError(""); }}
+              onKeyDown={e => e.key === "Enter" && submitTwoFactor()}
+            />
+            <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 6 }}>
+              Two-factor authentication is enabled on this account. Enter the 6-digit code to finish signing in.
+            </div>
+          </div>
+        )}
+
         {tab === "reset" && (
           <div className="form-group">
             <label className="label" htmlFor="auth-reset-token">Security Reset Token</label>
@@ -357,8 +404,9 @@ export function AuthModal({ mode, onClose, onSuccess }: {
           </div>
         )}
 
-        <button className="btn btn-primary w-full" style={{ marginBottom: 16 }} onClick={submit} disabled={loading}>
+        <button className="btn btn-primary w-full" style={{ marginBottom: 16 }} onClick={twoFactorToken ? submitTwoFactor : submit} disabled={loading}>
           {loading ? <span className="animate-spin">⚙</span> :
+           twoFactorToken ? "Verify & Sign In" :
            tab === "login" ? "Sign In" :
            tab === "signup" ? "Create Account" :
            tab === "forgot" ? "Send Reset Instructions" : "Update Password & Revoke Sessions"}
@@ -392,31 +440,33 @@ export function AuthModal({ mode, onClose, onSuccess }: {
             >
               ← Back to Sign In
             </button>
-          </div>
-        )}
+        </div>
+      )}
 
-        {(tab === "login" || tab === "signup") && (
-          <>
-            <div className="auth-divider"><div className="auth-divider-line" /><span>1-click social login</span><div className="auth-divider-line" /></div>
+      {(tab === "login" || tab === "signup") && (
+        <>
+          <div className="auth-divider"><div className="auth-divider-line" /><span>1-click social login</span><div className="auth-divider-line" /></div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 12 }}>
-              <button
-                className="btn btn-secondary"
-                style={{ fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
-                onClick={() => handleSocialAuth("github")}
-                disabled={loading}
-                aria-label="Sign in with GitHub"
-              >
-                🐙 GitHub
-              </button>
-              <button
-                className="btn btn-secondary"
-                style={{ fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
-                onClick={() => handleSocialAuth("google")}
-                disabled={loading}
-                aria-label="Sign in with Google"
-              >
-                🔵 Google
-              </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  style={{ fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+                  onClick={() => handleSocialAuth("github")}
+                  disabled={loading}
+                  aria-label="Sign in with GitHub"
+                >
+                  🐙 GitHub
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  style={{ fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+                  onClick={() => handleSocialAuth("google")}
+                  disabled={loading}
+                  aria-label="Sign in with Google"
+                >
+                  🔵 Google
+                </button>
             </div>
           </>
         )}

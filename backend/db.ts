@@ -1,5 +1,8 @@
 import { PrismaClient } from "./generated/prisma";
 import { PrismaPg } from "@prisma/adapter-pg";
+import fs from "fs";
+import path from "path";
+import { isCourseDeleted, markCourseDeleted } from "./src/coursePersistence";
 
 // Clean & resolve database connection string
 const rawDbUrl = process.env.DATABASE_URL || "postgresql://postgres:postgrespassword@localhost:5432/codearena?schema=public";
@@ -359,6 +362,63 @@ const inMemoryStore: Record<string, any[]> = {
   ]
 };
 
+const STORE_PERSISTENCE_FILE = path.resolve(__dirname, "./data/in_memory_store.json");
+
+let saveTimeout: any = null;
+function saveStoreToDisk() {
+  if (saveTimeout) clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(() => {
+    try {
+      const dir = path.dirname(STORE_PERSISTENCE_FILE);
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(STORE_PERSISTENCE_FILE, JSON.stringify(inMemoryStore, null, 2), "utf-8");
+    } catch (err) {
+      console.error("Error saving in_memory_store to disk:", err);
+    }
+  }, 50);
+}
+
+function loadStoreFromDisk() {
+  try {
+    if (fs.existsSync(STORE_PERSISTENCE_FILE)) {
+      const raw = fs.readFileSync(STORE_PERSISTENCE_FILE, "utf-8").trim();
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === "object") {
+          for (const key of Object.keys(parsed)) {
+            if (Array.isArray(parsed[key])) {
+              inMemoryStore[key] = parsed[key];
+            }
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.error("Error loading in_memory_store from disk:", err);
+  }
+}
+
+// Restore persisted store on startup
+loadStoreFromDisk();
+
+// Filter out any courses that were marked as deleted by admin
+if (inMemoryStore.course) {
+  inMemoryStore.course = inMemoryStore.course.filter((c: any) => 
+    !isCourseDeleted(c.id) && !isCourseDeleted(c.slug) && !isCourseDeleted(c.title)
+  );
+}
+
+/**
+ * Production strictness boundary (audit P0 remediation):
+ * - development / test → in-memory JSON fallback allowed (existing behavior).
+ * - production (unless explicitly opted out via ALLOW_IN_MEMORY_DB=true) →
+ *   PostgreSQL ONLY. Model queries that cannot reach Postgres throw instead
+ *   of silently serving JSON, so production can never run degraded unnoticed.
+ */
+export function isProductionStrict(): boolean {
+  return process.env.NODE_ENV === "production" && process.env.ALLOW_IN_MEMORY_DB !== "true";
+}
+
 // Create a resilient Proxy for Prisma calls to prevent connection crashes when DB is offline
 const handler: ProxyHandler<any> = {
   get(target, propKey: string) {
@@ -388,6 +448,19 @@ const handler: ProxyHandler<any> = {
     return new Proxy(dummyTarget, {
       get(modelTarget, methodKey: string) {
         return async function (...args: any[]) {
+          // Production strict path: authoritative PostgreSQL, fail closed.
+          // No silent JSON fallback — a DB outage surfaces as an error.
+          if (isProductionStrict()) {
+            const rawModel = (target as any)?.[propKey];
+            const rawMethod = rawModel?.[methodKey];
+            if (typeof rawMethod !== "function") {
+              throw new Error(`Production Database Error: unsupported operation ${String(propKey)}.${String(methodKey)}`);
+            }
+            const result = await rawMethod.apply(rawModel, args);
+            postgresConnected = true;
+            return result;
+          }
+
           const modelName = propKey.toLowerCase();
           if (!inMemoryStore[modelName]) inMemoryStore[modelName] = [];
           const list = inMemoryStore[modelName];
@@ -397,6 +470,9 @@ const handler: ProxyHandler<any> = {
                   if (queryOptions.where) {
                     const found = list.find(item => {
                       if (queryOptions.where.id && item.id === queryOptions.where.id) return true;
+                      if (queryOptions.where.tokenHash && item.tokenHash === queryOptions.where.tokenHash) return true;
+                      if (queryOptions.where.familyId && item.familyId === queryOptions.where.familyId) return true;
+                      if (queryOptions.where.sessionId && item.sessionId === queryOptions.where.sessionId) return true;
                       if (queryOptions.where.userId_problemId) {
                         return item.userId === queryOptions.where.userId_problemId.userId && item.problemId === queryOptions.where.userId_problemId.problemId;
                       }
@@ -572,23 +648,39 @@ const handler: ProxyHandler<any> = {
                   let count = 0;
                   for (const item of list) {
                     const matchesId = queryOptions.where?.id && item.id === queryOptions.where.id;
+                    const matchesUserId = queryOptions.where?.userId && item.userId === queryOptions.where.userId;
+                    const matchesFamilyId = queryOptions.where?.familyId && item.familyId === queryOptions.where.familyId;
+                    const matchesSessionId = queryOptions.where?.sessionId && item.sessionId === queryOptions.where.sessionId;
                     const matchesOr = queryOptions.where?.OR && Array.isArray(queryOptions.where.OR) &&
                       queryOptions.where.OR.some((cond: any) => {
                         if (cond.userId && item.userId === cond.userId) return true;
                         if (cond.isBroadcast && item.isBroadcast === cond.isBroadcast) return true;
                         return false;
                       });
-                    if (matchesId || matchesOr) {
+                    if (matchesId || matchesUserId || matchesFamilyId || matchesSessionId || matchesOr) {
                       Object.assign(item, dataToSet, { updatedAt: new Date() });
                       count++;
                     }
                   }
+                  saveStoreToDisk();
                   return { count };
                 }
 
                 if (methodKey === "delete" || methodKey === "deleteMany") {
                   const where = queryOptions.where || {};
                   const initialLen = list.length;
+                  if (modelName === "course") {
+                    const targetCourse = list.find(item => 
+                      (where.id && item.id === where.id) ||
+                      (where.slug && item.slug === where.slug)
+                    );
+                    if (targetCourse) {
+                      markCourseDeleted(targetCourse.id, targetCourse.slug, targetCourse.title);
+                      if (inMemoryStore["lesson"]) {
+                        inMemoryStore["lesson"] = inMemoryStore["lesson"].filter((l: any) => l.courseId !== targetCourse.id && l.courseId !== where.id);
+                      }
+                    }
+                  }
                   inMemoryStore[modelName] = list.filter(item => {
                     if (where.userId_problemId) {
                       return !(item.userId === where.userId_problemId.userId && item.problemId === where.userId_problemId.problemId);
@@ -596,9 +688,12 @@ const handler: ProxyHandler<any> = {
                     if (where.userId && where.problemId) {
                       return !(item.userId === where.userId && item.problemId === where.problemId);
                     }
+                    if (where.courseId) return item.courseId !== where.courseId;
                     if (where.id) return item.id !== where.id;
+                    if (where.slug) return item.slug !== where.slug;
                     return true;
                   });
+                  saveStoreToDisk();
                   return { count: initialLen - inMemoryStore[modelName].length };
                 }
 
@@ -629,6 +724,7 @@ const handler: ProxyHandler<any> = {
                     updatedAt: new Date()
                   };
                   list.push(newItem);
+                  saveStoreToDisk();
                   return newItem;
                 }
 
@@ -660,8 +756,16 @@ const handler: ProxyHandler<any> = {
                     }
                     merged.updatedAt = new Date();
                     list[existingIndex] = merged;
+                    saveStoreToDisk();
                     return list[existingIndex];
                   }
+
+                  if (modelName === "course" && methodKey === "upsert") {
+                    if (isCourseDeleted(where.slug) || isCourseDeleted(where.id) || isCourseDeleted(createData.slug) || isCourseDeleted(createData.title)) {
+                      return null;
+                    }
+                  }
+
                   const newItem = {
                     id: `${modelName}_${Date.now()}_${Math.floor(Math.random()*1000)}`,
                     ...createData,
@@ -669,6 +773,7 @@ const handler: ProxyHandler<any> = {
                     updatedAt: new Date()
                   };
                   list.push(newItem);
+                  saveStoreToDisk();
                   return newItem;
                 }
 

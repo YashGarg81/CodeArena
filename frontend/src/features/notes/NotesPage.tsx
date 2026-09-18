@@ -108,10 +108,10 @@ export function NotesPage({ user, onToast, onOpenAuth }: {
 
   const allTags = ["All", ...Array.from(new Set(notes.flatMap(n => n.tags || [])))];
   const filteredNotes = notes.filter(n => {
-    if (selectedTag !== "All" && !n.tags.includes(selectedTag)) return false;
+    if (selectedTag !== "All" && !(n.tags ?? []).includes(selectedTag)) return false;
     if (search.trim()) {
       const q = search.toLowerCase();
-      return n.title.toLowerCase().includes(q) || n.content.toLowerCase().includes(q);
+      return (n.title ?? "").toLowerCase().includes(q) || (n.content ?? "").toLowerCase().includes(q);
     }
     return true;
   });

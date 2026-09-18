@@ -60,20 +60,20 @@ export function CommunityPage({ user, onToast }: { user: User | null; onToast: (
           </div>
           <h1 style={{ fontSize: 22, fontWeight: 800, marginBottom: 8 }}>{selectedPost.title}</h1>
           <div style={{ display: "flex", gap: 12, fontSize: 12, color: "var(--text-muted)", marginBottom: 16 }}>
-            <span>👤 {selectedPost.user.name}</span>
+            <span>👤 {selectedPost.user?.name || "Unknown"}</span>
             <span>🕐 {new Date(selectedPost.createdAt).toLocaleDateString()}</span>
             <span>👁 {selectedPost.views} views</span>
           </div>
           <div style={{ color: "var(--text-secondary)", lineHeight: 1.7, fontSize: 14, whiteSpace: "pre-wrap" }}>{selectedPost.content}</div>
         </div>
 
-        <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 14 }}>💬 {selectedPost.comments.length} Comments</h3>
-        {selectedPost.comments.map(c => (
+        <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 14 }}>💬 {(selectedPost.comments || []).length} Comments</h3>
+        {(selectedPost.comments || []).map(c => (
           <div key={c.id} style={{ display: "flex", gap: 12, marginBottom: 14 }}>
-            <div className="user-avatar-lb" style={{ width: 32, height: 32, fontSize: 12 }}>{c.user.name[0]}</div>
+            <div className="user-avatar-lb" style={{ width: 32, height: 32, fontSize: 12 }}>{(c.user?.name ?? "?")[0]}</div>
             <div style={{ flex: 1 }}>
               <div style={{ display: "flex", gap: 8, marginBottom: 6 }}>
-                <span style={{ fontWeight: 600, fontSize: 13 }}>{c.user.name}</span>
+                <span style={{ fontWeight: 600, fontSize: 13 }}>{c.user?.name || "Unknown"}</span>
                 <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{new Date(c.createdAt).toLocaleDateString()}</span>
               </div>
               <div style={{ fontSize: 13.5, color: "var(--text-secondary)", lineHeight: 1.6 }}>{c.content}</div>
@@ -83,7 +83,7 @@ export function CommunityPage({ user, onToast }: { user: User | null; onToast: (
 
         {user && (
           <div style={{ marginTop: 20, display: "flex", gap: 10 }}>
-            <div className="user-avatar-lb" style={{ width: 32, height: 32, fontSize: 12, flexShrink: 0 }}>{user.name[0]}</div>
+            <div className="user-avatar-lb" style={{ width: 32, height: 32, fontSize: 12, flexShrink: 0 }}>{(user.name ?? "?")[0]}</div>
             <div style={{ flex: 1 }}>
               <textarea className="input" placeholder="Write a comment..." value={newComment} onChange={e => setNewComment(e.target.value)} rows={3} style={{ resize: "vertical", marginBottom: 8 }} />
               <button className="btn btn-primary btn-sm" onClick={addComment}>Post Comment</button>
@@ -128,9 +128,9 @@ export function CommunityPage({ user, onToast }: { user: User | null; onToast: (
                 <div className="forum-post-title">{p.title}</div>
                 <div style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 6, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{p.content}</div>
                 <div className="forum-meta">
-                  <span>👤 {p.user.name}</span>
+                  <span>👤 {p.user?.name || "Unknown"}</span>
                   <span>🕐 {new Date(p.createdAt).toLocaleDateString()}</span>
-                  <span>💬 {p._count.comments}</span>
+                  <span>💬 {p._count?.comments || 0}</span>
                   <span>👁 {p.views}</span>
                   <span>❤️ {p.upvotes}</span>
                 </div>

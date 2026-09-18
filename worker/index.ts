@@ -1,15 +1,13 @@
 import { createClient } from "redis";
 import fs from "fs";
-import { prisma } from "./db";
+import { prisma, assertWorkerPostgres, isProductionStrict } from "./db";
 import { DRIVERS } from "./drivers";
-import { LanguageAdapterRegistry } from "./src/adapters";
+import { LanguageAdapterRegistry, buildCodeWithDriver } from "./src/adapters";
 import { validateCodeSecurity } from "../backend/src/security";
 import { publicWrongAnswerMessage, sanitizeTestResults } from "../backend/src/judgePrivacy";
 import { validateSandboxSafety } from "./src/sandbox";
 
-const redisClient = createClient({
-    RESP: 2
-});
+const redisClient = createClient({ url: process.env.REDIS_URL || "redis://localhost:6379" });
 
 interface TestCase {
     input: string;
@@ -36,6 +34,12 @@ const MAX_RETRY_ATTEMPTS = 3;
 redisClient.connect()
     .then(async () => {
         console.log("⚡ CodeArena Sandbox Queue Worker connected (Reliable Queue Mode)...");
+        // Production gate: the worker shares the authoritative PostgreSQL
+        // with the API. Never start consuming jobs on a silent empty store.
+        if (isProductionStrict()) {
+            await assertWorkerPostgres();
+            console.log("✅ PostgreSQL connectivity verified (production strict mode).");
+        }
         
         // 1. Worker Heartbeat registration (every 10s with 30s TTL)
         setInterval(async () => {
@@ -78,14 +82,32 @@ redisClient.connect()
                 // Use rPopLPush for reliable queuing (retains item in PROCESSING_QUEUE until acknowledged)
                 response = await redisClient.rPopLPush(PENDING_QUEUE, PROCESSING_QUEUE);
             } catch {
-                // Fallback to rPop if rPopLPush fails
-                response = await redisClient.rPop(PENDING_QUEUE);
+                // Fallback to rPop if rPopLPush fails (item is only in PENDING_QUEUE; ack lRem is a no-op)
+                try {
+                    response = await redisClient.rPop(PENDING_QUEUE);
+                } catch (fallbackErr) {
+                    console.error("[Queue Error] rPopLPush and fallback rPop both failed:", fallbackErr);
+                    response = null;
+                }
             }
 
             if (!response) {
                 await new Promise((r) => setTimeout(r, 600));
                 continue;
             }
+
+            // Stamp a lease timestamp so crashed/reclaimed items can be recovered:
+            // rPopLPush moved the item to PROCESSING_QUEUE, so swap the original for a
+            // _claimedAt-stamped copy that the lease recovery loop can expire.
+            try {
+                const stampable = JSON.parse(response);
+                if (stampable && typeof stampable === "object") {
+                    const stamped = JSON.stringify({ ...stampable, _claimedAt: Date.now() });
+                    await redisClient.lRem(PROCESSING_QUEUE, 1, response).catch(() => {});
+                    await redisClient.rPush(PROCESSING_QUEUE, stamped).catch(() => {});
+                    response = stamped;
+                }
+            } catch {}
 
             let parsedResponse: any;
             try {
@@ -110,7 +132,10 @@ redisClient.connect()
 
             console.log(`\n[Queue] Evaluating submission ${submissionId} for [${problemId}] in (${language})...`);
 
-            const sandboxCheck = await validateSandboxSafety();
+            const sandboxCheck = await validateSandboxSafety().catch((sandboxErr: any) => ({
+                safe: false,
+                reason: `Sandbox validation error: ${sandboxErr?.message || "unknown"}`
+            }));
             if (!sandboxCheck.safe) {
                 console.error(`[Sandbox Error] Submission ${submissionId} rejected: ${sandboxCheck.reason}`);
                 await prisma.submissions.update({
@@ -119,7 +144,7 @@ redisClient.connect()
                         status: "Failure",
                         errorMessage: sandboxCheck.reason
                     }
-                });
+                }).catch(() => {});
                 // Acknowledge by removing from processing queue
                 await redisClient.lRem(PROCESSING_QUEUE, 1, response).catch(() => {});
                 continue;
@@ -134,12 +159,15 @@ redisClient.connect()
                         status: "RuntimeError" as any,
                         errorMessage: secCheck.reason
                     }
-                });
+                }).catch(() => {});
                 // Acknowledge by removing from processing queue
                 await redisClient.lRem(PROCESSING_QUEUE, 1, response).catch(() => {});
                 continue;
             }
 
+            // Hoisted so the finally-cleanup below can see it (block-scoped
+            // declarations inside try are invisible to finally).
+            let folderPath: string | null = null;
             try {
                 // Fetch problem & canonical test cases from database
                 const problem = await prisma.problems.findFirst({
@@ -185,9 +213,11 @@ redisClient.connect()
                 } else {
                     console.log(`[Driver Info] No specific driver registered for problem '${problemId}'. Running as standalone script.`);
                 }
-                const codeWithDriver = code + driverCode;
+                const codeWithDriver = buildCodeWithDriver(language, code, driverCode);
 
-                const folderPath = __dirname + `/code_${submissionId.replace(/[^a-zA-Z0-9_-]/g, "")}`;
+                // Scratch directory is removed in the finally block below (covers
+                // early-return/continue paths that previously leaked folders).
+                folderPath = __dirname + `/code_${submissionId.replace(/[^a-zA-Z0-9_-]/g, "")}`;
                 if (!fs.existsSync(folderPath)) {
                     fs.mkdirSync(folderPath, { recursive: true });
                 }
@@ -198,6 +228,20 @@ redisClient.connect()
                 const MAX_CUMULATIVE_TIMEOUT_MS = 60000; // 60s total execution budget per submission
 
                 const executableTestCases = testCases.slice(0, MAX_TEST_CASES);
+
+                // Idempotency guard (checked BEFORE running any test case): if the
+                // submission already reached a terminal status (a previous worker
+                // finished it, or it was scored synchronously), ack & skip instead of
+                // executing — and never double-award XP/solveCount below.
+                const existingSubmission = await prisma.submissions.findUnique({
+                    where: { id: submissionId },
+                    select: { status: true, userId: true }
+                });
+                if (existingSubmission && existingSubmission.status !== "Processing") {
+                    console.log(`[Idempotency] Submission ${submissionId} already evaluated with status: ${existingSubmission.status}. Skipping.`);
+                    await redisClient.lRem(PROCESSING_QUEUE, 1, response).catch(() => {});
+                    continue;
+                }
 
                 // Validation: A problem with 0 executable test cases cannot be accepted
                 if (executableTestCases.length === 0) {
@@ -264,13 +308,18 @@ redisClient.connect()
                         break;
                     }
 
+                    // Honor the toolchain's declared minimum budgets (see
+                    // LanguageAdapterRegistry.resolveBudgets): a floor, not a
+                    // blanket increase — languages without special needs keep
+                    // the problem author's limits untouched.
+                    const budgets = LanguageAdapterRegistry.resolveBudgets(language, problem.timeLimit, problem.memoryLimit);
                     const execResult = await LanguageAdapterRegistry.executeCode(language, {
                         folderPath,
                         codeWithDriver,
                         inputData: tc.input,
                         expectedOutput: tc.output,
-                        timeoutMs: problem.timeLimit || 4000,
-                        memoryLimitMb: problem.memoryLimit || 256
+                        timeoutMs: budgets.timeoutMs,
+                        memoryLimitMb: budgets.memoryLimitMb
                     });
 
                     cumulativeRuntimeMs += execResult.runtime || 0;
@@ -357,16 +406,13 @@ redisClient.connect()
 
                 console.log(`Submission ${submissionId} => ${finalStatus} (${passedCount}/${executableTestCases.length} tests passed, avg runtime: ${runtime}ms)`);
 
-                // Check idempotency: avoid duplicate scoring if submission is already finished
-                const existingSubmission = await prisma.submissions.findUnique({
-                    where: { id: submissionId },
-                    select: { status: true, userId: true }
-                });
-                if (existingSubmission && existingSubmission.status !== "Processing") {
-                    console.log(`[Idempotency] Submission ${submissionId} already evaluated with status: ${existingSubmission.status}. Skipping.`);
-                    await redisClient.lRem(PROCESSING_QUEUE, 1, response).catch(() => {});
-                    continue;
-                }
+                // Operational metric for the backend /metrics endpoint.
+                // Fire-and-forget by design: metrics must never stall judging.
+                try {
+                    if ((redisClient as any)?.isReady) {
+                        redisClient.hIncrBy("codearena:metrics:worker_verdicts", finalStatus, 1).catch(() => {});
+                    }
+                } catch {}
 
                 if (finalStatus === "Success") {
                     // 1. Idempotently increment problem solveCount: only if this user hasn't already solved this problem
@@ -448,12 +494,9 @@ redisClient.connect()
                         testResults: sanitizeTestResults(results) as any,
                         runtime,
                         testCasesPassed: passedCount,
-                        testCasesTotal: testCases.length
+                        testCasesTotal: executableTestCases.length
                     }
                 });
-
-                // Cleanup ephemeral directory
-                try { fs.rmSync(folderPath, { recursive: true, force: true }); } catch {}
 
             } catch (err: any) {
                 console.error("Worker processing failed:", err);
@@ -485,11 +528,16 @@ redisClient.connect()
                     }
                 }
             } finally {
+                // Cleanup ephemeral scratch directory on every exit path (success, retry, DLQ, rejects).
+                if (folderPath) {
+                    try { fs.rmSync(folderPath, { recursive: true, force: true }); } catch {}
+                }
                 // Acknowledge task completion by removing from the processing queue
                 await redisClient.lRem(PROCESSING_QUEUE, 1, response).catch(() => {});
             }
         }
     })
     .catch((err) => {
-        console.error("Redis client initialization failed inside worker:", err);
+        console.error("Worker startup failed:", err?.message || err);
+        if (isProductionStrict()) process.exit(1);
     });

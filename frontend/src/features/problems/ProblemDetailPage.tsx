@@ -5,6 +5,7 @@ import { StateView } from "../../components/common/StateView";
 import { api, API, getAuthHeaders } from "../../services/api";
 import type { User, ProblemDetail, Submission, TestResult } from "../../types";
 import { markdownToHtml } from "../../utils/markdown";
+import { LANGUAGE_OPTIONS } from "../../utils/languages";
 
 
 export function ProblemDetailPage({ problemId, user, onToast }: {
@@ -18,6 +19,7 @@ export function ProblemDetailPage({ problemId, user, onToast }: {
   const [running, setRunning] = useState(false);
   const [submission, setSubmission] = useState<Submission | null>(null);
   const [runResult, setRunResult] = useState<any>(null);
+  const [runIsCustom, setRunIsCustom] = useState(false);
   const [polling, setPolling] = useState(false);
   const [activeTab, setActiveTab] = useState<"desc" | "hints" | "editorial" | "submissions" | "discuss" | "ai" | "debugger">("desc");
   const [showHints, setShowHints] = useState<boolean[]>([]);
@@ -216,8 +218,20 @@ export function ProblemDetailPage({ problemId, user, onToast }: {
     }).catch(() => setLoading(false));
   }, [problemId]);
 
+  const lastProblemTemplateRef = useRef<string>("");
   useEffect(() => {
-    if (problem) setCode((problem.templates as any)[language] || "");
+    if (!problem) return;
+    const nextTemplate = (problem.templates as any)[language] || "";
+    // Don't wipe code the user has already edited — only swap the scaffold
+    // when the editor still holds the previous template (or is empty).
+    setCode((prev) => {
+      if (!prev.trim() || prev === lastProblemTemplateRef.current) {
+        lastProblemTemplateRef.current = nextTemplate;
+        return nextTemplate;
+      }
+      lastProblemTemplateRef.current = nextTemplate;
+      return prev;
+    });
   }, [language, problem]);
 
   // Load problem submissions when tab switches or filters change
@@ -262,6 +276,7 @@ export function ProblemDetailPage({ problemId, user, onToast }: {
           try {
             const payload = JSON.parse(event.data);
             if (payload.done) {
+              isCancelled = true;
               eventSource.close();
             } else {
               setLiveStreamEvents(prev => [...prev, payload]);
@@ -273,8 +288,10 @@ export function ProblemDetailPage({ problemId, user, onToast }: {
         };
       } catch {}
 
+      let isCancelled = false;
       let attempts = 0;
       const poll = async () => {
+        if (isCancelled) return;
         attempts++;
         try {
           const { data: res } = await api.get(`/api/v1/submissions/${subId}`);
@@ -282,6 +299,7 @@ export function ProblemDetailPage({ problemId, user, onToast }: {
           if (sub && (sub.status === "Processing" || sub.status === "Pending") && attempts < 25) {
             setTimeout(poll, 1000);
           } else if (sub) {
+            isCancelled = true;
             setSubmission(sub);
             setPolling(false);
             setSubmitting(false);
@@ -294,6 +312,7 @@ export function ProblemDetailPage({ problemId, user, onToast }: {
           } else if (attempts < 25) {
             setTimeout(poll, 1000);
           } else {
+            isCancelled = true;
             setPolling(false);
             setSubmitting(false);
             onToast("Submission timed out", "error");
@@ -302,6 +321,7 @@ export function ProblemDetailPage({ problemId, user, onToast }: {
           if (attempts < 25) {
             setTimeout(poll, 1000);
           } else {
+            isCancelled = true;
             setPolling(false);
             setSubmitting(false);
             onToast("Error checking submission verdict", "error");
@@ -321,9 +341,10 @@ export function ProblemDetailPage({ problemId, user, onToast }: {
     const isCustom = activeTestCase === (problem?.testCases?.filter(tc => !tc.isHidden).length ?? 0);
     const input = isCustom ? customInput : problem?.testCases?.[activeTestCase]?.input || "";
     const expected = isCustom ? "" : problem?.testCases?.[activeTestCase]?.output || "";
+    setRunIsCustom(isCustom);
     try {
       const { data } = await api.post("/api/v1/submissions/run", {
-        problemId, code, language, input, expected
+        problemId, code, language, input, expectedOutput: expected
       });
       setRunResult({ ...data.result, input });
     } catch (err: any) {
@@ -357,13 +378,7 @@ export function ProblemDetailPage({ problemId, user, onToast }: {
   if (loading) return <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "calc(100vh - 56px)" }}><div className="animate-spin" style={{ fontSize: 32 }}>⚙</div></div>;
   if (!problem) return <div className="empty-state"><div className="empty-state-icon">❓</div><h3>Problem not found</h3></div>;
 
-  const langs = [
-    { value: "py", label: "Python 3" },
-    { value: "js", label: "JavaScript" },
-    { value: "cpp", label: "C++" },
-    { value: "java", label: "Java" },
-    { value: "go", label: "Go" },
-  ];
+  const langs = LANGUAGE_OPTIONS.map(l => ({ value: l.key, label: l.label }));
 
   const visibleTestCases = problem.testCases?.filter(tc => !tc.isHidden) || [];
   const statusColor = !submission ? "" : submission.status === "Success" ? "var(--accent-green)" : submission.status === "TLE" ? "var(--accent-orange)" : "var(--accent-red)";
@@ -377,7 +392,7 @@ export function ProblemDetailPage({ problemId, user, onToast }: {
       {/* Left: Problem */}
       <div className="problem-pane">
         <div className="problem-pane-header">
-          <span className={`badge badge-${problem.difficulty.toLowerCase()}`}>{problem.difficulty}</span>
+          <span className={`badge badge-${(problem.difficulty ?? "medium").toLowerCase()}`}>{problem.difficulty}</span>
           <span className="badge badge-gray">{problem.category}</span>
           <div style={{ marginLeft: "auto", display: "flex", gap: 10, alignItems: "center", fontSize: 12, color: "var(--text-muted)", flexWrap: "wrap" }}>
             {user && ["ADMIN", "INSTRUCTOR", "DEVELOPER", "PLATFORM_ADMIN", "PROBLEM_ADMIN", "CONTEST_ADMIN"].includes(user.role) && (
@@ -548,11 +563,7 @@ export function ProblemDetailPage({ problemId, user, onToast }: {
                 </select>
                 <select className="select" style={{ fontSize: 12 }} value={subFilterLang} onChange={e => setSubFilterLang(e.target.value)}>
                   <option value="">All Languages</option>
-                  <option value="py">Python 3</option>
-                  <option value="js">JavaScript</option>
-                  <option value="cpp">C++</option>
-                  <option value="java">Java</option>
-                  <option value="go">Go</option>
+                  {LANGUAGE_OPTIONS.map(l => <option key={l.key} value={l.key}>{l.label}</option>)}
                 </select>
               </div>
 
@@ -1086,8 +1097,8 @@ export function ProblemDetailPage({ problemId, user, onToast }: {
                   ) : (
                     <>
                       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-                        <span style={{ fontWeight: 700, color: runResult.passed ? "var(--accent-green)" : "var(--accent-red)" }}>
-                          {runResult.passed ? "✅ Passed" : "❌ Wrong Answer"}
+                        <span style={{ fontWeight: 700, color: runIsCustom ? "var(--accent-primary)" : runResult.passed ? "var(--accent-green)" : "var(--accent-red)" }}>
+                          {runIsCustom ? "📟 Output (custom input — not judged)" : runResult.passed ? "✅ Passed" : "❌ Wrong Answer"}
                         </span>
                         {runResult.runtime !== undefined && <span style={{ fontSize: 11, color: "var(--text-muted)" }}>⏱ {runResult.runtime?.toFixed(1)}ms</span>}
                       </div>

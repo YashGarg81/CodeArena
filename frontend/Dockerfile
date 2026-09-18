@@ -1,7 +1,8 @@
 FROM oven/bun:1.2-alpine AS build
 WORKDIR /app
 COPY package.json bun.lock* ./
-RUN bun install --frozen-lockfile || bun install
+# Fail closed: never silently fall back to floating versions.
+RUN bun install --frozen-lockfile
 COPY . .
 RUN bun run build.ts --outdir=dist --minify
 

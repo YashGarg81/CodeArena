@@ -177,4 +177,23 @@ describe("Storage Security & IDOR Defense Suite", () => {
     const res = await fetch(`${base}/api/v1/storage/files/public/nonexistent_file_12345.png`);
     expect(res.status).toBe(404);
   });
+
+  test("11. SVG downloads force attachment disposition (stored-XSS mitigation)", async () => {
+    const uploadRes = await fetch(`${base}/api/v1/storage/upload?filename=xss_probe.svg`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "image/svg+xml",
+        Authorization: `Bearer ${user1Token}`
+      },
+      body: `<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>`
+    });
+    expect(uploadRes.status).toBe(200);
+    const { key } = await uploadRes.json();
+
+    const getRes = await fetch(`${base}/api/v1/storage/files/${key}`, {
+      headers: { Authorization: `Bearer ${user1Token}` }
+    });
+    expect(getRes.status).toBe(200);
+    expect(getRes.headers.get("content-disposition")).toContain("attachment");
+  });
 });

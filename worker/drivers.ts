@@ -1,7 +1,13 @@
 // CodeArena — Multi-Language Problem Driver Matrix
-// Provides standard stdin/stdout harnesses for sandboxed execution across languages
+// Provides standard stdin/stdout harnesses for sandboxed execution across languages.
+//
+// The worker merges in the backend's shared driver matrix so Java/Go harnesses
+// (class Driver / package main + import blocks) are available to the async judge
+// exactly as they are to the synchronous /run and /run-single-test endpoints.
 
-export const DRIVERS: Record<string, Record<string, string>> = {
+import { DRIVERS as BACKEND_DRIVERS } from "../backend/drivers";
+
+const LOCAL_DRIVERS: Record<string, Record<string, string>> = {
     "two-sum": {
         js: `\nconst fs = require('fs');\ntry {\n  const lines = fs.readFileSync(0, 'utf-8').split(/\\r?\\n/).map(s => s.trim()).filter(Boolean);\n  if (lines.length >= 2) {\n    const nums = lines[0].split(/\\s+/).map(Number);\n    const target = Number(lines[1]);\n    const res = twoSum(nums, target);\n    console.log(Array.isArray(res) ? res.slice().sort((a,b)=>a-b).join(' ') : "");\n  }\n} catch (e) { console.error(e.message); process.exit(1); }`,
         py: `\nimport sys\ntry:\n    lines = [l.strip() for l in sys.stdin.read().split('\\n') if l.strip()]\n    if len(lines) >= 2:\n        nums = list(map(int, lines[0].split()))\n        target = int(lines[1])\n        res = two_sum(nums, target)\n        print(" ".join(map(str, sorted(res))) if isinstance(res, (list, tuple)) else "")\nexcept Exception as e:\n    sys.stderr.write(str(e)); sys.exit(1)`,
@@ -123,3 +129,18 @@ export const DRIVERS: Record<string, Record<string, string>> = {
         cpp: ""
     }
 };
+
+// Backend drivers are the shared source of truth for java/go harnesses. For every
+// problem key, local (worker) js/py/cpp entries win; backend entries fill in any
+// missing languages (java, go) and any problems not defined locally.
+export const DRIVERS: Record<string, Record<string, string>> = (() => {
+    const merged: Record<string, Record<string, string>> = {};
+    const allKeys = new Set<string>([...Object.keys(LOCAL_DRIVERS), ...Object.keys(BACKEND_DRIVERS)]);
+    for (const key of allKeys) {
+        merged[key] = {
+            ...(BACKEND_DRIVERS[key] || {}),
+            ...(LOCAL_DRIVERS[key] || {})
+        };
+    }
+    return merged;
+})();

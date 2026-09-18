@@ -1,5 +1,42 @@
+import { DRIVERS } from "../drivers";
+
 export type ArenaGameMode = "classic" | "speed" | "score" | "best_of_3" | "survival";
 export type ArenaDifficulty = "All" | "Easy" | "Medium" | "Hard";
+
+export interface ArenaProblemRef {
+  id: string;
+  title: string;
+  difficulty: string;
+  description: string;
+  totalTests: number;
+}
+
+function prettifyProblemId(id: string): string {
+  return id
+    .split("-")
+    .map((w) => (w ? w[0]!.toUpperCase() + w.slice(1) : w))
+    .join(" ");
+}
+
+/** Problems the judge can actually execute (have a driver harness). */
+export function getRunnableProblemIds(): string[] {
+  return Object.keys(DRIVERS);
+}
+
+/** Build match problem refs from explicit ids, falling back to mode defaults for unknown ids. */
+export function getProblemsForIds(ids: string[]): ArenaProblemRef[] {
+  const runnable = new Set(getRunnableProblemIds());
+  return ids
+    .filter((id) => runnable.has(id))
+    .slice(0, 3)
+    .map((id) => ({
+      id,
+      title: prettifyProblemId(id),
+      difficulty: "Medium",
+      description: "Solve the problem — first to pass all visible tests wins the round.",
+      totalTests: 5,
+    }));
+}
 
 export interface ArenaPlayer {
   id: string;
@@ -42,6 +79,7 @@ export class BattleArenaService {
     gameMode: ArenaGameMode;
     difficulty: ArenaDifficulty;
     language?: string;
+    problemIds?: string[];
   }> = [];
   private battleHistory: Array<{
     matchId: string;
@@ -65,6 +103,7 @@ export class BattleArenaService {
     difficulty?: ArenaDifficulty;
     language?: string;
     autoMatchBot?: boolean;
+    problemIds?: string[];
   }): { match?: ArenaMatch; queued: boolean } {
     const mode = player.gameMode || "classic";
     const diff = player.difficulty || "All";
@@ -83,7 +122,7 @@ export class BattleArenaService {
     if (opponentIdx !== -1) {
       const opponent = this.matchQueue.splice(opponentIdx, 1)[0];
       if (opponent) {
-        const match = this.createMatch(player, opponent, mode, diff, false);
+        const match = this.createMatch(player, opponent, mode, diff, false, player.problemIds ?? opponent.problemIds);
         return { match, queued: false };
       }
     }
@@ -101,7 +140,7 @@ export class BattleArenaService {
         username: "master_coder_99",
         elo: player.elo
       };
-      const match = this.createMatch(player, challenger, mode, diff, false);
+      const match = this.createMatch(player, challenger, mode, diff, false, player.problemIds);
       return { match, queued: false };
     }
 
@@ -123,7 +162,7 @@ export class BattleArenaService {
     return baseSeconds; // classic / score
   }
 
-  public createPrivateRoom(player: { userId: string; username: string; elo: number; gameMode?: ArenaGameMode; difficulty?: ArenaDifficulty; language?: string }): ArenaMatch {
+  public createPrivateRoom(player: { userId: string; username: string; elo: number; gameMode?: ArenaGameMode; difficulty?: ArenaDifficulty; language?: string; problemIds?: string[] }): ArenaMatch {
     const roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
     const mode = player.gameMode || "classic";
     const diff = player.difficulty || "Medium";
@@ -139,7 +178,7 @@ export class BattleArenaService {
       player1: { id: player.userId, username: player.username, elo: player.elo, progress: 0, testsPassed: 0, status: "coding", score: 0, wins: 0, lastActive: Date.now() },
       player2: { id: "", username: "Waiting for player...", elo: 1200, progress: 0, testsPassed: 0, status: "coding", score: 0, wins: 0, lastActive: Date.now() },
       spectators: [],
-      problems: this.getProblemsForMode(mode, diff),
+      problems: this.getProblemsForMode(mode, diff, player.problemIds),
       currentRound: 1,
       totalRounds: mode === "best_of_3" ? 3 : 1,
       startTime: 0, // Starts when both players join
@@ -187,7 +226,8 @@ export class BattleArenaService {
     p2: { userId: string; username: string; elo: number },
     gameMode: ArenaGameMode,
     difficulty: ArenaDifficulty,
-    isPrivate: boolean
+    isPrivate: boolean,
+    problemIds?: string[]
   ): ArenaMatch {
     const matchId = `match_${Date.now()}_${Math.random().toString(36).substring(7)}`;
     const match: ArenaMatch = {
@@ -198,7 +238,7 @@ export class BattleArenaService {
       player1: { id: p1.userId, username: p1.username, elo: p1.elo, progress: 0, testsPassed: 0, status: "coding", score: 0, wins: 0, lastActive: Date.now() },
       player2: { id: p2.userId, username: p2.username, elo: p2.elo, progress: 0, testsPassed: 0, status: "coding", score: 0, wins: 0, lastActive: Date.now() },
       spectators: [],
-      problems: this.getProblemsForMode(gameMode, difficulty),
+      problems: this.getProblemsForMode(gameMode, difficulty, problemIds),
       currentRound: 1,
       totalRounds: gameMode === "best_of_3" ? 3 : 1,
       startTime: Date.now(),
@@ -212,7 +252,24 @@ export class BattleArenaService {
     return match;
   }
 
-  private getProblemsForMode(mode: ArenaGameMode, _diff: ArenaDifficulty) {
+  private getProblemsForMode(mode: ArenaGameMode, _diff: ArenaDifficulty, problemIds?: string[]) {
+    const neededRounds = mode === "best_of_3" || mode === "survival" ? 3 : 1;
+    const picked = getProblemsForIds(problemIds ?? []);
+    if (picked.length > 0) {
+      // Use the lobby-picked problem(s) first, pad with mode defaults.
+      const defaults = this.getDefaultProblemsForMode(mode);
+      const out = [...picked];
+      while (out.length < neededRounds && out.length < 3) {
+        const next = defaults[out.length % defaults.length];
+        if (next && !out.some((p) => p.id === next.id)) out.push(next);
+        else break;
+      }
+      return out;
+    }
+    return this.getDefaultProblemsForMode(mode);
+  }
+
+  private getDefaultProblemsForMode(mode: ArenaGameMode) {
     if (mode === "best_of_3") {
       return [
         { id: "two-sum", title: "Two Sum", difficulty: "Easy", description: "Find two indices that sum to target.", totalTests: 5 },
@@ -280,6 +337,13 @@ export class BattleArenaService {
     if (!match) return null;
     if (!match.rematchVotes) match.rematchVotes = [];
     if (!match.rematchVotes.includes(userId)) match.rematchVotes.push(userId);
+
+    // Practice bots never vote: auto-accept rematches against them instead of
+    // stranding the player in "rematch_requested" forever.
+    const opponent = match.player1.id === userId ? match.player2 : match.player1;
+    if (opponent.id.startsWith("bot_") && !match.rematchVotes.includes(opponent.id)) {
+      match.rematchVotes.push(opponent.id);
+    }
 
     if (match.rematchVotes.length >= 2) {
       match.status = "active";

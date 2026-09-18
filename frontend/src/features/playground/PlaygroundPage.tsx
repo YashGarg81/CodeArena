@@ -3,6 +3,7 @@ import axios from "axios";
 import { Icons } from "../../components/ui/Icons";
 import { StateView } from "../../components/common/StateView";
 import { api, API, getAuthHeaders } from "../../services/api";
+import { LANGUAGE_OPTIONS, DEFAULT_PROBLEM_LANGUAGES } from "../../utils/languages";
 
 export function PlaygroundPage({ onToast }: { onToast: (m: string, t: string) => void }) {
   const [activeFile, setActiveFile] = useState("index.html");
@@ -176,18 +177,14 @@ export function LessonCodeRunner({ lessonId }: { lessonId: string }) {
         background: "var(--bg-tertiary)"
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <span style={{ fontSize: 14, fontWeight: 700, color: "var(--text-main)" }}>💻 Exercise Code Runner</span>
+          <span style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)" }}>💻 Exercise Code Runner</span>
           <select
             className="select select-sm"
             value={language}
             onChange={e => setLanguage(e.target.value)}
             style={{ fontSize: 12 }}
           >
-            <option value="js">JavaScript</option>
-            <option value="py">Python</option>
-            <option value="cpp">C++</option>
-            <option value="java">Java</option>
-            <option value="go">Go</option>
+            {LANGUAGE_OPTIONS.map(l => <option key={l.key} value={l.key}>{l.label}</option>)}
           </select>
         </div>
         <button
@@ -229,7 +226,7 @@ export function LessonCodeRunner({ lessonId }: { lessonId: string }) {
             fontFamily: "var(--font-mono)",
             fontSize: 12,
             lineHeight: 1.5,
-            color: "var(--text-main)",
+            color: "var(--text-primary)",
             margin: 0,
             whiteSpace: "pre-wrap"
           }}>
@@ -276,11 +273,7 @@ const CATEGORIES_LIST = [
   "Greedy","Bit Manipulation","Sorting","Design","SQL","Shell","Database"
 ];
 const COMPANIES_ALL = ["Google","Amazon","Microsoft","Meta","Apple","Netflix","Uber","Adobe","Bloomberg","Twitter","LinkedIn","Airbnb"];
-const LANG_OPTIONS = [
-  { key: "js", label: "JavaScript" }, { key: "py", label: "Python" },
-  { key: "cpp", label: "C++" }, { key: "java", label: "Java" },
-  { key: "go", label: "Go" }, { key: "ts", label: "TypeScript" }
-];
+const LANG_OPTIONS = LANGUAGE_OPTIONS;
 
 interface AdminProblem {
   id: string; title: string; slug: string; difficulty: string; category: string;
@@ -304,7 +297,7 @@ const defaultFormState = () => ({
   constraints: "", inputFormat: "", outputFormat: "",
   hints: "", editorial: "", solutions: "",
   templates_js: "", templates_py: "", templates_cpp: "", templates_java: "", templates_go: "",
-  languages: ["js", "py", "cpp", "java", "go"],
+  languages: DEFAULT_PROBLEM_LANGUAGES,
   timeLimit: 5000, memoryLimit: 256,
   isPremium: false, status: "Draft"
 });

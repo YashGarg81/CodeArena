@@ -26,11 +26,34 @@ export interface SolutionCommitPayload {
  * Format solution file paths and README documentation.
  */
 export function buildCommitFiles(payload: SolutionCommitPayload, folderPrefix = "solutions") {
-  const ext = payload.language === "py" || payload.language === "python" ? "py"
-    : payload.language === "cpp" ? "cpp"
-    : payload.language === "java" ? "java"
-    : payload.language === "go" ? "go"
-    : "js";
+  const EXTENSION_BY_LANGUAGE: Record<string, string> = {
+    js: "js", javascript: "js",
+    ts: "ts", typescript: "ts",
+    py: "py", python: "py", python3: "py",
+    cpp: "cpp", "c++": "cpp",
+    c: "c",
+    java: "java",
+    go: "go", golang: "go",
+    rust: "rs", rs: "rs",
+    cs: "cs", csharp: "cs", "c#": "cs",
+    kt: "kt", kotlin: "kt",
+    swift: "swift",
+    ruby: "rb",
+    php: "php",
+    scala: "scala",
+    dart: "dart",
+    r: "r", rscript: "r",
+    perl: "pl", pl: "pl",
+    bash: "sh", sh: "sh", shell: "sh",
+    hs: "hs", haskell: "hs",
+    ex: "exs", elixir: "exs",
+    erl: "escript", erlang: "escript",
+    clj: "clj", clojure: "clj",
+    groovy: "groovy",
+    jl: "jl", julia: "jl",
+    nim: "nim",
+  };
+  const ext = EXTENSION_BY_LANGUAGE[payload.language?.toLowerCase()] ?? "js";
 
   const safeTitle = payload.problemTitle.replace(/[^a-zA-Z0-9_-]/g, "_");
   const problemFolder = `${folderPrefix}/${payload.problemId}-${safeTitle}`;
@@ -112,17 +135,20 @@ export async function syncSolutionToGitHub(
     });
 
     if (putRes.ok) {
-      const data = (await putRes.json()) as { commit?: { html_url?: string } };
-      return {
-        success: true,
-        commitUrl: data.commit?.html_url || `https://github.com/${config.repoName}`
-      };
+        const data = (await putRes.json()) as { commit?: { html_url?: string } };
+        return {
+            success: true,
+            commitUrl: data.commit?.html_url || `https://github.com/${config.repoName}`
+        };
     } else {
-      // In simulated/mock mode or non-reachable private repos
-      return {
-        success: true,
-        commitUrl: `https://github.com/${config.repoName}/blob/main/${codeFilePath}`
-      };
+        // A failed commit must never be reported as success: callers and UIs
+        // would otherwise display a fabricated commit URL.
+        let detail = "";
+        try { detail = (await putRes.text()).slice(0, 300); } catch {}
+        return {
+            success: false,
+            error: `GitHub commit failed (HTTP ${putRes.status})${detail ? `: ${detail}` : ""}`
+        };
     }
   } catch (err: any) {
     return { success: false, error: err.message };

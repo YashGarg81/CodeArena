@@ -137,7 +137,7 @@ export function AlgorithmVisualizer({ defaultType = "sorting" }: { defaultType?:
     <div className="algo-visualizer-container" style={{ padding: 24, background: "var(--bg-card)", borderRadius: 12, border: "1px solid var(--border-color)", margin: "16px 0" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
         <div>
-          <h3 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: "var(--text-main)" }}>✨ Interactive Algorithm Visualizer</h3>
+          <h3 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: "var(--text-primary)" }}>✨ Interactive Algorithm Visualizer</h3>
           <p style={{ margin: "4px 0 0", fontSize: 13, color: "var(--text-muted)" }}>Explore step-by-step state animations for algorithms and data structures</p>
         </div>
 

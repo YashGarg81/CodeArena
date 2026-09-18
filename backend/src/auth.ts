@@ -2,7 +2,7 @@
 import type { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { prisma } from "../db";
-import { getJwtSecret, getRefreshTokenSecret } from "./config";
+import { getJwtSecret, getRefreshTokenSecret, ACCESS_TOKEN_EXPIRY, REFRESH_TOKEN_EXPIRY } from "./config";
 import { getRedisClient } from "./redisClient";
 
 import crypto from "crypto";
@@ -88,12 +88,14 @@ export interface AuthenticatedRequest extends Request {
   sessionId?: string;
 }
 
-export function generateAccessToken(payload: { userId: string; role: string; tokenVersion?: number; sessionId?: string }): string {
-  return jwt.sign(payload, getJwtSecret(), { expiresIn: "15m" });
+export function generateAccessToken(payload: { userId: string; role: string; tokenVersion?: number; sessionId?: string; jti?: string }): string {
+  const { jti, ...claims } = payload;
+  return jwt.sign(claims, getJwtSecret(), { expiresIn: ACCESS_TOKEN_EXPIRY, ...(jti ? { jwtid: jti } : {}) });
 }
 
-export function generateRefreshToken(payload: { userId: string; familyId: string; tokenVersion?: number; sessionId?: string }): string {
-  return jwt.sign(payload, getRefreshTokenSecret(), { expiresIn: "7d" });
+export function generateRefreshToken(payload: { userId: string; familyId: string; tokenVersion?: number; sessionId?: string; jti?: string }): string {
+  const { jti, ...claims } = payload;
+  return jwt.sign(claims, getRefreshTokenSecret(), { expiresIn: REFRESH_TOKEN_EXPIRY, ...(jti ? { jwtid: jti } : {}) });
 }
 
 export async function auth(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
@@ -162,8 +164,10 @@ export async function optionalAuth(req: AuthenticatedRequest, _res: Response, ne
 }
 
 /**
- * Strict Core Administration authorization: Only ADMIN and PLATFORM_ADMIN.
- * Prevents privilege escalation from Developer / Instructor roles.
+ * Strict Core Administration authorization: ADMIN, PLATFORM_ADMIN, and
+ * DEVELOPER (DEVELOPER holds full admin privileges per the RBAC matrix —
+ * see security.test.ts "Granular RBAC Module"). INSTRUCTOR and all other
+ * roles are rejected.
  */
 export async function adminAuth(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
   const token = req.headers.authorization?.split(" ")[1];

@@ -8,6 +8,7 @@ import type { User } from "../../types";
 export function DashboardPage({ user, onNavigate }: { user: User | null; onNavigate: (p: string, s?: string) => void }) {
   const [stats, setStats] = useState({ totalSolved: 0, easySolved: 0, mediumSolved: 0, hardSolved: 0, totalSubmissions: 0 });
   const [submissions, setSubmissions] = useState<any[]>([]);
+  const [activityByDay, setActivityByDay] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -15,16 +16,27 @@ export function DashboardPage({ user, onNavigate }: { user: User | null; onNavig
     Promise.all([
       api.get(`/api/v1/users/${user.id}/stats`),
       api.get(`/api/v1/users/${user.id}/submissions?limit=10`),
-    ]).then(([sRes, subRes]) => {
+      api.get(`/api/v1/users/${user.id}/submissions?limit=500`),
+    ]).then(([sRes, subRes, actRes]) => {
       setStats(sRes.data.stats);
       setSubmissions(subRes.data.submissions);
+      const counts: Record<string, number> = {};
+      for (const s of actRes.data.submissions || []) {
+        const day = new Date(s.createdAt).toISOString().slice(0, 10);
+        counts[day] = (counts[day] || 0) + 1;
+      }
+      setActivityByDay(counts);
       setLoading(false);
     }).catch(() => setLoading(false));
   }, [user]);
 
+  // Real contribution heatmap from submission dates (level 0-3 by daily count).
+  // Days without submissions render empty — never synthesized.
   const activityData = Array.from({ length: 364 }, (_, i) => {
-    const random = Math.random();
-    return random > 0.75 ? (random > 0.9 ? 3 : random > 0.83 ? 2 : 1) : 0;
+    const d = new Date();
+    d.setDate(d.getDate() - (363 - i));
+    const count = activityByDay[d.toISOString().slice(0, 10)] || 0;
+    return count >= 6 ? 3 : count >= 3 ? 2 : count >= 1 ? 1 : 0;
   });
 
   if (!user) return (
@@ -223,7 +235,7 @@ export function DashboardPage({ user, onNavigate }: { user: User | null; onNavig
       <div className="card" style={{ marginBottom: 24 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
           <h2 style={{ fontSize: 15, fontWeight: 700 }}>Contribution Activity</h2>
-          <span style={{ fontSize: 12, color: "var(--text-muted)" }}>Past year</span>
+          <span style={{ fontSize: 12, color: "var(--text-muted)" }}>Past year · from your submissions</span>
         </div>
         <div className="activity-graph">
           <div className="activity-grid">

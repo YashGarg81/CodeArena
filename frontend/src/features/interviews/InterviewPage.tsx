@@ -4,6 +4,7 @@ import { Icons } from "../../components/ui/Icons";
 import { StateView } from "../../components/common/StateView";
 import { api, API, getAuthHeaders } from "../../services/api";
 import type { User } from "../../types";
+import { LANGUAGE_OPTIONS, normalizeLanguage } from "../../utils/languages";
 
 // ─── REAL-TIME MOCK INTERVIEW STUDIO (P1 CORE FEATURE) ───────────────────────
 
@@ -12,7 +13,7 @@ export function InterviewPage({ user, onToast }: { user: User | null; onToast: (
   const [activeSession, setActiveSession] = useState<any | null>(null);
   const [role, setRole] = useState<"candidate" | "interviewer">("candidate");
   const [selectedProblem, setSelectedProblem] = useState("two-sum");
-  const [language, setLanguage] = useState("javascript");
+  const [language, setLanguage] = useState("js");
   const [duration, setDuration] = useState(45);
   const [code, setCode] = useState("");
   const [chatInput, setChatInput] = useState("");
@@ -82,7 +83,7 @@ export function InterviewPage({ user, onToast }: { user: User | null; onToast: (
         const interview = res.data.interview;
         setActiveSession(interview);
         setCode(interview.code);
-        setLanguage(interview.language || "javascript");
+        setLanguage(normalizeLanguage(interview.language) || "js");
         setSecondsLeft(interview.timerSecondsLeft ?? (interview.durationMinutes * 60));
         setIsTimerRunning(interview.status === "completed" ? false : Boolean(interview.timerRunning));
         setRunResult(null);
@@ -294,7 +295,7 @@ export function InterviewPage({ user, onToast }: { user: User | null; onToast: (
                 <div>
                   <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 6 }}>
                     <span className="badge badge-blue">Target Problem</span>
-                    <span className={`badge badge-${activeSession.difficulty.toLowerCase()}`}>{activeSession.difficulty}</span>
+                    <span className={`badge badge-${(activeSession.difficulty ?? "medium").toLowerCase()}`}>{activeSession.difficulty}</span>
                     <span className="badge badge-gray">{activeSession.durationMinutes} mins allocated</span>
                   </div>
                   <h2 style={{ fontSize: 18, fontWeight: 800, margin: 0 }}>{activeSession.problemTitle}</h2>
@@ -350,10 +351,7 @@ export function InterviewPage({ user, onToast }: { user: User | null; onToast: (
                       api.post(`/api/v1/interviews/${activeSession.id}/sync`, { language: newLang }).catch(() => {});
                     }}
                   >
-                    <option value="javascript">JavaScript</option>
-                    <option value="python">Python</option>
-                    <option value="cpp">C++</option>
-                    <option value="java">Java</option>
+                    {LANGUAGE_OPTIONS.map(l => <option key={l.key} value={l.key}>{l.label}</option>)}
                   </select>
                 </div>
 
@@ -585,10 +583,7 @@ export function InterviewPage({ user, onToast }: { user: User | null; onToast: (
                 <div>
                   <label className="label" style={{ fontSize: 12 }}>Language</label>
                   <select className="input" value={language} onChange={e => setLanguage(e.target.value)}>
-                    <option value="javascript">JavaScript</option>
-                    <option value="python">Python 3</option>
-                    <option value="cpp">C++ 20</option>
-                    <option value="java">Java 17</option>
+                    {LANGUAGE_OPTIONS.map(l => <option key={l.key} value={l.key}>{l.label}</option>)}
                   </select>
                 </div>
                 <div>

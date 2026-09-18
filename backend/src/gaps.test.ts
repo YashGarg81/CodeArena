@@ -200,3 +200,21 @@ describe("Issue 12 & 13 — Interview Authorization & Score Validation", () => {
   });
 });
 
+describe("Production Secret Guard", () => {
+  test("rejects documented placeholders and suffixed variants", async () => {
+    const { isInsecureSecret } = await import("./config");
+    expect(isInsecureSecret(undefined)).toBe(true);
+    expect(isInsecureSecret("change-me")).toBe(true);
+    expect(isInsecureSecret("change-me-set-JWT_SECRET-before-production")).toBe(true);
+    expect(isInsecureSecret("replace-with-long-random-secret")).toBe(true);
+  });
+  test("rejects short secrets even if unfamiliar", async () => {
+    const { isInsecureSecret } = await import("./config");
+    expect(isInsecureSecret("short-secret-123")).toBe(true);
+  });
+  test("accepts a long random secret", async () => {
+    const { isInsecureSecret } = await import("./config");
+    expect(isInsecureSecret("9f2c7a1e4b6d8f0a3c5e7b9d1f2a4c6e8b0d2f4a6c8e0b2d4f6a8c0e2b4d6")).toBe(false);
+  });
+});
+

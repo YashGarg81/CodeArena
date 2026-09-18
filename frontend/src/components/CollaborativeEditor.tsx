@@ -23,7 +23,7 @@ export function CollaborativeEditor({
   userId,
   username,
   initialCode = "// Start collaborating!\nconsole.log('Hello from CodeArena!');\n",
-  language = "javascript",
+  language = "js",
   onCodeChange,
 }: CollaborativeEditorProps) {
   const [code, setCode] = useState(initialCode);
@@ -119,7 +119,7 @@ export function CollaborativeEditor({
                 : "0 0 6px rgba(245,158,11,0.5)",
             }}
           />
-          <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text-main)" }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)" }}>
             🤝 Collaborative Editor
           </span>
           <span
@@ -222,7 +222,7 @@ export function CollaborativeEditor({
               border: "none",
               outline: "none",
               background: "transparent",
-              color: "var(--text-main)",
+              color: "var(--text-primary)",
               fontFamily: "var(--font-mono)",
               fontSize: 13,
               lineHeight: "1.5",

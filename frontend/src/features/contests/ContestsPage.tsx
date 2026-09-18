@@ -5,7 +5,7 @@ import { StateView } from "../../components/common/StateView";
 import { api, API, getAuthHeaders } from "../../services/api";
 import type { User } from "../../types";
 
-export function ContestsPage({ user, onToast }: { user: User | null; onToast: (msg: string, type: string) => void }) {
+export function ContestsPage({ user, onToast, onNavigate }: { user: User | null; onToast: (msg: string, type: string) => void; onNavigate?: (p: string, s?: string) => void }) {
   const [contests, setContests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeContestView, setActiveContestView] = useState<any | null>(null);
@@ -96,7 +96,10 @@ export function ContestsPage({ user, onToast }: { user: User | null; onToast: (m
 
   if (activeContestView) {
     const startMs = new Date(activeContestView.startTime).getTime();
-    const endMs = new Date(activeContestView.endTime).getTime();
+    const durationMs = (activeContestView.durationMinutes ?? 90) * 60 * 1000;
+    const endMs = activeContestView.endTime
+      ? new Date(activeContestView.endTime).getTime()
+      : startMs + durationMs;
     const isActive = nowTime >= startMs && nowTime < endMs;
     const isUpcoming = nowTime < startMs;
     const isEnded = activeContestView.status === "Ended" || nowTime >= endMs;
@@ -206,15 +209,15 @@ export function ContestsPage({ user, onToast }: { user: User | null; onToast: (m
                   <div>
                     <div style={{ fontWeight: 700, fontSize: 16 }}>{p.title}</div>
                     <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
-                      <span className={`badge badge-${p.difficulty.toLowerCase()}`}>{p.difficulty}</span>
-                      <span style={{ fontSize: 12, color: "var(--text-muted)" }}>⭐ {p.points} Points</span>
+                      <span className={`badge badge-${(p.difficulty ?? "medium").toLowerCase()}`}>{p.difficulty ?? "Medium"}</span>
+                      <span style={{ fontSize: 12, color: "var(--text-muted)" }}>⭐ {p.points ?? 0} Points</span>
                     </div>
                   </div>
                 </div>
 
                 <button
                   className="btn btn-primary btn-sm"
-                  onClick={() => window.location.href = `/problems/${p.problemId}`}
+                  onClick={() => onNavigate ? onNavigate("problem", p.problemId) : (window.location.href = `/problems/${p.problemId}`)}
                 >
                   {isEnded ? "Practice Problem 💡" : "Open Workspace 🚀"}
                 </button>
@@ -348,10 +351,10 @@ export function ContestsPage({ user, onToast }: { user: User | null; onToast: (m
             </div>
 
             <div style={{ display: "flex", gap: 10 }}>
-              <button className="btn btn-primary btn-sm" onClick={() => window.location.href = "/problems"}>
+              <button className="btn btn-primary btn-sm" onClick={() => onNavigate ? onNavigate("problems") : (window.location.href = "/problems")}>
                 Browse Problem Editorials & Video Solutions 🎥
               </button>
-              <button className="btn btn-secondary btn-sm" onClick={() => window.location.href = "/leaderboard"}>
+              <button className="btn btn-secondary btn-sm" onClick={() => onNavigate ? onNavigate("leaderboard") : (window.location.href = "/leaderboard")}>
                 View Global Elo Leaderboard 📊
               </button>
             </div>

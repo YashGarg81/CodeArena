@@ -6,8 +6,8 @@ import { runProcessSafely } from "./base";
 
 export class JavaScriptAdapter implements ILanguageAdapter {
     readonly key: SupportedLanguage = "js";
-    readonly displayName = "JavaScript (Node / Bun)";
-    readonly fileExtension = ".cjs";
+    readonly displayName = "JavaScript (Bun)";
+    readonly fileExtension = ".js";
     readonly defaultTimeoutMs = 3000;
     readonly defaultMemoryLimitMb = 256;
 
@@ -19,9 +19,8 @@ export class JavaScriptAdapter implements ILanguageAdapter {
         const filePath = path.join(options.folderPath, `solution${this.fileExtension}`);
         fs.writeFileSync(filePath, options.codeWithDriver);
 
-        const cmd = "node";
+        const cmd = "bun";
         const args = [
-            `--max-old-space-size=${options.memoryLimitMb}`,
             "--no-warnings",
             `solution${this.fileExtension}`
         ];

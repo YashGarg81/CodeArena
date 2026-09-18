@@ -1,6 +1,8 @@
 // worker/src/adapters/types.ts
 
-export type SupportedLanguage = "js" | "ts" | "py" | "cpp" | "java" | "go" | "rust" | "cs" | "kt" | "ruby" | "php" | "swift";
+export type SupportedLanguage =
+    | "js" | "ts" | "py" | "cpp" | "java" | "go" | "rust" | "cs" | "kt" | "ruby" | "php" | "swift"
+    | "c" | "scala" | "dart" | "r" | "perl" | "bash" | "hs" | "ex" | "erl" | "clj" | "groovy" | "jl" | "nim";
 
 export interface ExecutionOptions {
     folderPath: string;
@@ -41,6 +43,8 @@ export interface ILanguageAdapter {
     readonly fileExtension: string;
     readonly defaultTimeoutMs: number;
     readonly defaultMemoryLimitMb: number;
+    /** Optional alternative keys accepted by the registry (e.g. "golang" for "go"). */
+    readonly aliases?: string[];
 
     isCompiled(): boolean;
     compile?(folderPath: string, sourceFilePath: string): Promise<CompilationResult>;

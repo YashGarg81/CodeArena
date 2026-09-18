@@ -1,13 +1,75 @@
 import axios, { AxiosError, type AxiosResponse } from "axios";
 
-export const API = typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_API_URL
-  ? (import.meta as any).env.VITE_API_URL
-  : (typeof process !== "undefined" && process.env?.API_URL) || "http://localhost:3000";
+export const API = (() => {
+  if (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_API_URL) {
+    return (import.meta as any).env.VITE_API_URL;
+  }
+  if (typeof window !== "undefined") {
+    // If the app is being accessed via local network IP or tunnel (not localhost:3003),
+    // use relative path so requests flow through the server's API proxy.
+    if (window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
+      return "";
+    }
+  }
+  return (typeof process !== "undefined" && process.env?.API_URL) || "http://localhost:3000";
+})();
 
 export const getAuthHeaders = (): Record<string, string> => {
   const t = typeof window !== "undefined" ? localStorage.getItem("ca_token") : null;
   return t ? { Authorization: `Bearer ${t}` } : {};
 };
+
+export const REFRESH_STORAGE_KEY = "ca_refresh";
+
+export const getStoredRefreshToken = (): string | null =>
+  typeof window !== "undefined" ? localStorage.getItem(REFRESH_STORAGE_KEY) : null;
+
+export const storeTokens = (accessToken?: string, refreshToken?: string) => {
+  if (typeof window === "undefined") return;
+  if (accessToken) localStorage.setItem("ca_token", accessToken);
+  if (refreshToken) localStorage.setItem(REFRESH_STORAGE_KEY, refreshToken);
+};
+
+export const clearTokens = () => {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem("ca_token");
+  localStorage.removeItem(REFRESH_STORAGE_KEY);
+  localStorage.removeItem("ca_user");
+};
+
+/**
+ * Silently exchanges the stored refresh token for a new access token.
+ * Concurrent callers share a single in-flight refresh (single-flight).
+ */
+let refreshPromise: Promise<string | null> | null = null;
+
+export async function refreshAccessToken(): Promise<string | null> {
+  if (typeof window === "undefined") return null;
+  const refreshToken = getStoredRefreshToken();
+  if (!refreshToken) return null;
+
+  if (!refreshPromise) {
+    refreshPromise = axios
+      .post(`${API}/api/v1/auth/refresh`, { refreshToken })
+      .then((res) => {
+        const data = res.data;
+        if (data?.token) {
+          storeTokens(data.token, data.refreshToken);
+          return data.token as string;
+        }
+        clearTokens();
+        return null;
+      })
+      .catch(() => {
+        clearTokens();
+        return null;
+      })
+      .finally(() => {
+        refreshPromise = null;
+      });
+  }
+  return refreshPromise;
+}
 
 export interface ApiErrorDetail {
   status: number;
@@ -66,8 +128,27 @@ const notifyError = (detail: ApiErrorDetail) => {
 
 axiosInstance.interceptors.response.use(
   (response: AxiosResponse) => response,
-  (error: AxiosError) => {
+  async (error: AxiosError) => {
     const status = error.response?.status || 0;
+    const originalRequest: any = error.config;
+
+    // Silent access-token refresh + one retry on 401 (never for the refresh call itself).
+    if (
+      status === 401 &&
+      originalRequest &&
+      !originalRequest._retry &&
+      !String(originalRequest.url || "").includes("/auth/refresh") &&
+      getStoredRefreshToken()
+    ) {
+      originalRequest._retry = true;
+      const newToken = await refreshAccessToken();
+      if (newToken) {
+        originalRequest.headers = originalRequest.headers || {};
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        return axiosInstance(originalRequest);
+      }
+    }
+
     const responseData: any = error.response?.data;
     const rawMessage = responseData?.error || responseData?.message || error.message;
 
@@ -84,9 +165,9 @@ axiosInstance.interceptors.response.use(
       friendlyMessage = "Network error: unable to reach the server. Please check your connection.";
     } else if (isAuthError) {
       friendlyMessage = "Session expired or unauthorized. Please sign in again.";
-      // Clean stale token on 401 if running in browser and dispatch notification
+      // Clean stale tokens on 401 if running in browser and dispatch notification
       if (typeof window !== "undefined") {
-        localStorage.removeItem("ca_token");
+        clearTokens();
         try {
           window.dispatchEvent(new CustomEvent("codearena:auth_expired", { detail: { status: 401 } }));
         } catch {}

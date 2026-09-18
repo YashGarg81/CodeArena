@@ -117,3 +117,43 @@ export interface SDProject {
   updatedAt: string;
 }
 
+export type SDCurriculumLevel = "Beginner" | "Intermediate" | "Advanced" | "Staff";
+
+export interface SDCurriculumQuizQuestion {
+  question: string;
+  options: string[];
+  correct: number;
+  explanation: string;
+}
+
+export interface SDCurriculumLesson {
+  id: string; // "<sectionSlug>/<lessonSlug>"
+  slug: string;
+  title: string;
+  summary: string;
+  durationMin: number;
+  order: number;
+  content: string;
+  keyConcepts: string[];
+  checklist: string[];
+  quiz: SDCurriculumQuizQuestion[];
+  resources: string[];
+  completed?: boolean;
+  score?: number | null;
+}
+
+export interface SDCurriculumSection {
+  slug: string;
+  title: string;
+  level: SDCurriculumLevel;
+  icon: string;
+  description: string;
+  order: number;
+  lessons: SDCurriculumLesson[];
+}
+
+export interface SDCurriculumPayload {
+  curriculum: SDCurriculumSection[];
+  totalLessons: number;
+}
+

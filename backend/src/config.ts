@@ -7,7 +7,14 @@ function parseIntSafe(value: string | undefined, fallback: number): number {
   return Number.isFinite(n) && n > 0 ? n : fallback;
 }
 
-export const IS_TEST = process.env.NODE_ENV === "test" || process.env.BUN_ENV === "test" || process.argv.some(a => a.includes("test") || a.includes("harness"));
+// NOTE: intentionally env-only. A previous argv-substring heuristic
+// (`a.includes("test")`) misfired on innocent paths (e.g. "/app/latest",
+// "/opt/contest-…") and silently flipped production into test mode
+// (OAuth CSRF + rate-limit bypasses). Never re-add argv sniffing here.
+export function computeIsTest(env: Record<string, string | undefined>, _argv: string[]): boolean {
+  return env.NODE_ENV === "test" || env.BUN_ENV === "test";
+}
+export const IS_TEST = computeIsTest(process.env, process.argv);
 export const IS_PROD = process.env.NODE_ENV === "production";
 
 const INSECURE_DEFAULT_SECRETS = [
@@ -15,12 +22,22 @@ const INSECURE_DEFAULT_SECRETS = [
   "secret",
   "jwt-secret",
   "change-me",
+  "change-me-set-jwt_secret-before-production",
   "replace-with-long-random-secret",
+  "replace-with-another-long-random-secret",
 ];
 
 export function isInsecureSecret(secret: string | undefined): boolean {
   if (!secret) return true;
-  return INSECURE_DEFAULT_SECRETS.includes(secret.toLowerCase());
+  const lower = secret.toLowerCase();
+  // Exact match against known placeholders…
+  if (INSECURE_DEFAULT_SECRETS.includes(lower)) return true;
+  // …plus prefix match so suffixed variants (e.g. "change-me-set-…-production")
+  // cannot slip past the production guard.
+  if (INSECURE_DEFAULT_SECRETS.some((bad) => lower.startsWith(bad))) return true;
+  // Minimum entropy bar: production secrets must be at least 32 chars.
+  if (secret.length < 32) return true;
+  return false;
 }
 
 export function getJwtSecret(): string {

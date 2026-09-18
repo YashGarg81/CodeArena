@@ -1,0 +1,11 @@
+[install]
+optional = []
+
+[serve]
+port = 3001
+
+[test]
+root = "src"
+
+[run]
+experimental-sandbox = false

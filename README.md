@@ -219,5 +219,39 @@ bun run build:frontend
 bun test
 ```
 
+## 🛠️ Operations Runbook
+
+### Health & readiness
+- `GET /health` — liveness only (process alive). **Do not use for load-balancer health.**
+- `GET /ready` — returns 200 only when PostgreSQL answers `SELECT 1` (Redis reported separately). Point load balancers / orchestrator healthchecks here.
+
+### Metrics
+- `GET /api/v1/metrics` (admin token required) — Prometheus-text exposition:
+  `http_requests_total`, `http_request_duration_ms`, `http_server_errors_total`,
+  `judge_runs_total`, `judge_run_duration_ms`, plus worker verdicts merged from
+  Redis (`worker_verdicts_total`). Append `?format=json` for a JSON snapshot.
+
+### Database backups
+```bash
+# Nightly (cron) or on demand — verified backup → restore → row-count match:
+bun run backup:db                                   # ./backups/codearena_*.dump, retention 14
+bun run restore:db ./backups/codearena_<ts>.dump    # restores into codearena_restore_test + verifies
+```
+Tune with `DB_CONTAINER`, `POSTGRES_USER`, `POSTGRES_DB`, `BACKUP_DIR`, `RETENTION`.
+Redis persists via the `redisdata` volume; PostgreSQL data via `pgdata`.
+
+### Judge cache maintenance
+Go builds share a content-addressed `codearena-gocache` volume (steady-state
+~1 s builds; safe across submissions by hash). It grows unboundedly, so prune it:
+```bash
+bun run maintenance:prune-caches                   # prunes only if over GOCACHE_MAX_MB (default 2048)
+```
+
+### Production boot requirements
+`NODE_ENV=production` needs `JWT_SECRET` (≥32 chars, non-placeholder),
+`REFRESH_TOKEN_SECRET`, `CORS_ORIGIN`, `DATABASE_URL`, and a reachable
+PostgreSQL — otherwise the backend exits(1) and the worker refuses jobs.
+Never set `ALLOW_IN_MEMORY_DB=true` in production.
+
 ## 📄 License
 MIT © CodeArena Engineering

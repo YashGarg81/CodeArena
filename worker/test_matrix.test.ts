@@ -1,5 +1,6 @@
 import { test, expect, describe } from "bun:test";
-import { LanguageAdapterRegistry } from "./src/adapters";
+import { LanguageAdapterRegistry, type SupportedLanguage } from "./src/adapters";
+import { LANGUAGE_IMAGES } from "./src/sandbox/dockerRunner";
 import { DRIVERS } from "./drivers";
 
 describe("Issue 11 — Multi-Language Compatibility & Adapter Validation Matrix", () => {
@@ -19,8 +20,8 @@ describe("Issue 11 — Multi-Language Compatibility & Adapter Validation Matrix"
     });
 
     test("Language adapters declare accurate compilation vs interpreted characteristics", () => {
-        const compiledLanguages = ["cpp", "java", "rust", "cs", "kt", "swift"];
-        const interpretedLanguages = ["js", "py", "php", "ruby", "go"];
+        const compiledLanguages = ["cpp", "java", "rust", "cs", "kt", "swift", "go", "scala"];
+        const interpretedLanguages = ["js", "py", "php", "ruby"];
 
         for (const lang of compiledLanguages) {
             const adapter = LanguageAdapterRegistry.get(lang);
@@ -125,5 +126,79 @@ describe("Issue 11 — Multi-Language Compatibility & Adapter Validation Matrix"
         expect(sanitized[0].input).toBe("[HIDDEN TEST CASE]");
         expect(sanitized[0].expected).toBe("[HIDDEN TEST CASE]");
         expect(sanitized[1].input).toBe("open_1");
+    });
+});
+
+describe("Expanded language matrix (config-driven adapters)", () => {
+    const addedLanguages: SupportedLanguage[] = [
+        "c", "ts", "scala", "dart", "r", "perl", "bash", "hs", "ex", "erl", "clj", "groovy", "jl", "nim"
+    ];
+
+    test("registry exposes every newly added language", () => {
+        for (const lang of addedLanguages) {
+            const adapter = LanguageAdapterRegistry.get(lang);
+            expect(adapter).toBeDefined();
+            expect(adapter?.key).toBe(lang);
+            expect(typeof adapter?.execute).toBe("function");
+        }
+    });
+
+    test("every canonical language resolves to a Docker image", () => {
+        for (const lang of LanguageAdapterRegistry.getSupportedLanguages()) {
+            expect(LANGUAGE_IMAGES[lang]).toBeDefined();
+        }
+    });
+
+    test("newly added compiled languages report isCompiled=true", () => {
+        for (const lang of ["c", "nim", "scala"]) {
+            expect(LanguageAdapterRegistry.get(lang)?.isCompiled()).toBe(true);
+        }
+        for (const lang of ["ts", "dart", "r", "perl", "bash", "hs", "ex", "erl", "clj", "groovy", "jl"]) {
+            expect(LanguageAdapterRegistry.get(lang)?.isCompiled()).toBe(false);
+        }
+    });
+
+    test("language aliases resolve to their canonical adapter", () => {
+        expect(LanguageAdapterRegistry.get("typescript")?.key).toBe("ts");
+        expect(LanguageAdapterRegistry.get("gcc")?.key).toBe("c");
+        expect(LanguageAdapterRegistry.get("haskell")?.key).toBe("hs");
+        expect(LanguageAdapterRegistry.get("shell")?.key).toBe("bash");
+        expect(LanguageAdapterRegistry.get("julia")?.key).toBe("jl");
+    });
+
+    test("resolveBudgets keeps problem limits when toolchain needs less", () => {
+        // js declares 3000ms/256MB: a 5000ms problem budget passes through untouched.
+        expect(LanguageAdapterRegistry.resolveBudgets("js", 5000, 256)).toEqual({
+            timeoutMs: 5000,
+            memoryLimitMb: 256,
+        });
+        // Unknown languages fall back to the historic defaults.
+        expect(LanguageAdapterRegistry.resolveBudgets("nope", undefined, undefined)).toEqual({
+            timeoutMs: 4000,
+            memoryLimitMb: 256,
+        });
+    });
+
+    test("resolveBudgets raises to the toolchain floor when it needs more", () => {
+        // Measured cold runs: clojure ~8s, groovy ~6s — both declare higher minimums.
+        expect(LanguageAdapterRegistry.resolveBudgets("clj", 4000, 256)).toEqual({
+            timeoutMs: 15000,
+            memoryLimitMb: 512,
+        });
+        expect(LanguageAdapterRegistry.resolveBudgets("groovy", 5000, 256)).toEqual({
+            timeoutMs: 10000,
+            memoryLimitMb: 512,
+        });
+        expect(LanguageAdapterRegistry.resolveBudgets("scala", 4000, 256)).toEqual({
+            timeoutMs: 15000,
+            memoryLimitMb: 512,
+        });
+    });
+
+    test("resolveBudgets never lowers a generous problem budget", () => {
+        expect(LanguageAdapterRegistry.resolveBudgets("py", 20000, 1024)).toEqual({
+            timeoutMs: 20000,
+            memoryLimitMb: 1024,
+        });
     });
 });

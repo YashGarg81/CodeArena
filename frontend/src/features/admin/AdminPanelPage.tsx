@@ -4,6 +4,7 @@ import { Icons } from "../../components/ui/Icons";
 import { StateView } from "../../components/common/StateView";
 import { api, API, getAuthHeaders } from "../../services/api";
 import type { User } from "../../types";
+import { LANGUAGE_OPTIONS, DEFAULT_PROBLEM_LANGUAGES } from "../../utils/languages";
 
 
 import { AlgorithmVisualizer } from "../../components/AlgorithmVisualizer";
@@ -18,11 +19,7 @@ const CATEGORIES_LIST = [
   "Greedy","Bit Manipulation","Sorting","Design","SQL","Shell","Database"
 ];
 const COMPANIES_ALL = ["Google","Amazon","Microsoft","Meta","Apple","Netflix","Uber","Adobe","Bloomberg","Twitter","LinkedIn","Airbnb"];
-const LANG_OPTIONS = [
-  { key: "js", label: "JavaScript" }, { key: "py", label: "Python" },
-  { key: "cpp", label: "C++" }, { key: "java", label: "Java" },
-  { key: "go", label: "Go" }, { key: "ts", label: "TypeScript" }
-];
+const LANG_OPTIONS = LANGUAGE_OPTIONS;
 
 interface AdminProblem {
   id: string; title: string; slug: string; difficulty: string; category: string;
@@ -46,7 +43,7 @@ const defaultFormState = () => ({
   constraints: "", inputFormat: "", outputFormat: "",
   hints: "", editorial: "", solutions: "",
   templates_js: "", templates_py: "", templates_cpp: "", templates_java: "", templates_go: "",
-  languages: ["js", "py", "cpp", "java", "go"],
+  languages: DEFAULT_PROBLEM_LANGUAGES,
   timeLimit: 5000, memoryLimit: 256,
   isPremium: false, status: "Draft"
 });
@@ -670,7 +667,7 @@ export function AdminPanelPage({ user, onToast }: { user: User | null; onToast: 
       templates_cpp: p.templates?.cpp || "",
       templates_java: p.templates?.java || "",
       templates_go: p.templates?.go || "",
-      languages: p.languages || ["js", "py", "cpp", "java", "go"],
+      languages: p.languages || DEFAULT_PROBLEM_LANGUAGES,
       timeLimit: p.timeLimit || 5000, memoryLimit: p.memoryLimit || 256,
       isPremium: p.isPremium || false, status: p.status || "Draft"
     });

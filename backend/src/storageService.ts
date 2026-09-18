@@ -188,7 +188,8 @@ export async function saveStorageFile(
   const uniqueId = crypto.randomBytes(12).toString("hex");
   const sanitizedBasename = path.basename(rawFilename, ext).replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 32) || "file";
   const scopeFolder = isPublic ? "public" : userId;
-  const fileKey = `${scopeFolder}/${Date.now()}_${uniqueId}_${sanitizedBasename}${ext || ".bin"}`;
+  const storedName = `${Date.now()}_${uniqueId}_${sanitizedBasename}${ext || ".bin"}`;
+  const fileKey = `${scopeFolder}/${storedName}`;
 
   const uploadsDir = getUploadsDir();
   const targetDir = path.resolve(uploadsDir, scopeFolder);
@@ -196,7 +197,7 @@ export async function saveStorageFile(
     await fs.promises.mkdir(targetDir, { recursive: true });
   }
 
-  const targetPath = path.resolve(targetDir, `${Date.now()}_${uniqueId}_${sanitizedBasename}${ext || ".bin"}`);
+  const targetPath = path.resolve(targetDir, storedName);
 
   // Prevent accidental overwrite
   if (fs.existsSync(targetPath)) {

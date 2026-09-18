@@ -3,10 +3,12 @@ import path from "path";
 import fs from "fs";
 import type { ILanguageAdapter, ExecutionOptions, ExecutionResult, CompilationResult } from "./types";
 import { runProcessSafely } from "./base";
+import { shouldUseDockerSandbox } from "../sandbox";
+import { compileInDocker, runInDocker } from "../sandbox/dockerRunner";
 
 export class CsAdapter implements ILanguageAdapter {
     readonly key = "cs" as const;
-    readonly displayName = "C# (.NET)";
+    readonly displayName = "C# (Mono/.NET)";
     readonly fileExtension = "cs";
     readonly defaultTimeoutMs = 5000;
     readonly defaultMemoryLimitMb = 256;
@@ -17,6 +19,17 @@ export class CsAdapter implements ILanguageAdapter {
 
     async compile(folderPath: string, sourceFilePath: string): Promise<CompilationResult> {
         const exePath = path.join(folderPath, process.platform === "win32" ? "Solution.exe" : "Solution");
+
+        if (await shouldUseDockerSandbox()) {
+            // Inside the mono image, compile Program.cs and emit Solution.exe in
+            // the mounted /sandbox directory, then run with `mono Solution.exe`.
+            return compileInDocker(
+                "cs",
+                ["mcs", "-out:Solution.exe", "Program.cs"],
+                { folderPath, outputBinaryName: "Solution.exe", timeoutMs: 30000 }
+            );
+        }
+
         const compileRes = await runProcessSafely("csc", ["-out:" + exePath, sourceFilePath], {
             folderPath,
             codeWithDriver: "",
@@ -48,6 +61,10 @@ export class CsAdapter implements ILanguageAdapter {
                 isCompileError: true,
                 error: comp.errorMessage || "C# Compilation error"
             };
+        }
+
+        if (await shouldUseDockerSandbox()) {
+            return runInDocker("cs", ["mono", "Solution.exe"], { ...options, languageKey: "cs" });
         }
 
         return runProcessSafely(comp.executablePath, [], {

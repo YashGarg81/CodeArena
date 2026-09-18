@@ -79,8 +79,16 @@ export class JavaAdapter implements ILanguageAdapter {
     }
 
     async execute(options: ExecutionOptions): Promise<ExecutionResult> {
+        // Submissions are method bodies (e.g. `public int[] twoSum(...) { ... }`); wrap
+        // them in `class Solution` unless the source already declares a class (some
+        // problems ship full `class Solution` skeletons or a `Driver` harness).
+        let source = options.codeWithDriver || "";
+        if (!/\b(?:public\s+)?class\s+(?:Solution|Driver)\b/.test(source)) {
+            source = `class Solution {\n${source}\n}`;
+        }
+
         const sourcePath = path.join(options.folderPath, `Solution${this.fileExtension}`);
-        fs.writeFileSync(sourcePath, options.codeWithDriver);
+        fs.writeFileSync(sourcePath, source);
 
         const compilation = await this.compile(options.folderPath, sourcePath);
         if (!compilation.success) {
@@ -95,13 +103,17 @@ export class JavaAdapter implements ILanguageAdapter {
             };
         }
 
+        // Prefer the problem harness (Driver) when present, else fall back to Solution
+        // (standalone programs with their own `public static void main`).
+        const mainClassName = fs.existsSync(path.join(options.folderPath, "Driver.class")) ? "Driver" : "Solution";
+
         if (await shouldUseDockerSandbox()) {
             return runInDocker("java", [
                 "java",
                 `-Xmx${options.memoryLimitMb || 256}m`,
                 "-cp",
                 "/sandbox",
-                "Solution"
+                mainClassName
             ], { ...options, languageKey: this.key });
         }
 
@@ -110,7 +122,7 @@ export class JavaAdapter implements ILanguageAdapter {
             `-Xmx${options.memoryLimitMb}m`,
             "-cp",
             options.folderPath,
-            "Solution"
+            mainClassName
         ];
 
         return runProcessSafely(cmd, args, { ...options, languageKey: this.key });

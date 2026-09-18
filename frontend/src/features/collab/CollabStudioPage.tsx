@@ -5,6 +5,7 @@ import { StateView } from "../../components/common/StateView";
 import { api, API, getAuthHeaders } from "../../services/api";
 import type { User } from "../../types";
 import { CollaborativeEditor } from "../../components/CollaborativeEditor";
+import { LANGUAGE_OPTIONS, normalizeLanguage } from "../../utils/languages";
 
 
 export function CollabStudioPage({ roomId: initialRoomId, user, onToast, onNavigate }: {
@@ -17,7 +18,7 @@ export function CollabStudioPage({ roomId: initialRoomId, user, onToast, onNavig
   const [inRoom, setInRoom] = useState(!!initialRoomId);
   const [roomTitle, setRoomTitle] = useState("Collaborative Pair Studio");
   const [code, setCode] = useState("// Welcome to CodeArena Collaborative Studio\n// Start coding together in real-time!\n\nfunction solve(input) {\n  console.log('Running collaborative solution with input:', input);\n  return input * 2;\n}\n\nconsole.log(solve(21));\n");
-  const [language, setLanguage] = useState("javascript");
+  const [language, setLanguage] = useState("js");
   const [usersInRoom, setUsersInRoom] = useState<any[]>([]);
   const [chatMessages, setChatMessages] = useState<{ sender: string; text: string; time: string }[]>([]);
   const [chatInput, setChatInput] = useState("");
@@ -46,7 +47,7 @@ export function CollabStudioPage({ roomId: initialRoomId, user, onToast, onNavig
     try {
       const res = await api.get(`/api/v1/collab/rooms/${rId}`);
       if (res.data.code && !code) setCode(res.data.code);
-      if (res.data.language) setLanguage(res.data.language);
+      if (res.data.language) setLanguage(normalizeLanguage(res.data.language));
       if (res.data.users) setUsersInRoom(res.data.users);
       if (res.data.messages && Array.isArray(res.data.messages)) {
         setChatMessages(res.data.messages);
@@ -168,11 +169,7 @@ export function CollabStudioPage({ roomId: initialRoomId, user, onToast, onNavig
               <div style={{ marginBottom: 16 }}>
                 <label style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" }}>Language</label>
                 <select className="input" value={language} onChange={e => setLanguage(e.target.value)}>
-                  <option value="javascript">JavaScript (Node.js)</option>
-                  <option value="python">Python 3</option>
-                  <option value="cpp">C++ (GCC 12)</option>
-                  <option value="java">Java 17</option>
-                  <option value="go">Go 1.20</option>
+                  {LANGUAGE_OPTIONS.map(l => <option key={l.key} value={l.key}>{l.label}</option>)}
                 </select>
               </div>
             </div>
@@ -243,11 +240,7 @@ export function CollabStudioPage({ roomId: initialRoomId, user, onToast, onNavig
           </div>
 
           <select className="input" style={{ height: 32, fontSize: 12 }} value={language} onChange={e => setLanguage(e.target.value)}>
-            <option value="javascript">JavaScript</option>
-            <option value="python">Python</option>
-            <option value="cpp">C++</option>
-            <option value="java">Java</option>
-            <option value="go">Go</option>
+            {LANGUAGE_OPTIONS.map(l => <option key={l.key} value={l.key}>{l.label}</option>)}
           </select>
 
           <button className="btn btn-secondary btn-sm" onClick={handleCopyInvite}>

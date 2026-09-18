@@ -1,17 +1,19 @@
 import express from "express";
-import { prisma } from "./db";
+import { prisma, assertPostgresConnection, isProductionStrict } from "./db";
+import { recordHttpRequest, recordJudgeRun, renderPrometheus, snapshot as metricsSnapshot } from "./src/metrics";
 import cors from "cors";
 import jwt from "jsonwebtoken";
 import fs from "fs";
 import path from "path";
 import { DRIVERS } from "./drivers";
-import { LanguageAdapterRegistry } from "../worker/src/adapters";
+import { LanguageAdapterRegistry, buildCodeWithDriver } from "../worker/src/adapters";
 import { validateCodeSecurity } from "./src/security";
 import { PORT, CORS_ORIGINS, IS_TEST, getJwtSecret, safeErrorMessage, MAX_JSON_BODY, isDevSocialAuthAllowed } from "./src/config";
 import { auth, optionalAuth, adminAuth, developerAuth, revokeToken } from "./src/auth";
+import { issueTokenPair, rotateRefreshToken, revokeRefreshToken, revokeSessionTokens, revokeAllUserTokens } from "./src/tokenService";
 import { validatePassword, validateEmail, clampPagination, sanitizeSearchQuery } from "./src/validation";
-import { createRateLimiter, loginRateLimiter, signupRateLimiter, passwordResetRateLimiter, submissionRateLimiter, runCodeRateLimiter, storageUploadRateLimiter, isAccountLocked, recordFailedLogin, resetFailedLogins } from "./src/rateLimit";
-import { initRedis, getRedisClient } from "./src/redisClient";
+import { createRateLimiter, loginRateLimiter, signupRateLimiter, passwordResetRateLimiter, submissionRateLimiter, runCodeRateLimiter, storageUploadRateLimiter, benchmarkRateLimiter, isAccountLocked, recordFailedLogin, resetFailedLogins } from "./src/rateLimit";
+import { initRedis, getRedisClient, isRedisReady } from "./src/redisClient";
 import { verifyOAuthToken, OAuthVerificationError, generateOAuthState, verifyOAuthState } from "./src/oauth";
 import { publishedProblemWhere, isPublishedProblem, publicTestCases, firstPublicTestCase, toPublicProblemView, isStarterTemplate } from "./src/publicProblem";
 import { sanitizeTestResults, sanitizeJudgeOutput, toOwnerSubmissionView, toPublicShareView, toStrangerSubmissionView } from "./src/judgePrivacy";
@@ -19,6 +21,7 @@ import { auditService } from "./src/audit";
 import { applyContestRatings } from "./src/ratingEngine";
 import { collaborationEngine } from "./src/collaboration";
 import { seedDsaInJavaCourse } from "./seed_dsa_java";
+import { isCourseDeleted, markCourseDeleted, unmarkCourseDeleted } from "./src/coursePersistence";
 
 function stripHtmlTags(input: string): string {
     return input.replace(/<[^>]*>/g, "").trim();
@@ -62,6 +65,20 @@ app.use((_req, res, next) => {
     next();
 });
 
+// Operational metrics: per-route request counts + latency. The listener runs
+// on response finish, so req.route is populated and templates (not raw IDs)
+// are recorded. Listener-only: never alters responses.
+app.use((req: any, res: any, next: any) => {
+    const start = Date.now();
+    res.on("finish", () => {
+        try {
+            const template = `${req.baseUrl || ""}${req.route?.path || "unmatched"}`;
+            recordHttpRequest(req.method, template, res.statusCode, Date.now() - start);
+        } catch {}
+    });
+    next();
+});
+
 import { systemDesignRouter } from "./src/systemDesign";
 import { infraRouter } from "./src/infra";
 
@@ -78,7 +95,6 @@ app.use("/api/v1/scheduled-interviews", interviewRouter);
 app.use("/api/v1/interviews/calendar", interviewRouter);
 app.use("/api/v1/roadmaps", roadmapRouter);
 app.use("/api/v1/ai", aiRouter);
-app.use("/api/v1", infraRouter);
 app.get("/api/v1/health", (_, res) => res.json({ status: "ok", time: new Date().toISOString() }));
 
 // ─── VISUAL DEBUGGER ENDPOINT ────────────────────────────────────────────────
@@ -98,7 +114,7 @@ app.post("/api/v1/debugger/trace", optionalAuth, (req: any, res) => {
 // ─── 1V1 BATTLE ARENA ENDPOINTS ──────────────────────────────────────────────
 app.post("/api/v1/arena/matchmake", auth, async (req: any, res) => {
     try {
-        const { gameMode = "classic", difficulty = "All", language, autoMatchBot = true } = req.body;
+        const { gameMode = "classic", difficulty = "All", language, autoMatchBot = true, problemIds } = req.body;
         const user = await prisma.user.findUnique({ where: { id: req.userId! } });
         if (!user) return res.status(404).json({ error: "User not found" });
 
@@ -109,7 +125,8 @@ app.post("/api/v1/arena/matchmake", auth, async (req: any, res) => {
             gameMode,
             difficulty,
             language,
-            autoMatchBot: Boolean(autoMatchBot)
+            autoMatchBot: Boolean(autoMatchBot),
+            problemIds: Array.isArray(problemIds) ? problemIds.filter((id: any) => typeof id === "string").slice(0, 3) : undefined
         });
 
         res.json({ success: true, ...result });
@@ -121,7 +138,7 @@ app.post("/api/v1/arena/matchmake", auth, async (req: any, res) => {
 // Private room creation
 app.post("/api/v1/arena/rooms", auth, async (req: any, res) => {
     try {
-        const { gameMode = "classic", difficulty = "Medium", language } = req.body;
+        const { gameMode = "classic", difficulty = "Medium", language, problemIds } = req.body;
         const user = await prisma.user.findUnique({ where: { id: req.userId! } });
         if (!user) return res.status(404).json({ error: "User not found" });
 
@@ -131,7 +148,8 @@ app.post("/api/v1/arena/rooms", auth, async (req: any, res) => {
             elo: user.contestRating || 1500,
             gameMode,
             difficulty,
-            language
+            language,
+            problemIds: Array.isArray(problemIds) ? problemIds.filter((id: any) => typeof id === "string").slice(0, 3) : undefined
         });
 
         res.json({ success: true, match, roomCode: match.roomCode });
@@ -173,6 +191,24 @@ app.post("/api/v1/arena/matches/:matchId/rematch", auth, (req: any, res) => {
 app.get("/api/v1/arena/history", (_req, res) => {
     const history = battleArenaService.getBattleHistory();
     res.json({ success: true, history });
+});
+
+// Runnable duel problems: published catalog problems the judge can execute (have a driver harness)
+app.get("/api/v1/arena/problems", async (_req, res) => {
+    try {
+        const runnableIds = Object.keys(DRIVERS);
+        const problems = await prisma.problems.findMany({
+            where: { status: "Published", id: { in: runnableIds } },
+            select: { id: true, title: true, difficulty: true, category: true },
+            orderBy: { order: "asc" }
+        });
+        // Keep driver-catalog order so lobby list matches judge coverage
+        const order = new Map(runnableIds.map((id, i) => [id, i]));
+        problems.sort((a: any, b: any) => (order.get(a.id) ?? 999) - (order.get(b.id) ?? 999));
+        res.json({ success: true, problems });
+    } catch (err: any) {
+        res.status(500).json({ error: safeErrorMessage(err, "Failed to load arena problems") });
+    }
 });
 
 app.get("/api/v1/arena/matches/:matchId", optionalAuth, (req: any, res) => {
@@ -249,7 +285,22 @@ app.get("/api/v1/storage/files/*key", optionalAuth, async (req: any, res) => {
             return res.status(400).json({ error: validation.error || "Invalid file key or path traversal detected" });
         }
 
-        const access = checkFileAccess(validation.cleanKey, req.userId, req.userRole);
+        // Re-verify privileged roles against the database: optionalAuth trusts
+        // JWT claims without a DB read, so a stale demoted-admin token must
+        // not retain global read access here.
+        let effectiveRole = req.userRole;
+        if (req.userId && (req.userRole === "ADMIN" || req.userRole === "PLATFORM_ADMIN" || req.userRole === "DEVELOPER")) {
+            try {
+                const fresh = await prisma.user.findUnique({ where: { id: req.userId }, select: { role: true, isSuspended: true } });
+                if (!fresh || fresh.isSuspended) {
+                    return res.status(403).json({ error: "Access denied" });
+                }
+                effectiveRole = fresh.role;
+            } catch {
+                return res.status(500).json({ error: "Failed to verify access" });
+            }
+        }
+        const access = checkFileAccess(validation.cleanKey, req.userId, effectiveRole);
         if (!access.allowed) {
             return res.status(access.status).json({ error: access.error });
         }
@@ -264,13 +315,18 @@ app.get("/api/v1/storage/files/*key", optionalAuth, async (req: any, res) => {
         }
 
         res.setHeader("X-Content-Type-Options", "nosniff");
+        // Active-content types (SVG can embed scripts) must never render in
+        // site origin: force download instead of inline rendering.
+        if (/\.(svg|svgz)$/i.test(resolution.resolvedPath)) {
+            res.setHeader("Content-Disposition", "attachment");
+        }
         res.sendFile(resolution.resolvedPath);
     } catch (err: any) {
         res.status(500).json({ error: "Failed to retrieve asset" });
     }
 });
 
-app.post("/api/v1/storage/upload", auth, storageUploadRateLimiter, express.raw({ type: "*/*", limit: "15mb" }), async (req: any, res) => {
+app.post("/api/v1/storage/upload", auth, storageUploadRateLimiter, express.raw({ type: "*/*", limit: "10mb" }), async (req: any, res) => {
     try {
         const filename = typeof req.query.filename === "string" ? req.query.filename : (typeof req.query.key === "string" ? req.query.key : "upload.txt");
         const isPublic = req.query.isPublic === "true" || req.body?.isPublic === true;
@@ -360,7 +416,9 @@ app.get("/api/v1/recommendations", auth, (req: any, res) => {
     res.json({ success: true, recommendations });
 });
 
-app.post("/api/v1/submissions/benchmark", (req, res) => {
+// Dedicated bucket (not the shared "auth" bucket) so benchmark floods can
+// never starve login/refresh/social endpoints sharing an IP.
+app.post("/api/v1/submissions/benchmark", benchmarkRateLimiter, (req, res) => {
     const { runtimeMs = 120, memoryMb = 32 } = req.body;
     const benchmark = platformServicesEngine.calculatePercentiles(Number(runtimeMs), Number(memoryMb));
     res.json({ success: true, benchmark });
@@ -435,18 +493,20 @@ async function executeSingleTest(
     }
 
     const driverCode = DRIVERS[problemId]?.[language] ?? "";
-    const codeWithDriver = code + driverCode;
+    const codeWithDriver = buildCodeWithDriver(language, code, driverCode);
     const folderPath = __dirname + `/tmp_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
 
     try {
         fs.mkdirSync(folderPath, { recursive: true });
+        // Honor the toolchain's declared minimum budgets (floor, not increase).
+        const budgets = LanguageAdapterRegistry.resolveBudgets(language, timeoutMs);
         const execResult = await LanguageAdapterRegistry.executeCode(language, {
             folderPath,
             codeWithDriver,
             inputData,
             expectedOutput,
-            timeoutMs,
-            memoryLimitMb: 256
+            timeoutMs: budgets.timeoutMs,
+            memoryLimitMb: budgets.memoryLimitMb
         });
 
         return {
@@ -2047,6 +2107,10 @@ CREATE INDEX idx_urls_code ON urls(code);
 
     for (const courseData of courses) {
         const { lessons, ...courseFields } = courseData;
+        if (isCourseDeleted(courseFields.slug) || isCourseDeleted((courseFields as any).id) || isCourseDeleted(courseFields.title)) {
+            console.log(`ℹ️ Course '${courseFields.title}' (${courseFields.slug}) was deleted by administrator; skipping seed.`);
+            continue;
+        }
         const course = await prisma.course.upsert({
             where: { slug: courseFields.slug },
             update: { title: courseFields.title, description: courseFields.description, isPublished: true },
@@ -2095,6 +2159,8 @@ CREATE INDEX idx_urls_code ON urls(code);
 
 // ─── AUTH ROUTES ──────────────────────────────────────────────────────────────
 
+import { sendVerificationEmail } from "./src/emailVerification";
+
 // ─── AUTH ROUTES ──────────────────────────────────────────────────────────────
 
 app.post("/api/v1/auth/signup", signupRateLimiter, async (req, res) => {
@@ -2134,9 +2200,19 @@ app.post("/api/v1/auth/signup", signupRateLimiter, async (req, res) => {
                 streak: 0
             }
         });
-        const token = jwt.sign({ userId: user.id, role: user.role, email: user.email, tokenVersion: user.tokenVersion || 0 }, JWT_SECRET, { expiresIn: "7d" });
+        const tokens = await issueTokenPair(
+            { id: user.id, role: user.role, email: user.email, tokenVersion: user.tokenVersion },
+            { ipAddress: req.ip, userAgent: req.headers["user-agent"] as string | undefined }
+        );
+
+        // Dispatch verification email in the background
+        sendVerificationEmail(user.id, user.email).catch(e => console.error("Failed to send verification email:", e));
+
         res.json({
-            token,
+            token: tokens.accessToken,
+            accessToken: tokens.accessToken,
+            refreshToken: tokens.refreshToken,
+            expiresIn: tokens.expiresIn,
             user: {
                 id: user.id,
                 name: user.name,
@@ -2146,7 +2222,8 @@ app.post("/api/v1/auth/signup", signupRateLimiter, async (req, res) => {
                 xp: user.xp || 0,
                 level: user.level || 1,
                 contestRating: user.contestRating || 1200,
-                streak: user.streak || 0
+                streak: user.streak || 0,
+                isEmailVerified: user.isEmailVerified || false
             }
         });
     } catch (err: any) {
@@ -2162,9 +2239,11 @@ app.post("/api/v1/auth/login", loginRateLimiter, async (req, res) => {
     if (!email || !password) return res.status(400).json({ error: "Missing email or password" });
 
     const cleanEmail = email.trim().toLowerCase();
+    const clientIp = String(req.ip || req.socket?.remoteAddress || "unknown");
 
-    // Account lockout defense against brute force guessing
-    if (await isAccountLocked(cleanEmail)) {
+    // Account lockout defense against brute force guessing (scoped to email+IP
+    // so one attacker cannot lock the victim out globally — see rateLimit.ts).
+    if (await isAccountLocked(cleanEmail, clientIp)) {
         return res.status(429).json({ error: "Too many failed login attempts. Account temporarily locked for 15 minutes." });
     }
 
@@ -2174,7 +2253,10 @@ app.post("/api/v1/auth/login", loginRateLimiter, async (req, res) => {
         });
 
         if (!user) {
-            await recordFailedLogin(cleanEmail);
+            // Constant-time mitigation: run a dummy hash verification so unknown
+            // emails don't respond measurably faster than wrong passwords.
+            await verifyDummyPassword(password).catch(() => {});
+            await recordFailedLogin(cleanEmail, clientIp);
             return res.status(400).json({ error: "Invalid email or password" });
         }
 
@@ -2186,7 +2268,7 @@ app.post("/api/v1/auth/login", loginRateLimiter, async (req, res) => {
         }
 
         if (!isMatch) {
-            const fail = await recordFailedLogin(cleanEmail);
+            const fail = await recordFailedLogin(cleanEmail, clientIp);
             if (fail.locked) {
                 return res.status(429).json({ error: "Too many failed login attempts. Account temporarily locked for 15 minutes." });
             }
@@ -2209,17 +2291,23 @@ app.post("/api/v1/auth/login", loginRateLimiter, async (req, res) => {
 
             const isValid = verifyTOTPCode(user.twoFactorSecret || "", String(totpCode).trim());
             if (!isValid) {
-                await recordFailedLogin(cleanEmail);
+                await recordFailedLogin(cleanEmail, clientIp);
                 return res.status(400).json({ error: "Invalid two-factor authentication code" });
             }
         }
 
         // Reset failed login counter upon successful authentication
-        await resetFailedLogins(cleanEmail);
+        await resetFailedLogins(cleanEmail, clientIp);
 
-        const token = jwt.sign({ userId: user.id, role: user.role, email: user.email, tokenVersion: user.tokenVersion || 0 }, JWT_SECRET, { expiresIn: "7d" });
+        const tokens = await issueTokenPair(
+            { id: user.id, role: user.role, email: user.email, tokenVersion: user.tokenVersion },
+            { ipAddress: req.ip, userAgent: req.headers["user-agent"] as string | undefined }
+        );
         res.json({
-            token,
+            token: tokens.accessToken,
+            accessToken: tokens.accessToken,
+            refreshToken: tokens.refreshToken,
+            expiresIn: tokens.expiresIn,
             user: {
                 id: user.id,
                 name: user.name,
@@ -2234,8 +2322,23 @@ app.post("/api/v1/auth/login", loginRateLimiter, async (req, res) => {
                 twoFactorEnabled: user.twoFactorEnabled || false
             }
         });
-    } catch (err: any) { res.status(500).json({ error: err.message || "Authentication failed" }); }
+    } catch (err: any) { res.status(500).json({ error: safeErrorMessage(err, "Authentication failed") }); }
 });
+
+// Precomputed dummy hash so unknown-email logins take the same time as
+// password verification (timing-oracle mitigation for account enumeration).
+let dummyPasswordHash: string | null = null;
+async function verifyDummyPassword(password: unknown): Promise<void> {
+    try {
+        if (!dummyPasswordHash) {
+            dummyPasswordHash = await Bun.password.hash(cryptoRandomPlaceholder());
+        }
+        await Bun.password.verify(String(password || ""), dummyPasswordHash);
+    } catch {}
+}
+function cryptoRandomPlaceholder(): string {
+    return `${Date.now()}-${Math.random()}-dummy-password-placeholder`;
+}
 
 // P0 OAuth State Endpoint (CSRF Protection)
 app.get("/api/v1/auth/oauth/state", (_req, res) => {
@@ -2305,9 +2408,15 @@ app.post("/api/v1/auth/social", authRateLimiter, async (req, res) => {
             return res.status(403).json({ error: "Account suspended. Please contact platform administration." });
         }
 
-        const token = jwt.sign({ userId: user.id, role: user.role, email: user.email, tokenVersion: user.tokenVersion || 0 }, JWT_SECRET, { expiresIn: "7d" });
+        const tokens = await issueTokenPair(
+            { id: user.id, role: user.role, email: user.email, tokenVersion: user.tokenVersion },
+            { ipAddress: req.ip, userAgent: req.headers["user-agent"] as string | undefined }
+        );
         res.json({
-            token,
+            token: tokens.accessToken,
+            accessToken: tokens.accessToken,
+            refreshToken: tokens.refreshToken,
+            expiresIn: tokens.expiresIn,
             user: {
                 id: user.id,
                 name: user.name,
@@ -2374,11 +2483,43 @@ app.put("/api/v1/auth/profile", auth, async (req: any, res) => {
     }
 });
 
+app.post("/api/v1/auth/refresh", authRateLimiter, async (req: any, res) => {
+    try {
+        const refreshToken = req.body?.refreshToken || req.body?.refresh_token
+            || (typeof req.headers["x-refresh-token"] === "string" ? req.headers["x-refresh-token"] : undefined);
+
+        const result = await rotateRefreshToken(refreshToken, {
+            ipAddress: req.ip,
+            userAgent: req.headers["user-agent"] as string | undefined
+        });
+
+        if (!result.ok || !result.tokens) {
+            return res.status(result.status).json({ error: result.error || "Unable to refresh session", reuseDetected: result.reuseDetected || false });
+        }
+
+        res.json({
+            token: result.tokens.accessToken,
+            accessToken: result.tokens.accessToken,
+            refreshToken: result.tokens.refreshToken,
+            expiresIn: result.tokens.expiresIn,
+            user: result.user
+        });
+    } catch (err: any) {
+        res.status(500).json({ error: safeErrorMessage(err, "Token refresh failed") });
+    }
+});
+
 app.post("/api/v1/auth/logout", auth, async (req: any, res) => {
     try {
         const token = req.headers.authorization?.split(" ")[1];
         if (token) {
             await revokeToken(token);
+        }
+        const refreshToken = req.body?.refreshToken || req.body?.refresh_token;
+        if (refreshToken) {
+            await revokeRefreshToken(refreshToken);
+        } else if (req.sessionId) {
+            await revokeSessionTokens(req.sessionId);
         }
         res.json({ success: true, message: "Logged out successfully" });
     } catch (err: any) {
@@ -2434,7 +2575,7 @@ app.post("/api/v1/auth/reset-password", authRateLimiter, async (req, res) => {
 });
 
 // ─── EMAIL VERIFICATION (P0 LIFECYCLE) ────────────────────────────────────────
-import { sendVerificationEmail, verifyEmailToken, isUserEmailVerified } from "./src/emailVerification";
+import { verifyEmailToken, isUserEmailVerified } from "./src/emailVerification";
 
 app.post("/api/v1/auth/resend-verification", authRateLimiter, async (req: any, res) => {
     const { email } = req.body;
@@ -2557,9 +2698,15 @@ app.post("/api/v1/auth/2fa/challenge", authRateLimiter, async (req, res) => {
             return res.status(400).json({ error: "Invalid two-factor authentication code" });
         }
 
-        const token = jwt.sign({ userId: user.id, role: user.role, email: user.email, tokenVersion: user.tokenVersion || 0 }, JWT_SECRET, { expiresIn: "7d" });
+        const tokens = await issueTokenPair(
+            { id: user.id, role: user.role, email: user.email, tokenVersion: user.tokenVersion },
+            { ipAddress: req.ip, userAgent: req.headers["user-agent"] as string | undefined }
+        );
         res.json({
-            token,
+            token: tokens.accessToken,
+            accessToken: tokens.accessToken,
+            refreshToken: tokens.refreshToken,
+            expiresIn: tokens.expiresIn,
             user: {
                 id: user.id,
                 name: user.name,
@@ -2627,6 +2774,7 @@ app.post("/api/v1/auth/logout-all", auth, async (req: any, res) => {
             where: { userId: req.userId },
             data: { isRevoked: true }
         });
+        await revokeAllUserTokens(req.userId);
         const currentToken = req.headers.authorization?.split(" ")[1];
         if (currentToken) await revokeToken(currentToken);
 
@@ -3342,7 +3490,7 @@ app.get("/api/v1/developer/dashboard", developerAuth, async (req: any, res) => {
                 version: "v1.2.0",
                 environment: process.env.NODE_ENV || "development",
                 sandboxMode: process.env.SANDBOX_MODE || "firecracker",
-                supportedLanguages: ["python", "javascript", "cpp", "java", "go"],
+                supportedLanguages: ["js", "ts", "py", "cpp", "c", "java", "go", "rust", "cs", "kt", "swift", "ruby", "php", "scala", "dart", "r", "perl", "bash", "hs", "ex", "erl", "clj", "groovy", "jl", "nim"],
                 features: {
                     githubSync: true,
                     customPlugins: true,
@@ -3381,7 +3529,7 @@ app.get("/api/v1/developer/sandbox-health", developerAuth, async (_req: any, res
     res.json({
         engine: "CodeArena-Sandbox",
         mode: process.env.SANDBOX_MODE || "firecracker",
-        adapters: ["python", "javascript", "cpp", "java", "go"],
+        adapters: ["js", "ts", "py", "cpp", "c", "java", "go", "rust", "cs", "kt", "swift", "ruby", "php", "scala", "dart", "r", "perl", "bash", "hs", "ex", "erl", "clj", "groovy", "jl", "nim"],
         status: "operational"
     });
 });
@@ -3728,6 +3876,8 @@ app.post("/api/v1/admin/courses", adminAuth, async (req: any, res) => {
                 order: Number(order) || 0
             }
         });
+        unmarkCourseDeleted(courseSlug);
+
         await prisma.auditLog.create({
             data: { userId: req.userId, action: "COURSE_CREATED", resourceId: course.id, metadata: { title: course.title, slug: course.slug } }
         });
@@ -3770,14 +3920,29 @@ app.put("/api/v1/admin/courses/:id", adminAuth, async (req: any, res) => {
 app.delete("/api/v1/admin/courses/:id", adminAuth, async (req: any, res) => {
     const { id } = req.params;
     try {
-        const course = await prisma.course.findUnique({ where: { id } });
+        const course = await prisma.course.findFirst({
+            where: { OR: [{ id }, { slug: id }] }
+        });
         if (!course) return res.status(404).json({ error: "Course not found" });
 
-        await prisma.course.delete({ where: { id } });
+        // Permanently record tombstone so seeders and startup scripts never recreate it
+        markCourseDeleted(course.id, course.slug, course.title);
+
+        // Delete cascading lessons and enrollments
+        try {
+            await prisma.quizQuestion.deleteMany({ where: { quiz: { lesson: { courseId: course.id } } } }).catch(() => {});
+            await prisma.quiz.deleteMany({ where: { lesson: { courseId: course.id } } }).catch(() => {});
+            await prisma.lesson.deleteMany({ where: { courseId: course.id } }).catch(() => {});
+            await prisma.courseEnrollment.deleteMany({ where: { courseId: course.id } }).catch(() => {});
+        } catch (cascadeErr) {
+            // Ignore cascade errors in in-memory fallback
+        }
+
+        await prisma.course.delete({ where: { id: course.id } });
         await prisma.auditLog.create({
-            data: { userId: req.userId, action: "COURSE_DELETED", resourceId: id, metadata: { title: course.title } }
+            data: { userId: req.userId, action: "COURSE_DELETED", resourceId: course.id, metadata: { title: course.title, slug: course.slug } }
         });
-        res.json({ message: "Course deleted successfully", id });
+        res.json({ message: "Course deleted successfully", id: course.id, slug: course.slug });
     } catch (err: any) { res.status(500).json({ error: safeErrorMessage(err) }); }
 });
 
@@ -4062,6 +4227,7 @@ app.post("/api/v1/submissions/run", runCodeRateLimiter, auth, async (req: any, r
         const expected = expectedOutput !== undefined ? String(expectedOutput).slice(0, 64_000) : (publicTc?.output || "");
 
         const result = await executeSingleTest(problemId, code, language, testInput, expected, problem.timeLimit || 4000);
+        recordJudgeRun(language, result.passed ? "AC" : (result.error ? "RE" : "WA"), result.runtime || 0);
 
         res.json({ result });
     } catch (err: any) { res.status(500).json({ error: safeErrorMessage(err) }); }
@@ -4121,13 +4287,16 @@ app.post("/api/v1/execute", runCodeRateLimiter, optionalAuth, async (req: any, r
         const folderPath = __dirname + `/tmp_exec_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
         try {
             fs.mkdirSync(folderPath, { recursive: true });
+            // Ephemeral playground: no problem limits, so the toolchain's
+            // declared minimums are the budgets (floor, not increase).
+            const budgets = LanguageAdapterRegistry.resolveBudgets(language);
             const execResult = await LanguageAdapterRegistry.executeCode(language, {
                 folderPath,
                 codeWithDriver: code,
                 inputData: "",
                 expectedOutput: "",
-                timeoutMs: 4000,
-                memoryLimitMb: 256
+                timeoutMs: budgets.timeoutMs,
+                memoryLimitMb: budgets.memoryLimitMb
             });
             res.json({
                 success: true,
@@ -4259,12 +4428,13 @@ app.get("/api/v1/submissions/:id/share", async (req, res) => {
 
         let beatsPercent = 100.0;
         if (submission.status === "Success") {
-            const allSuccess = await prisma.submissions.findMany({
-                where: { problemId: submission.problemId, status: "Success" }
-            });
+            // DB-side aggregation: never load the full success set into memory.
             const currentRuntime = submission.runtime ?? 0;
-            const slower = allSuccess.filter((s: any) => (s.runtime ?? 0) > currentRuntime).length;
-            beatsPercent = allSuccess.length > 1 ? Math.round((slower / allSuccess.length) * 1000) / 10 : 100.0;
+            const [total, slower] = await Promise.all([
+                prisma.submissions.count({ where: { problemId: submission.problemId, status: "Success" } }),
+                prisma.submissions.count({ where: { problemId: submission.problemId, status: "Success", runtime: { gt: currentRuntime } } })
+            ]);
+            beatsPercent = total > 1 ? Math.round((slower / total) * 1000) / 10 : 100.0;
         }
 
         res.json({
@@ -5349,7 +5519,7 @@ app.post("/api/v1/courses/:id/enroll", auth, async (req: any, res) => {
 });
 
 // 4. Get lesson detail (content, navigation, quiz preview)
-app.get("/api/v1/lessons/:id", optionalAuth, async (req: any, res) => {
+app.get("/api/v1/lessons/:id", auth, async (req: any, res) => {
     const { id } = req.params;
     try {
         const lesson = await prisma.lesson.findUnique({
@@ -5943,11 +6113,41 @@ app.put("/api/v1/users/me/settings", auth, async (req: any, res) => {
 app.post("/api/v1/users/me/password", auth, async (req: any, res) => {
     try {
         const { currentPassword, newPassword } = req.body;
-        if (!currentPassword || !newPassword || newPassword.length < 8) {
-            return res.status(400).json({ error: "Invalid password format" });
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({ error: "Current and new password are required" });
         }
-        res.json({ message: "Password changed successfully" });
-    } catch (err: any) { res.status(500).json({ error: err.message }); }
+        const passwordCheck = validatePassword(newPassword);
+        if (!passwordCheck.valid) {
+            return res.status(400).json({ error: passwordCheck.error });
+        }
+
+        const user = await prisma.user.findUnique({ where: { id: req.userId } });
+        if (!user) return res.status(404).json({ error: "User not found" });
+
+        let isMatch = false;
+        try {
+            isMatch = await Bun.password.verify(currentPassword, user.password);
+        } catch {
+            isMatch = false;
+        }
+        if (!isMatch) return res.status(400).json({ error: "Current password is incorrect" });
+        if (currentPassword === newPassword) {
+            return res.status(400).json({ error: "New password must differ from the current password" });
+        }
+
+        const passwordHash = await Bun.password.hash(newPassword);
+        await prisma.user.update({
+            where: { id: req.userId },
+            data: { password: passwordHash, tokenVersion: { increment: 1 } }
+        });
+
+        // Security: terminate every other session and revoke all outstanding tokens.
+        await revokeAllUserTokens(req.userId);
+        const currentToken = req.headers.authorization?.split(" ")[1];
+        if (currentToken) await revokeToken(currentToken);
+
+        res.json({ success: true, message: "Password changed successfully. Please sign in again." });
+    } catch (err: any) { res.status(500).json({ error: safeErrorMessage(err, "Failed to change password") }); }
 });
 
 // ─── ADMIN: ANALYTICS & REPORTS ───────────────────────────────────────────────
@@ -6230,6 +6430,33 @@ app.get("/api/v1/admin/system/health", adminAuth, async (_req: any, res) => {
 });
 
 app.get("/api/v1/admin/audit-logs", adminAuth, async (req: any, res) => {
+    try {
+        const { limit = 50, offset = 0 } = req.query;
+        const logs = await prisma.auditLog.findMany({
+            orderBy: { createdAt: "desc" },
+            take: Math.min(parseInt(limit) || 50, 500),
+            skip: parseInt(offset) || 0
+        });
+
+        res.json({
+            auditLogs: logs.map((l: any) => ({
+                id: l.id,
+                action: l.action,
+                userId: l.userId,
+                resourceId: l.resourceId || l.targetId,
+                metadata: l.metadata || l.details,
+                ipAddress: l.ipAddress || "127.0.0.1",
+                userAgent: l.userAgent || "Client/Browser",
+                createdAt: l.createdAt,
+                timestamp: l.createdAt ? new Date(l.createdAt).toISOString() : new Date().toISOString()
+            })),
+            total: logs.length
+        });
+    } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
+// Canonical audit-log endpoint (admin/instructor only). Mirrors /api/v1/admin/audit-logs.
+app.get("/api/v1/audit-logs", adminAuth, async (req: any, res) => {
     try {
         const { limit = 50, offset = 0 } = req.query;
         const logs = await prisma.auditLog.findMany({
@@ -6543,10 +6770,9 @@ app.post("/api/v1/auth/saml/callback", async (req: any, res) => {
             });
         }
 
-        const token = jwt.sign(
-            { userId: user.id, email: user.email, role: user.role },
-            getJwtSecret(),
-            { expiresIn: "7d" }
+        const tokens = await issueTokenPair(
+            { id: user.id, role: user.role, email: user.email, tokenVersion: user.tokenVersion },
+            { ipAddress: req.ip || req.socket?.remoteAddress, userAgent: req.headers?.["user-agent"] }
         );
 
         await auditService.log("USER_SAML_LOGIN", {
@@ -6558,7 +6784,10 @@ app.post("/api/v1/auth/saml/callback", async (req: any, res) => {
 
         res.json({
             success: true,
-            token,
+            token: tokens.accessToken,
+            accessToken: tokens.accessToken,
+            refreshToken: tokens.refreshToken,
+            expiresIn: tokens.expiresIn,
             user: { id: user.id, email: user.email, name: user.name, role: user.role }
         });
     } catch (err: any) {
@@ -6572,6 +6801,11 @@ app.post("/api/v1/integrations/github/sync", auth, async (req: any, res) => {
         const { repoName, branch = "main", token, folderPrefix = "solutions", submissionId } = req.body;
         if (!repoName || !token) {
             return res.status(400).json({ error: "GitHub repository name and OAuth token are required" });
+        }
+        // Constrain to owner/repo shape so path traversal or URL tricks
+        // cannot escape the api.github.com path prefix in githubSync.
+        if (typeof repoName !== "string" || !/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repoName.trim())) {
+            return res.status(400).json({ error: "Repository must be in 'owner/repo' format" });
         }
 
         const submission = await prisma.submission.findUnique({
@@ -6947,7 +7181,58 @@ app.post("/api/v1/interviews/:id/evaluate", optionalAuth, async (req: any, res) 
 });
 
 // ─── HEALTH CHECK ─────────────────────────────────────────────────────────────
+// Liveness only: proves the process is alive, NOT that dependencies are up.
 app.get("/health", (_, res) => res.json({ status: "ok", time: new Date().toISOString() }));
+
+// ─── OPERATIONAL METRICS ──────────────────────────────────────────────────────
+// Prometheus-text exposition + JSON snapshot. Admin-gated: counters contain
+// route shapes and toolchain stats but must not become an info oracle.
+app.get("/api/v1/metrics", adminAuth, async (_req: any, res: any) => {
+    const extra: Record<string, number> = {};
+    try {
+        const rc: any = getRedisClient();
+        if (rc && isRedisReady()) {
+            const workerVerdicts = await rc.hGetAll("codearena:metrics:worker_verdicts");
+            for (const [verdict, count] of Object.entries(workerVerdicts || {})) {
+                const n = Number(count);
+                if (Number.isFinite(n) && n > 0) {
+                    extra[`worker_verdicts_total{verdict="${String(verdict).replace(/[^a-zA-Z0-9_]/g, "_")}"}`] = n;
+                }
+            }
+        }
+    } catch {}
+    const format = String(_req.query?.format || "prometheus");
+    if (format === "json") {
+        return res.json({ ...metricsSnapshot(), workerVerdicts: extra });
+    }
+    res.setHeader("Content-Type", "text/plain; version=0.0.4");
+    res.send(renderPrometheus(extra));
+});
+
+// ─── READINESS CHECK ──────────────────────────────────────────────────────────
+// For load balancers / orchestrators: 200 only when required dependencies answer.
+app.get("/ready", async (_req, res) => {
+    const checks: Record<string, string> = {};
+    try {
+        await prisma.$queryRaw`SELECT 1`;
+        checks.postgres = "ok";
+    } catch {
+        checks.postgres = "unavailable";
+    }
+    try {
+        const rc: any = getRedisClient();
+        if (rc && isRedisReady()) {
+            await rc.ping();
+            checks.redis = "ok";
+        } else {
+            checks.redis = "unavailable";
+        }
+    } catch {
+        checks.redis = "unavailable";
+    }
+    const ready = checks.postgres === "ok";
+    res.status(ready ? 200 : 503).json({ ready, checks, time: new Date().toISOString() });
+});
 
 
 // ─── SERVER ───────────────────────────────────────────────────────────────────
@@ -7000,6 +7285,17 @@ io.on("connection", (socket: any) => {
 });
 
 if (!IS_TEST) {
+    // Production gate: never serve traffic without the authoritative database.
+    // assertPostgresConnection throws in production when PG is unreachable.
+    if (isProductionStrict()) {
+        try {
+            await assertPostgresConnection();
+            console.log("✅ PostgreSQL connectivity verified (production strict mode).");
+        } catch (err: any) {
+            console.error("🚨 FATAL [DATABASE]:", err?.message || err);
+            process.exit(1);
+        }
+    }
     httpServer.listen(PORT, async () => {
         console.log(`🚀 CodeArena Backend listening on port ${PORT}`);
         try { await seedDatabase(); } catch (err: any) { console.error("Seeding failed:", err.message); }

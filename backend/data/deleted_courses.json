@@ -1,0 +1,20 @@
+[
+  {
+    "id": "course_1789621956323_926",
+    "slug": "web-dev-crash-course",
+    "title": "Web Development Crash Course",
+    "deletedAt": "2026-09-17T05:31:16.698Z"
+  },
+  {
+    "id": "dsa-101",
+    "slug": "dsa-fundamentals",
+    "title": "DSA Fundamentals",
+    "deletedAt": "2026-09-17T05:37:02.310Z"
+  },
+  {
+    "id": "sd-101",
+    "slug": "system-design-101",
+    "title": "System Design Fundamentals",
+    "deletedAt": "2026-09-17T05:37:05.312Z"
+  }
+]

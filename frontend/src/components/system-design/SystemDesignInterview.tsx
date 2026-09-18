@@ -181,7 +181,7 @@ export function SystemDesignInterview({
       .filter(Boolean).length;
 
     if (totalWords < 25) {
-      onToast("Please write at least 25 words in your architectural defense steps before AI grading.", "info");
+      onToast("Please write at least 25 words in your architectural defense steps before self-check.", "info");
       return;
     }
 
@@ -189,7 +189,16 @@ export function SystemDesignInterview({
     setTimeout(() => {
       setIsEvaluating(false);
       const isExtensive = totalWords >= 120;
-      const score = isExtensive ? Math.min(97, 88 + Math.floor(Math.random() * 8)) : Math.min(84, 70 + Math.floor(Math.random() * 12));
+      // Deterministic heuristic self-check: overall is the exact sum of the
+      // four rubric parts below (+3 depth bonus, capped at 97). Same notes
+      // always produce the same score — no randomness.
+      const partScores = [
+        stepNotes[1].length > 40 ? 19 : 14,
+        stepNotes[2].length > 60 ? 28 : 22,
+        stepNotes[3].length > 60 ? 25 : 20,
+        stepNotes[4].length > 40 ? 20 : 15,
+      ];
+      const score = Math.min(97, partScores.reduce((a, b) => a + b, 0) + (isExtensive ? 3 : 0));
       const verdict = score >= 90 ? "Staff Bar Passed" : score >= 80 ? "Senior Bar Passed" : "Needs Practice";
 
       setEvalResult({
@@ -199,31 +208,31 @@ export function SystemDesignInterview({
           {
             category: "1. Scope & Scale Math",
             rating: stepNotes[1].length > 40 ? "Exceeds Bar" : "Meets Bar",
-            score: stepNotes[1].length > 40 ? 19 : 14,
+            score: partScores[0] as number,
             comment: "Clear understanding of QPS boundaries, read-write ratio, and storage estimation."
           },
           {
             category: "2. High-Level Architecture",
             rating: stepNotes[2].length > 60 ? "Exceeds Bar" : "Meets Bar",
-            score: stepNotes[2].length > 60 ? 28 : 22,
+            score: partScores[1] as number,
             comment: "Clean decoupling of edge, service, and database tiers with stateless web workers."
           },
           {
             category: "3. Deep Dives & Data Modeling",
             rating: stepNotes[3].length > 60 ? "Staff Level" : "Meets Bar",
-            score: stepNotes[3].length > 60 ? 25 : 20,
+            score: partScores[2] as number,
             comment: "Strong rationale for partition keys, sharding strategy, and in-memory caching."
           },
           {
             category: "4. Failure Recovery & Trade-Offs",
             rating: stepNotes[4].length > 40 ? "Staff Level" : "Needs Detail",
-            score: stepNotes[4].length > 40 ? 20 : 15,
+            score: partScores[3] as number,
             comment: "Identified single points of failure (SPOF) and presented mitigation playbooks."
           }
         ]
       });
 
-      onToast(`Evaluation Complete! Overall Score: ${score}/100 (${verdict})`, "success");
+      onToast(`Self-check complete! Heuristic score: ${score}/100 (${verdict})`, "success");
     }, 1200);
   };
 
@@ -442,7 +451,7 @@ export function SystemDesignInterview({
               className="btn btn-primary btn-sm"
               style={{ flex: 1, fontSize: 12.5, fontWeight: 700 }}
             >
-              {isEvaluating ? "Evaluating with AI Rubric..." : "Submit for AI Assessment & Staff Score 🚀"}
+              {isEvaluating ? "Evaluating rubric..." : "Submit for Heuristic Self-Check 🚀"}
             </button>
           </div>
 
@@ -454,9 +463,9 @@ export function SystemDesignInterview({
                   <span style={{ fontSize: 20 }}>🏆</span>
                   <div>
                     <div style={{ fontWeight: 800, fontSize: 14, color: "var(--text-primary)" }}>
-                      AI Assessment Verdict: <span style={{ color: evalResult.overallScore >= 90 ? "var(--accent-green)" : "var(--accent-blue)" }}>{evalResult.verdict}</span>
+                      Heuristic Self-Check: <span style={{ color: evalResult.overallScore >= 90 ? "var(--accent-green)" : "var(--accent-blue)" }}>{evalResult.verdict}</span>
                     </div>
-                    <div style={{ fontSize: 11, color: "var(--text-muted)" }}>Graded against FAANG Staff Engineering Rubric</div>
+                    <div style={{ fontSize: 11, color: "var(--text-muted)" }}>Deterministic rubric estimate — not an official score</div>
                   </div>
                 </div>
                 <div style={{ fontSize: 22, fontWeight: 800, color: "var(--accent-primary)", fontFamily: "var(--font-mono)" }}>

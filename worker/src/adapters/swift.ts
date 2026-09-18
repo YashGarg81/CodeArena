@@ -3,6 +3,8 @@ import path from "path";
 import fs from "fs";
 import type { ILanguageAdapter, ExecutionOptions, ExecutionResult, CompilationResult } from "./types";
 import { runProcessSafely } from "./base";
+import { shouldUseDockerSandbox } from "../sandbox";
+import { compileInDocker, runInDocker } from "../sandbox/dockerRunner";
 
 export class SwiftAdapter implements ILanguageAdapter {
     readonly key = "swift" as const;
@@ -16,12 +18,22 @@ export class SwiftAdapter implements ILanguageAdapter {
     }
 
     async compile(folderPath: string, sourceFilePath: string): Promise<CompilationResult> {
-        const exePath = path.join(folderPath, process.platform === "win32" ? "solution.exe" : "solution");
+        const exeName = process.platform === "win32" ? "solution.exe" : "solution";
+
+        if (await shouldUseDockerSandbox()) {
+            return compileInDocker(
+                "swift",
+                ["swiftc", "main.swift", "-o", "solution"],
+                { folderPath, timeoutMs: 60000, outputBinaryName: "solution" }
+            );
+        }
+
+        const exePath = path.join(folderPath, exeName);
         const compileRes = await runProcessSafely("swiftc", [sourceFilePath, "-o", exePath], {
             folderPath,
             codeWithDriver: "",
             inputData: "",
-            timeoutMs: 15000,
+            timeoutMs: 60000,
             memoryLimitMb: 512
         });
 
@@ -48,6 +60,10 @@ export class SwiftAdapter implements ILanguageAdapter {
                 isCompileError: true,
                 error: comp.errorMessage || "Swift Compilation error"
             };
+        }
+
+        if (await shouldUseDockerSandbox()) {
+            return runInDocker("swift", ["./solution"], { ...options, languageKey: "swift" });
         }
 
         return runProcessSafely(comp.executablePath, [], {

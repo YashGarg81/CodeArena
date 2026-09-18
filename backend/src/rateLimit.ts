@@ -124,59 +124,72 @@ async function checkRedisLimitsAtomic(keys: string[], maxRequests: number, windo
 const MAX_FAILED_LOGIN_ATTEMPTS = 5;
 const FAILED_LOGIN_LOCK_MS = 15 * 60 * 1000; // 15 minutes
 
-export async function isAccountLocked(email: string): Promise<boolean> {
-  if (!email) return false;
+// Lockout buckets are scoped to (email, IP) so an attacker cannot lock a
+// victim out globally: the victim can still sign in from their own network
+// while the attacker's bucket is locked. The IP rate limiter (60/min)
+// remains the primary brute-force backstop.
+function lockoutKey(email: string, ip?: string): string {
   const cleanEmail = email.trim().toLowerCase();
+  return ip ? `${cleanEmail}|${ip}` : cleanEmail;
+}
+
+export async function isAccountLocked(email: string, ip?: string): Promise<boolean> {
+  if (!email) return false;
+  const key = lockoutKey(email, ip);
   const redis = getRedisClient();
   if (redis && isRedisReady()) {
     try {
-      const locked = await redis.get(`codearena:lockout:${cleanEmail}`);
+      const locked = await redis.get(`codearena:lockout:${key}`);
       if (locked) return true;
     } catch {}
   }
 
-  const record = failedLoginStore.get(cleanEmail);
+  const record = failedLoginStore.get(key);
   if (record && Date.now() < record.lockUntil) {
     return true;
   }
   return false;
 }
 
-export async function recordFailedLogin(email: string): Promise<{ locked: boolean; remainingAttempts: number }> {
+export async function recordFailedLogin(email: string, ip?: string): Promise<{ locked: boolean; remainingAttempts: number }> {
   if (!email) return { locked: false, remainingAttempts: MAX_FAILED_LOGIN_ATTEMPTS };
-  const cleanEmail = email.trim().toLowerCase();
+  const key = lockoutKey(email, ip);
   const now = Date.now();
 
-  const record = failedLoginStore.get(cleanEmail) || { attempts: 0, lockUntil: 0 };
+  const record = failedLoginStore.get(key) || { attempts: 0, lockUntil: 0 };
   record.attempts++;
 
   if (record.attempts >= MAX_FAILED_LOGIN_ATTEMPTS) {
     record.lockUntil = now + FAILED_LOGIN_LOCK_MS;
-    failedLoginStore.set(cleanEmail, record);
+    failedLoginStore.set(key, record);
 
     const redis = getRedisClient();
     if (redis && isRedisReady()) {
       try {
-        await redis.set(`codearena:lockout:${cleanEmail}`, "1", { EX: Math.ceil(FAILED_LOGIN_LOCK_MS / 1000) });
+        await redis.set(`codearena:lockout:${key}`, "1", { EX: Math.ceil(FAILED_LOGIN_LOCK_MS / 1000) });
       } catch {}
     }
     return { locked: true, remainingAttempts: 0 };
   }
 
-  failedLoginStore.set(cleanEmail, record);
+  failedLoginStore.set(key, record);
   return { locked: false, remainingAttempts: MAX_FAILED_LOGIN_ATTEMPTS - record.attempts };
 }
 
-export async function resetFailedLogins(email: string): Promise<void> {
+export async function resetFailedLogins(email: string, ip?: string): Promise<void> {
   if (!email) return;
   const cleanEmail = email.trim().toLowerCase();
-  failedLoginStore.delete(cleanEmail);
-
+  // Clear both the scoped bucket and the legacy email-only bucket (callers
+  // that never passed an IP), so a successful login always fully unlocks.
+  const keys = ip ? [lockoutKey(email, ip), cleanEmail] : [cleanEmail];
   const redis = getRedisClient();
-  if (redis && isRedisReady()) {
-    try {
-      await redis.del(`codearena:lockout:${cleanEmail}`);
-    } catch {}
+  for (const key of keys) {
+    failedLoginStore.delete(key);
+    if (redis && isRedisReady()) {
+      try {
+        await redis.del(`codearena:lockout:${key}`);
+      } catch {}
+    }
   }
 }
 
@@ -246,6 +259,8 @@ export const submissionRateLimiter = createRateLimiter("submission", 20, 60 * 10
 export const runCodeRateLimiter = createRateLimiter("run-code", 40, 60 * 1000, {
   keyGenerator: (req: any) => req.userId ? [`user:${req.userId}`] : []
 });
+export const benchmarkRateLimiter = createRateLimiter("benchmark", 30, 60 * 1000);
+
 export const storageUploadRateLimiter = createRateLimiter("storage-upload", 25, 10 * 60 * 1000, {
   keyGenerator: (req: any) => req.userId ? [`user:${req.userId}`] : []
 });

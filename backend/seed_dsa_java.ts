@@ -1,8 +1,15 @@
 import { prisma } from "./db";
 import fs from "fs";
 import path from "path";
+import { isCourseDeleted } from "./src/coursePersistence";
 
 export async function seedDsaInJavaCourse(): Promise<void> {
+  const courseSlug = "dsa-in-java";
+  if (isCourseDeleted(courseSlug)) {
+    console.log("ℹ️ 'DSA in Java' course was deleted by administrator; skipping re-seed.");
+    return;
+  }
+
   console.log("🌱 Seeding 'DSA in Java (from Beginning)' complete playlist course...");
 
   const playlistFile = path.join(__dirname, "parsed_dsa_java_playlist.json");
@@ -11,7 +18,6 @@ export async function seedDsaInJavaCourse(): Promise<void> {
     videos = JSON.parse(fs.readFileSync(playlistFile, "utf8"));
   }
 
-  const courseSlug = "dsa-in-java";
   const course = await prisma.course.upsert({
     where: { slug: courseSlug },
     update: {

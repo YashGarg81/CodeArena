@@ -1,12 +1,9 @@
 // backend/src/index.ts
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import { createServer } from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import { CORS_ORIGINS, PORT, IS_TEST } from './config';
-
-dotenv.config();
 
 const app = express();
 const httpServer = createServer(app);

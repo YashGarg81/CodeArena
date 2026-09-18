@@ -3,6 +3,8 @@ import path from "path";
 import fs from "fs";
 import type { ILanguageAdapter, ExecutionOptions, ExecutionResult, CompilationResult } from "./types";
 import { runProcessSafely } from "./base";
+import { shouldUseDockerSandbox } from "../sandbox";
+import { compileInDocker, runInDocker } from "../sandbox/dockerRunner";
 
 export class KtAdapter implements ILanguageAdapter {
     readonly key = "kt" as const;
@@ -16,12 +18,20 @@ export class KtAdapter implements ILanguageAdapter {
     }
 
     async compile(folderPath: string, sourceFilePath: string): Promise<CompilationResult> {
+        if (await shouldUseDockerSandbox()) {
+            return compileInDocker(
+                "kt",
+                ["kotlinc", "Solution.kt", "-include-runtime", "-d", "Solution.jar"],
+                { folderPath, timeoutMs: 180000, outputBinaryName: "Solution.jar" }
+            );
+        }
+
         const jarPath = path.join(folderPath, "Solution.jar");
         const compileRes = await runProcessSafely("kotlinc", [sourceFilePath, "-include-runtime", "-d", jarPath], {
             folderPath,
             codeWithDriver: "",
             inputData: "",
-            timeoutMs: 20000,
+            timeoutMs: 180000,
             memoryLimitMb: 512
         });
 
@@ -48,6 +58,10 @@ export class KtAdapter implements ILanguageAdapter {
                 isCompileError: true,
                 error: comp.errorMessage || "Kotlin Compilation error"
             };
+        }
+
+        if (await shouldUseDockerSandbox()) {
+            return runInDocker("kt", ["java", "-jar", "Solution.jar"], { ...options, languageKey: "kt" });
         }
 
         return runProcessSafely("java", ["-jar", comp.executablePath], {

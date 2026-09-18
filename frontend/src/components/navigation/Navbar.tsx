@@ -1,6 +1,7 @@
 // frontend/src/components/navigation/Navbar.tsx
 import React, { useState, useRef, useEffect } from "react";
 import { Icons } from "../ui/Icons";
+import { API } from "../../services/api";
 
 export interface User {
   id: string;
@@ -93,7 +94,7 @@ export function Navbar({
       try {
         const token = localStorage.getItem("ca_token");
         if (!token) return;
-        const res = await fetch("http://localhost:3000/api/v1/notifications", {
+        const res = await fetch(`${API}/api/v1/notifications`, {
           headers: { Authorization: `Bearer ${token}` }
         }).then(r => r.json());
         if (res.notifications) {
@@ -139,7 +140,7 @@ export function Navbar({
     try {
       const token = localStorage.getItem("ca_token");
       if (token) {
-        await fetch("http://localhost:3000/api/v1/notifications/read-all", {
+        await fetch(`${API}/api/v1/notifications/read-all`, {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` }
         });
