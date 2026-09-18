@@ -126,6 +126,7 @@ async function runRbacMatrix() {
   const results: MatrixResult[] = [];
   let passedCount = 0;
   let failedCount = 0;
+  const totalCombinations = routes.length * ROLES.length;
 
   for (const route of routes) {
     const testPath = resolveTestUrl(route.path);
@@ -178,10 +179,13 @@ async function runRbacMatrix() {
       let passed = true;
 
       try {
+        // Bounded per-request timeout: streaming/SSE endpoints never close,
+        // and without this a single hanging route stalls the entire matrix.
         const res = await fetch(fullUrl, {
           method: route.method,
           headers,
-          body: ["POST", "PUT", "PATCH"].includes(route.method) ? JSON.stringify({ ping: true }) : undefined
+          body: ["POST", "PUT", "PATCH"].includes(route.method) ? JSON.stringify({ ping: true }) : undefined,
+          signal: AbortSignal.timeout(15000),
         });
         actualStatus = res.status;
 
@@ -206,11 +210,18 @@ async function runRbacMatrix() {
       } catch (err: any) {
         actualStatus = 599;
         passed = false;
-        reason = `Request dispatch failure: ${err.message}`;
+        reason = err?.name === "AbortError" || err?.name === "TimeoutError"
+          ? "Request timed out after 15s (hung route?)"
+          : `Request dispatch failure: ${err.message}`;
       }
 
       if (passed) passedCount++;
       else failedCount++;
+
+      const done = passedCount + failedCount;
+      if (done % 200 === 0) {
+        console.log(`  ... ${done}/${totalCombinations} evaluated (${failedCount} failed so far)`);
+      }
 
       results.push({
         method: route.method,

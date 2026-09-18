@@ -486,6 +486,7 @@ const handler: ProxyHandler<any> = {
                       if (queryOptions.where.email && item.email?.toLowerCase() === queryOptions.where.email.toLowerCase()) return true;
                       if (queryOptions.where.username && item.username?.toLowerCase() === queryOptions.where.username.toLowerCase()) return true;
                       if (queryOptions.where.slug && item.slug === queryOptions.where.slug) return true;
+                      if (queryOptions.where.status && item.status === queryOptions.where.status) return true;
                       if (queryOptions.where.OR && Array.isArray(queryOptions.where.OR)) {
                         return queryOptions.where.OR.some((cond: any) => {
                           if (cond.email && item.email?.toLowerCase() === cond.email.toLowerCase()) return true;

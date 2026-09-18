@@ -66,7 +66,8 @@ async function callLiveLLM(prompt: string, systemInstruction?: string): Promise<
         ],
         temperature: 0.3,
         max_tokens: 800,
-      })
+      }),
+      signal: AbortSignal.timeout(6000),
     });
 
     if (!response.ok) {

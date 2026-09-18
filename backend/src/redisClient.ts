@@ -21,16 +21,32 @@ export async function initRedis(): Promise<RedisClientType | null> {
 
   try {
     const url = process.env.REDIS_URL || "redis://localhost:6379";
-    client = createClient({ url }) as RedisClientType;
-    client.on("error", () => {
-      connected = false;
-    });
-    client.on("connect", () => {
+    try {
+      client = createClient({ url }) as RedisClientType;
+      client.on("error", () => {
+        connected = false;
+      });
+      client.on("connect", () => {
+        connected = true;
+      });
+      await client.connect();
       connected = true;
-    });
-    await client.connect();
-    connected = true;
-    return client;
+      return client;
+    } catch (err: any) {
+      if (String(err?.message || "").includes("HELLO")) {
+        client = createClient({ url, RESP: 2 } as any) as RedisClientType;
+        client.on("error", () => {
+          connected = false;
+        });
+        client.on("connect", () => {
+          connected = true;
+        });
+        await client.connect();
+        connected = true;
+        return client;
+      }
+      throw err;
+    }
   } catch {
     connected = false;
     client = null;

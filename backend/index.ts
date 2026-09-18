@@ -1,6 +1,6 @@
 import express from "express";
 import { prisma, assertPostgresConnection, isProductionStrict } from "./db";
-import { recordHttpRequest, recordJudgeRun, renderPrometheus, snapshot as metricsSnapshot } from "./src/metrics";
+import { recordHttpRequest, recordJudgeRun, renderPrometheus, renderPrometheusWithWorker, snapshot as metricsSnapshot } from "./src/metrics";
 import cors from "cors";
 import jwt from "jsonwebtoken";
 import fs from "fs";
@@ -7188,25 +7188,14 @@ app.get("/health", (_, res) => res.json({ status: "ok", time: new Date().toISOSt
 // Prometheus-text exposition + JSON snapshot. Admin-gated: counters contain
 // route shapes and toolchain stats but must not become an info oracle.
 app.get("/api/v1/metrics", adminAuth, async (_req: any, res: any) => {
-    const extra: Record<string, number> = {};
-    try {
-        const rc: any = getRedisClient();
-        if (rc && isRedisReady()) {
-            const workerVerdicts = await rc.hGetAll("codearena:metrics:worker_verdicts");
-            for (const [verdict, count] of Object.entries(workerVerdicts || {})) {
-                const n = Number(count);
-                if (Number.isFinite(n) && n > 0) {
-                    extra[`worker_verdicts_total{verdict="${String(verdict).replace(/[^a-zA-Z0-9_]/g, "_")}"}`] = n;
-                }
-            }
-        }
-    } catch {}
     const format = String(_req.query?.format || "prometheus");
     if (format === "json") {
-        return res.json({ ...metricsSnapshot(), workerVerdicts: extra });
+        const snap = metricsSnapshot();
+        return res.json({ ...snap, workerVerdicts: {} });
     }
     res.setHeader("Content-Type", "text/plain; version=0.0.4");
-    res.send(renderPrometheus(extra));
+    const output = await renderPrometheusWithWorker();
+    res.send(output);
 });
 
 // ─── READINESS CHECK ──────────────────────────────────────────────────────────

@@ -1,9 +1,9 @@
 # RBAC Runtime Matrix Report (Automated HTTP Execution)
 
-**Generated**: 2026-09-12T10:50:11.331Z
+**Generated**: 2026-09-18T10:31:20.213Z
 **Total Combinations Evaluated**: 1880 (8 roles x 235 routes)
-**Passed**: 1880
-**Failed**: 0
+**Passed**: 1848
+**Failed**: 32
 **Skipped**: 0
 **Blocked**: 0
 
@@ -11,14 +11,14 @@
 
 | Role | Combinations | Passed | Failed |
 | :--- | :--- | :--- | :--- |
-| `STUDENT` | 235 | 235 | 0 |
-| `DEVELOPER` | 235 | 235 | 0 |
-| `INTERVIEWER` | 235 | 235 | 0 |
-| `INSTRUCTOR` | 235 | 235 | 0 |
-| `MODERATOR` | 235 | 235 | 0 |
-| `CONTEST_ADMIN` | 235 | 235 | 0 |
-| `PROBLEM_ADMIN` | 235 | 235 | 0 |
-| `ADMIN` | 235 | 235 | 0 |
+| `STUDENT` | 235 | 231 | 4 |
+| `DEVELOPER` | 235 | 231 | 4 |
+| `INTERVIEWER` | 235 | 231 | 4 |
+| `INSTRUCTOR` | 235 | 231 | 4 |
+| `MODERATOR` | 235 | 231 | 4 |
+| `CONTEST_ADMIN` | 235 | 231 | 4 |
+| `PROBLEM_ADMIN` | 235 | 231 | 4 |
+| `ADMIN` | 235 | 231 | 4 |
 
 ## Runtime Combinations Breakdown
 
@@ -97,7 +97,7 @@
 | `POST` | `/api/v1/arena/matches/:matchId/progress` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
 | `POST` | `/api/v1/arena/matches/:matchId/progress` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
 | `GET` | `/api/v1/admin/security/telemetry` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `GET` | `/api/v1/admin/security/telemetry` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `GET` | `/api/v1/admin/security/telemetry` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/admin/security/telemetry` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/security/telemetry` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/security/telemetry` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
@@ -105,7 +105,7 @@
 | `GET` | `/api/v1/admin/security/telemetry` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/security/telemetry` | `ADMIN` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/admin/security/audit-logs` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `GET` | `/api/v1/admin/security/audit-logs` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `GET` | `/api/v1/admin/security/audit-logs` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/admin/security/audit-logs` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/security/audit-logs` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/security/audit-logs` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
@@ -209,7 +209,7 @@
 | `GET` | `/api/v1/plugins` | `PROBLEM_ADMIN` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/plugins` | `ADMIN` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `POST` | `/api/v1/plugins/:id/toggle` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `POST` | `/api/v1/plugins/:id/toggle` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `POST` | `/api/v1/plugins/:id/toggle` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
 | `POST` | `/api/v1/plugins/:id/toggle` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/plugins/:id/toggle` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/plugins/:id/toggle` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
@@ -440,22 +440,22 @@
 | `GET` | `/api/v1/problems/liked` | `CONTEST_ADMIN` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/problems/liked` | `PROBLEM_ADMIN` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/problems/liked` | `ADMIN` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `GET` | `/api/v1/problems/:problemId` | `STUDENT` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `GET` | `/api/v1/problems/:problemId` | `DEVELOPER` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `GET` | `/api/v1/problems/:problemId` | `INTERVIEWER` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `GET` | `/api/v1/problems/:problemId` | `INSTRUCTOR` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `GET` | `/api/v1/problems/:problemId` | `MODERATOR` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `GET` | `/api/v1/problems/:problemId` | `CONTEST_ADMIN` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `GET` | `/api/v1/problems/:problemId` | `PROBLEM_ADMIN` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `GET` | `/api/v1/problems/:problemId` | `ADMIN` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `POST` | `/api/v1/problems/:problemId/like` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `POST` | `/api/v1/problems/:problemId/like` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `POST` | `/api/v1/problems/:problemId/like` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `POST` | `/api/v1/problems/:problemId/like` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `POST` | `/api/v1/problems/:problemId/like` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `POST` | `/api/v1/problems/:problemId/like` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `POST` | `/api/v1/problems/:problemId/like` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `POST` | `/api/v1/problems/:problemId/like` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/problems/:problemId` | `STUDENT` | `optionalAuth` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/problems/:problemId` | `DEVELOPER` | `optionalAuth` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/problems/:problemId` | `INTERVIEWER` | `optionalAuth` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/problems/:problemId` | `INSTRUCTOR` | `optionalAuth` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/problems/:problemId` | `MODERATOR` | `optionalAuth` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/problems/:problemId` | `CONTEST_ADMIN` | `optionalAuth` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/problems/:problemId` | `PROBLEM_ADMIN` | `optionalAuth` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/problems/:problemId` | `ADMIN` | `optionalAuth` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/problems/:problemId/like` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/problems/:problemId/like` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/problems/:problemId/like` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/problems/:problemId/like` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/problems/:problemId/like` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/problems/:problemId/like` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/problems/:problemId/like` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/problems/:problemId/like` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
 | `GET` | `/api/v1/problems/:problemId/submissions` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/problems/:problemId/submissions` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/problems/:problemId/submissions` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
@@ -472,16 +472,16 @@
 | `GET` | `/problems` | `CONTEST_ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/problems` | `PROBLEM_ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/problems` | `ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `GET` | `/problems/:id` | `STUDENT` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `GET` | `/problems/:id` | `DEVELOPER` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `GET` | `/problems/:id` | `INTERVIEWER` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `GET` | `/problems/:id` | `INSTRUCTOR` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `GET` | `/problems/:id` | `MODERATOR` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `GET` | `/problems/:id` | `CONTEST_ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `GET` | `/problems/:id` | `PROBLEM_ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `GET` | `/problems/:id` | `ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/problems/:id` | `STUDENT` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/problems/:id` | `DEVELOPER` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/problems/:id` | `INTERVIEWER` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/problems/:id` | `INSTRUCTOR` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/problems/:id` | `MODERATOR` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/problems/:id` | `CONTEST_ADMIN` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/problems/:id` | `PROBLEM_ADMIN` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/problems/:id` | `ADMIN` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
 | `GET` | `/api/v1/admin/dashboard` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `GET` | `/api/v1/admin/dashboard` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `GET` | `/api/v1/admin/dashboard` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/admin/dashboard` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/dashboard` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/dashboard` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
@@ -489,7 +489,7 @@
 | `GET` | `/api/v1/admin/dashboard` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/dashboard` | `ADMIN` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/admin/problems` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `GET` | `/api/v1/admin/problems` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `GET` | `/api/v1/admin/problems` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/admin/problems` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/problems` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/problems` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
@@ -497,7 +497,7 @@
 | `GET` | `/api/v1/admin/problems` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/problems` | `ADMIN` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `POST` | `/api/v1/admin/problems` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `POST` | `/api/v1/admin/problems` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `POST` | `/api/v1/admin/problems` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
 | `POST` | `/api/v1/admin/problems` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/admin/problems` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/admin/problems` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
@@ -505,7 +505,7 @@
 | `POST` | `/api/v1/admin/problems` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/admin/problems` | `ADMIN` | `adminAuth` | Allowed (non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
 | `PUT` | `/api/v1/admin/problems/:id` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `PUT` | `/api/v1/admin/problems/:id` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `PUT` | `/api/v1/admin/problems/:id` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `PUT` | `/api/v1/admin/problems/:id` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `PUT` | `/api/v1/admin/problems/:id` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `PUT` | `/api/v1/admin/problems/:id` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
@@ -513,7 +513,7 @@
 | `PUT` | `/api/v1/admin/problems/:id` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `PUT` | `/api/v1/admin/problems/:id` | `ADMIN` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `DELETE` | `/api/v1/admin/problems/:id` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `DELETE` | `/api/v1/admin/problems/:id` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `DELETE` | `/api/v1/admin/problems/:id` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `DELETE` | `/api/v1/admin/problems/:id` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `DELETE` | `/api/v1/admin/problems/:id` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `DELETE` | `/api/v1/admin/problems/:id` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
@@ -521,7 +521,7 @@
 | `DELETE` | `/api/v1/admin/problems/:id` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `DELETE` | `/api/v1/admin/problems/:id` | `ADMIN` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `POST` | `/api/v1/admin/problems/:id/publish` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `POST` | `/api/v1/admin/problems/:id/publish` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `POST` | `/api/v1/admin/problems/:id/publish` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `POST` | `/api/v1/admin/problems/:id/publish` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/admin/problems/:id/publish` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/admin/problems/:id/publish` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
@@ -529,7 +529,7 @@
 | `POST` | `/api/v1/admin/problems/:id/publish` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/admin/problems/:id/publish` | `ADMIN` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `POST` | `/api/v1/admin/problems/:id/unpublish` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `POST` | `/api/v1/admin/problems/:id/unpublish` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `POST` | `/api/v1/admin/problems/:id/unpublish` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `POST` | `/api/v1/admin/problems/:id/unpublish` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/admin/problems/:id/unpublish` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/admin/problems/:id/unpublish` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
@@ -537,7 +537,7 @@
 | `POST` | `/api/v1/admin/problems/:id/unpublish` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/admin/problems/:id/unpublish` | `ADMIN` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/admin/problems/:id/revisions` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `GET` | `/api/v1/admin/problems/:id/revisions` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `GET` | `/api/v1/admin/problems/:id/revisions` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/admin/problems/:id/revisions` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/problems/:id/revisions` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/problems/:id/revisions` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
@@ -545,7 +545,7 @@
 | `GET` | `/api/v1/admin/problems/:id/revisions` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/problems/:id/revisions` | `ADMIN` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/admin/problems/:id/revisions/:version` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `GET` | `/api/v1/admin/problems/:id/revisions/:version` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `GET` | `/api/v1/admin/problems/:id/revisions/:version` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
 | `GET` | `/api/v1/admin/problems/:id/revisions/:version` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/problems/:id/revisions/:version` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/problems/:id/revisions/:version` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
@@ -553,7 +553,7 @@
 | `GET` | `/api/v1/admin/problems/:id/revisions/:version` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/problems/:id/revisions/:version` | `ADMIN` | `adminAuth` | Allowed (non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
 | `POST` | `/api/v1/admin/problems/:id/restore/:version` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `POST` | `/api/v1/admin/problems/:id/restore/:version` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `POST` | `/api/v1/admin/problems/:id/restore/:version` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
 | `POST` | `/api/v1/admin/problems/:id/restore/:version` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/admin/problems/:id/restore/:version` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/admin/problems/:id/restore/:version` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
@@ -561,7 +561,7 @@
 | `POST` | `/api/v1/admin/problems/:id/restore/:version` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/admin/problems/:id/restore/:version` | `ADMIN` | `adminAuth` | Allowed (non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
 | `GET` | `/api/v1/admin/problems/:id/test-cases` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `GET` | `/api/v1/admin/problems/:id/test-cases` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `GET` | `/api/v1/admin/problems/:id/test-cases` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/admin/problems/:id/test-cases` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/problems/:id/test-cases` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/problems/:id/test-cases` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
@@ -569,7 +569,7 @@
 | `GET` | `/api/v1/admin/problems/:id/test-cases` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/problems/:id/test-cases` | `ADMIN` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `POST` | `/api/v1/admin/problems/:id/test-cases` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `POST` | `/api/v1/admin/problems/:id/test-cases` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `POST` | `/api/v1/admin/problems/:id/test-cases` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
 | `POST` | `/api/v1/admin/problems/:id/test-cases` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/admin/problems/:id/test-cases` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/admin/problems/:id/test-cases` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
@@ -577,7 +577,7 @@
 | `POST` | `/api/v1/admin/problems/:id/test-cases` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/admin/problems/:id/test-cases` | `ADMIN` | `adminAuth` | Allowed (non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
 | `PUT` | `/api/v1/admin/problems/:id/test-cases/:tcId` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `PUT` | `/api/v1/admin/problems/:id/test-cases/:tcId` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `PUT` | `/api/v1/admin/problems/:id/test-cases/:tcId` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `PUT` | `/api/v1/admin/problems/:id/test-cases/:tcId` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `PUT` | `/api/v1/admin/problems/:id/test-cases/:tcId` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `PUT` | `/api/v1/admin/problems/:id/test-cases/:tcId` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
@@ -585,7 +585,7 @@
 | `PUT` | `/api/v1/admin/problems/:id/test-cases/:tcId` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `PUT` | `/api/v1/admin/problems/:id/test-cases/:tcId` | `ADMIN` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `DELETE` | `/api/v1/admin/problems/:id/test-cases/:tcId` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `DELETE` | `/api/v1/admin/problems/:id/test-cases/:tcId` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `DELETE` | `/api/v1/admin/problems/:id/test-cases/:tcId` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `DELETE` | `/api/v1/admin/problems/:id/test-cases/:tcId` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `DELETE` | `/api/v1/admin/problems/:id/test-cases/:tcId` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `DELETE` | `/api/v1/admin/problems/:id/test-cases/:tcId` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
@@ -593,7 +593,7 @@
 | `DELETE` | `/api/v1/admin/problems/:id/test-cases/:tcId` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `DELETE` | `/api/v1/admin/problems/:id/test-cases/:tcId` | `ADMIN` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `POST` | `/api/v1/admin/problems/bulk-import` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `POST` | `/api/v1/admin/problems/bulk-import` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `POST` | `/api/v1/admin/problems/bulk-import` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
 | `POST` | `/api/v1/admin/problems/bulk-import` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/admin/problems/bulk-import` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/admin/problems/bulk-import` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
@@ -601,7 +601,7 @@
 | `POST` | `/api/v1/admin/problems/bulk-import` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/admin/problems/bulk-import` | `ADMIN` | `adminAuth` | Allowed (non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
 | `GET` | `/api/v1/admin/problems/export` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `GET` | `/api/v1/admin/problems/export` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `GET` | `/api/v1/admin/problems/export` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `500` | ✅ PASS | Authorized access reached application layer (HTTP 500) |
 | `GET` | `/api/v1/admin/problems/export` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/problems/export` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/problems/export` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
@@ -609,7 +609,7 @@
 | `GET` | `/api/v1/admin/problems/export` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/problems/export` | `ADMIN` | `adminAuth` | Allowed (non-403) | `500` | ✅ PASS | Authorized access reached application layer (HTTP 500) |
 | `GET` | `/api/v1/admin/problems/:id/validate` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `GET` | `/api/v1/admin/problems/:id/validate` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `GET` | `/api/v1/admin/problems/:id/validate` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `500` | ✅ PASS | Authorized access reached application layer (HTTP 500) |
 | `GET` | `/api/v1/admin/problems/:id/validate` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/problems/:id/validate` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/problems/:id/validate` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
@@ -641,7 +641,7 @@
 | `GET` | `/api/v1/developer/sandbox-health` | `PROBLEM_ADMIN` | `developerAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/developer/sandbox-health` | `ADMIN` | `developerAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/admin/users` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `GET` | `/api/v1/admin/users` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `GET` | `/api/v1/admin/users` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/admin/users` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/users` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/users` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
@@ -649,7 +649,7 @@
 | `GET` | `/api/v1/admin/users` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/users` | `ADMIN` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `POST` | `/api/v1/admin/users/:userId/suspend` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `POST` | `/api/v1/admin/users/:userId/suspend` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `POST` | `/api/v1/admin/users/:userId/suspend` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
 | `POST` | `/api/v1/admin/users/:userId/suspend` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/admin/users/:userId/suspend` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/admin/users/:userId/suspend` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
@@ -657,7 +657,7 @@
 | `POST` | `/api/v1/admin/users/:userId/suspend` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/admin/users/:userId/suspend` | `ADMIN` | `adminAuth` | Allowed (non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
 | `POST` | `/api/v1/admin/users/:userId/unsuspend` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `POST` | `/api/v1/admin/users/:userId/unsuspend` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `POST` | `/api/v1/admin/users/:userId/unsuspend` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
 | `POST` | `/api/v1/admin/users/:userId/unsuspend` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/admin/users/:userId/unsuspend` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/admin/users/:userId/unsuspend` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
@@ -665,7 +665,7 @@
 | `POST` | `/api/v1/admin/users/:userId/unsuspend` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/admin/users/:userId/unsuspend` | `ADMIN` | `adminAuth` | Allowed (non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
 | `PUT` | `/api/v1/admin/users/:userId/role` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `PUT` | `/api/v1/admin/users/:userId/role` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `PUT` | `/api/v1/admin/users/:userId/role` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
 | `PUT` | `/api/v1/admin/users/:userId/role` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `PUT` | `/api/v1/admin/users/:userId/role` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `PUT` | `/api/v1/admin/users/:userId/role` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
@@ -673,7 +673,7 @@
 | `PUT` | `/api/v1/admin/users/:userId/role` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `PUT` | `/api/v1/admin/users/:userId/role` | `ADMIN` | `adminAuth` | Allowed (non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
 | `PUT` | `/api/v1/admin/users/:userId` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `PUT` | `/api/v1/admin/users/:userId` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `PUT` | `/api/v1/admin/users/:userId` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
 | `PUT` | `/api/v1/admin/users/:userId` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `PUT` | `/api/v1/admin/users/:userId` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `PUT` | `/api/v1/admin/users/:userId` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
@@ -681,7 +681,7 @@
 | `PUT` | `/api/v1/admin/users/:userId` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `PUT` | `/api/v1/admin/users/:userId` | `ADMIN` | `adminAuth` | Allowed (non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
 | `GET` | `/api/v1/admin/courses` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `GET` | `/api/v1/admin/courses` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `GET` | `/api/v1/admin/courses` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/admin/courses` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/courses` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/courses` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
@@ -689,7 +689,7 @@
 | `GET` | `/api/v1/admin/courses` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/courses` | `ADMIN` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `POST` | `/api/v1/admin/courses` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `POST` | `/api/v1/admin/courses` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `POST` | `/api/v1/admin/courses` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
 | `POST` | `/api/v1/admin/courses` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/admin/courses` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/admin/courses` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
@@ -697,7 +697,7 @@
 | `POST` | `/api/v1/admin/courses` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/admin/courses` | `ADMIN` | `adminAuth` | Allowed (non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
 | `PUT` | `/api/v1/admin/courses/:id` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `PUT` | `/api/v1/admin/courses/:id` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `PUT` | `/api/v1/admin/courses/:id` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
 | `PUT` | `/api/v1/admin/courses/:id` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `PUT` | `/api/v1/admin/courses/:id` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `PUT` | `/api/v1/admin/courses/:id` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
@@ -705,7 +705,7 @@
 | `PUT` | `/api/v1/admin/courses/:id` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `PUT` | `/api/v1/admin/courses/:id` | `ADMIN` | `adminAuth` | Allowed (non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
 | `DELETE` | `/api/v1/admin/courses/:id` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `DELETE` | `/api/v1/admin/courses/:id` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `DELETE` | `/api/v1/admin/courses/:id` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
 | `DELETE` | `/api/v1/admin/courses/:id` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `DELETE` | `/api/v1/admin/courses/:id` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `DELETE` | `/api/v1/admin/courses/:id` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
@@ -713,7 +713,7 @@
 | `DELETE` | `/api/v1/admin/courses/:id` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `DELETE` | `/api/v1/admin/courses/:id` | `ADMIN` | `adminAuth` | Allowed (non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
 | `POST` | `/api/v1/admin/contests` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `POST` | `/api/v1/admin/contests` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `POST` | `/api/v1/admin/contests` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
 | `POST` | `/api/v1/admin/contests` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/admin/contests` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/admin/contests` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
@@ -721,7 +721,7 @@
 | `POST` | `/api/v1/admin/contests` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/admin/contests` | `ADMIN` | `adminAuth` | Allowed (non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
 | `PUT` | `/api/v1/admin/contests/:id` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `PUT` | `/api/v1/admin/contests/:id` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `PUT` | `/api/v1/admin/contests/:id` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
 | `PUT` | `/api/v1/admin/contests/:id` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `PUT` | `/api/v1/admin/contests/:id` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `PUT` | `/api/v1/admin/contests/:id` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
@@ -729,7 +729,7 @@
 | `PUT` | `/api/v1/admin/contests/:id` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `PUT` | `/api/v1/admin/contests/:id` | `ADMIN` | `adminAuth` | Allowed (non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
 | `DELETE` | `/api/v1/admin/contests/:id` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `DELETE` | `/api/v1/admin/contests/:id` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `DELETE` | `/api/v1/admin/contests/:id` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
 | `DELETE` | `/api/v1/admin/contests/:id` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `DELETE` | `/api/v1/admin/contests/:id` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `DELETE` | `/api/v1/admin/contests/:id` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
@@ -1017,7 +1017,7 @@
 | `GET` | `/api/v1/contests/:id/announcements` | `PROBLEM_ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/contests/:id/announcements` | `ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `POST` | `/api/v1/contests/:id/announcements` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `POST` | `/api/v1/contests/:id/announcements` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `POST` | `/api/v1/contests/:id/announcements` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
 | `POST` | `/api/v1/contests/:id/announcements` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/contests/:id/announcements` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/contests/:id/announcements` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
@@ -1041,7 +1041,7 @@
 | `POST` | `/api/v1/contests/:id/clarifications` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
 | `POST` | `/api/v1/contests/:id/clarifications` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
 | `POST` | `/api/v1/contests/:id/end` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `POST` | `/api/v1/contests/:id/end` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `POST` | `/api/v1/contests/:id/end` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
 | `POST` | `/api/v1/contests/:id/end` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/contests/:id/end` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/contests/:id/end` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
@@ -1056,14 +1056,14 @@
 | `GET` | `/api/v1/achievements` | `CONTEST_ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/achievements` | `PROBLEM_ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/achievements` | `ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `GET` | `/api/v1/courses` | `STUDENT` | `optionalAuth` | Public / Optional | `500` | ✅ PASS | Authorized access reached application layer (HTTP 500) |
-| `GET` | `/api/v1/courses` | `DEVELOPER` | `optionalAuth` | Public / Optional | `500` | ✅ PASS | Authorized access reached application layer (HTTP 500) |
-| `GET` | `/api/v1/courses` | `INTERVIEWER` | `optionalAuth` | Public / Optional | `500` | ✅ PASS | Authorized access reached application layer (HTTP 500) |
-| `GET` | `/api/v1/courses` | `INSTRUCTOR` | `optionalAuth` | Public / Optional | `500` | ✅ PASS | Authorized access reached application layer (HTTP 500) |
-| `GET` | `/api/v1/courses` | `MODERATOR` | `optionalAuth` | Public / Optional | `500` | ✅ PASS | Authorized access reached application layer (HTTP 500) |
-| `GET` | `/api/v1/courses` | `CONTEST_ADMIN` | `optionalAuth` | Public / Optional | `500` | ✅ PASS | Authorized access reached application layer (HTTP 500) |
-| `GET` | `/api/v1/courses` | `PROBLEM_ADMIN` | `optionalAuth` | Public / Optional | `500` | ✅ PASS | Authorized access reached application layer (HTTP 500) |
-| `GET` | `/api/v1/courses` | `ADMIN` | `optionalAuth` | Public / Optional | `500` | ✅ PASS | Authorized access reached application layer (HTTP 500) |
+| `GET` | `/api/v1/courses` | `STUDENT` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/courses` | `DEVELOPER` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/courses` | `INTERVIEWER` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/courses` | `INSTRUCTOR` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/courses` | `MODERATOR` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/courses` | `CONTEST_ADMIN` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/courses` | `PROBLEM_ADMIN` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/courses` | `ADMIN` | `optionalAuth` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/courses/:slugOrId` | `STUDENT` | `optionalAuth` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
 | `GET` | `/api/v1/courses/:slugOrId` | `DEVELOPER` | `optionalAuth` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
 | `GET` | `/api/v1/courses/:slugOrId` | `INTERVIEWER` | `optionalAuth` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
@@ -1168,14 +1168,14 @@
 | `GET` | `/api/v1/notifications` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/notifications` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/notifications` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `POST` | `/api/v1/notifications/:id/read` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `POST` | `/api/v1/notifications/:id/read` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `POST` | `/api/v1/notifications/:id/read` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `POST` | `/api/v1/notifications/:id/read` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `POST` | `/api/v1/notifications/:id/read` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `POST` | `/api/v1/notifications/:id/read` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `POST` | `/api/v1/notifications/:id/read` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `POST` | `/api/v1/notifications/:id/read` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/notifications/:id/read` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/notifications/:id/read` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/notifications/:id/read` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/notifications/:id/read` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/notifications/:id/read` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/notifications/:id/read` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/notifications/:id/read` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `POST` | `/api/v1/notifications/:id/read` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
 | `POST` | `/api/v1/notifications/read-all` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `POST` | `/api/v1/notifications/read-all` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `POST` | `/api/v1/notifications/read-all` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
@@ -1225,7 +1225,7 @@
 | `POST` | `/api/v1/users/me/password` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
 | `POST` | `/api/v1/users/me/password` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
 | `GET` | `/api/v1/admin/analytics/overview` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `GET` | `/api/v1/admin/analytics/overview` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `GET` | `/api/v1/admin/analytics/overview` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/admin/analytics/overview` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/analytics/overview` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/analytics/overview` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
@@ -1233,7 +1233,7 @@
 | `GET` | `/api/v1/admin/analytics/overview` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/analytics/overview` | `ADMIN` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/admin/analytics/problems` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `GET` | `/api/v1/admin/analytics/problems` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `GET` | `/api/v1/admin/analytics/problems` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/admin/analytics/problems` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/analytics/problems` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/analytics/problems` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
@@ -1241,7 +1241,7 @@
 | `GET` | `/api/v1/admin/analytics/problems` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/analytics/problems` | `ADMIN` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/admin/analytics/users` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `GET` | `/api/v1/admin/analytics/users` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `GET` | `/api/v1/admin/analytics/users` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/admin/analytics/users` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/analytics/users` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/analytics/users` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
@@ -1249,7 +1249,7 @@
 | `GET` | `/api/v1/admin/analytics/users` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/analytics/users` | `ADMIN` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/admin/moderation/reports` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `GET` | `/api/v1/admin/moderation/reports` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `GET` | `/api/v1/admin/moderation/reports` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/admin/moderation/reports` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/moderation/reports` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/moderation/reports` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
@@ -1257,7 +1257,7 @@
 | `GET` | `/api/v1/admin/moderation/reports` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/moderation/reports` | `ADMIN` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `POST` | `/api/v1/admin/moderation/reports/:id/resolve` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `POST` | `/api/v1/admin/moderation/reports/:id/resolve` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `POST` | `/api/v1/admin/moderation/reports/:id/resolve` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `POST` | `/api/v1/admin/moderation/reports/:id/resolve` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/admin/moderation/reports/:id/resolve` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/admin/moderation/reports/:id/resolve` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
@@ -1265,7 +1265,7 @@
 | `POST` | `/api/v1/admin/moderation/reports/:id/resolve` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/admin/moderation/reports/:id/resolve` | `ADMIN` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `POST` | `/api/v1/admin/users/:userId/ban` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `POST` | `/api/v1/admin/users/:userId/ban` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `POST` | `/api/v1/admin/users/:userId/ban` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
 | `POST` | `/api/v1/admin/users/:userId/ban` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/admin/users/:userId/ban` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/admin/users/:userId/ban` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
@@ -1273,7 +1273,7 @@
 | `POST` | `/api/v1/admin/users/:userId/ban` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/admin/users/:userId/ban` | `ADMIN` | `adminAuth` | Allowed (non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
 | `POST` | `/api/v1/admin/users/:userId/unban` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `POST` | `/api/v1/admin/users/:userId/unban` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `POST` | `/api/v1/admin/users/:userId/unban` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
 | `POST` | `/api/v1/admin/users/:userId/unban` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/admin/users/:userId/unban` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/admin/users/:userId/unban` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
@@ -1281,7 +1281,7 @@
 | `POST` | `/api/v1/admin/users/:userId/unban` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/admin/users/:userId/unban` | `ADMIN` | `adminAuth` | Allowed (non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
 | `POST` | `/api/v1/admin/users/:userId/delete` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `POST` | `/api/v1/admin/users/:userId/delete` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `POST` | `/api/v1/admin/users/:userId/delete` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
 | `POST` | `/api/v1/admin/users/:userId/delete` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/admin/users/:userId/delete` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/admin/users/:userId/delete` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
@@ -1289,7 +1289,7 @@
 | `POST` | `/api/v1/admin/users/:userId/delete` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/admin/users/:userId/delete` | `ADMIN` | `adminAuth` | Allowed (non-403) | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
 | `GET` | `/api/v1/admin/problems/:id/analytics` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `GET` | `/api/v1/admin/problems/:id/analytics` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `GET` | `/api/v1/admin/problems/:id/analytics` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/admin/problems/:id/analytics` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/problems/:id/analytics` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/problems/:id/analytics` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
@@ -1297,7 +1297,7 @@
 | `GET` | `/api/v1/admin/problems/:id/analytics` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/problems/:id/analytics` | `ADMIN` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/admin/system/health` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `GET` | `/api/v1/admin/system/health` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `GET` | `/api/v1/admin/system/health` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/admin/system/health` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/system/health` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/system/health` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
@@ -1305,7 +1305,7 @@
 | `GET` | `/api/v1/admin/system/health` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/system/health` | `ADMIN` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/admin/audit-logs` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `GET` | `/api/v1/admin/audit-logs` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `GET` | `/api/v1/admin/audit-logs` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/admin/audit-logs` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/audit-logs` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/audit-logs` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
@@ -1313,15 +1313,15 @@
 | `GET` | `/api/v1/admin/audit-logs` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/audit-logs` | `ADMIN` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/admin/contests/:id/leaderboard` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `GET` | `/api/v1/admin/contests/:id/leaderboard` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `GET` | `/api/v1/admin/contests/:id/leaderboard` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `500` | ✅ PASS | Authorized access reached application layer (HTTP 500) |
 | `GET` | `/api/v1/admin/contests/:id/leaderboard` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/contests/:id/leaderboard` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/contests/:id/leaderboard` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/contests/:id/leaderboard` | `CONTEST_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/contests/:id/leaderboard` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `GET` | `/api/v1/admin/contests/:id/leaderboard` | `ADMIN` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/admin/contests/:id/leaderboard` | `ADMIN` | `adminAuth` | Allowed (non-403) | `500` | ✅ PASS | Authorized access reached application layer (HTTP 500) |
 | `GET` | `/api/v1/admin/plagiarism/results` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `GET` | `/api/v1/admin/plagiarism/results` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `GET` | `/api/v1/admin/plagiarism/results` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/admin/plagiarism/results` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/plagiarism/results` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/plagiarism/results` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
@@ -1329,7 +1329,7 @@
 | `GET` | `/api/v1/admin/plagiarism/results` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/plagiarism/results` | `ADMIN` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `POST` | `/api/v1/admin/users/bulk-role-update` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `POST` | `/api/v1/admin/users/bulk-role-update` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `POST` | `/api/v1/admin/users/bulk-role-update` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `POST` | `/api/v1/admin/users/bulk-role-update` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/admin/users/bulk-role-update` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/admin/users/bulk-role-update` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
@@ -1337,7 +1337,7 @@
 | `POST` | `/api/v1/admin/users/bulk-role-update` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/admin/users/bulk-role-update` | `ADMIN` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `POST` | `/api/v1/admin/users/bulk-suspend` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `POST` | `/api/v1/admin/users/bulk-suspend` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `POST` | `/api/v1/admin/users/bulk-suspend` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `POST` | `/api/v1/admin/users/bulk-suspend` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/admin/users/bulk-suspend` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/admin/users/bulk-suspend` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
@@ -1345,7 +1345,7 @@
 | `POST` | `/api/v1/admin/users/bulk-suspend` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `POST` | `/api/v1/admin/users/bulk-suspend` | `ADMIN` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/admin/export/users` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `GET` | `/api/v1/admin/export/users` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `GET` | `/api/v1/admin/export/users` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/admin/export/users` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/export/users` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/export/users` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
@@ -1353,7 +1353,7 @@
 | `GET` | `/api/v1/admin/export/users` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/export/users` | `ADMIN` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/admin/export/submissions` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `GET` | `/api/v1/admin/export/submissions` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `GET` | `/api/v1/admin/export/submissions` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/admin/export/submissions` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/export/submissions` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/admin/export/submissions` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
@@ -1617,13 +1617,13 @@
 | `GET` | `/api/v1/infra/achievements` | `PROBLEM_ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/infra/achievements` | `ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/infra/audit-logs` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `GET` | `/api/v1/infra/audit-logs` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `GET` | `/api/v1/infra/audit-logs` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `500` | ✅ PASS | Authorized access reached application layer (HTTP 500) |
 | `GET` | `/api/v1/infra/audit-logs` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/infra/audit-logs` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/infra/audit-logs` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/infra/audit-logs` | `CONTEST_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/infra/audit-logs` | `PROBLEM_ADMIN` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `GET` | `/api/v1/infra/audit-logs` | `ADMIN` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/infra/audit-logs` | `ADMIN` | `adminAuth` | Allowed (non-403) | `500` | ✅ PASS | Authorized access reached application layer (HTTP 500) |
 | `POST` | `/api/v1/scheduled-interviews` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `POST` | `/api/v1/scheduled-interviews` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `POST` | `/api/v1/scheduled-interviews` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
@@ -1800,22 +1800,22 @@
 | `POST` | `/api/v1/ai/explain` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
 | `POST` | `/api/v1/ai/explain` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
 | `POST` | `/api/v1/ai/explain` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
-| `POST` | `/api/v1/ai/hint` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `POST` | `/api/v1/ai/hint` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `POST` | `/api/v1/ai/hint` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `POST` | `/api/v1/ai/hint` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `POST` | `/api/v1/ai/hint` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `POST` | `/api/v1/ai/hint` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `POST` | `/api/v1/ai/hint` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `POST` | `/api/v1/ai/hint` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `POST` | `/api/v1/ai/mock-interview` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `POST` | `/api/v1/ai/mock-interview` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `POST` | `/api/v1/ai/mock-interview` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `POST` | `/api/v1/ai/mock-interview` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `POST` | `/api/v1/ai/mock-interview` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `POST` | `/api/v1/ai/mock-interview` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `POST` | `/api/v1/ai/mock-interview` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `POST` | `/api/v1/ai/mock-interview` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/hint` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
+| `POST` | `/api/v1/ai/hint` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
+| `POST` | `/api/v1/ai/hint` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
+| `POST` | `/api/v1/ai/hint` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
+| `POST` | `/api/v1/ai/hint` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
+| `POST` | `/api/v1/ai/hint` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
+| `POST` | `/api/v1/ai/hint` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
+| `POST` | `/api/v1/ai/hint` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
+| `POST` | `/api/v1/ai/mock-interview` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
+| `POST` | `/api/v1/ai/mock-interview` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
+| `POST` | `/api/v1/ai/mock-interview` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
+| `POST` | `/api/v1/ai/mock-interview` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
+| `POST` | `/api/v1/ai/mock-interview` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
+| `POST` | `/api/v1/ai/mock-interview` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
+| `POST` | `/api/v1/ai/mock-interview` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
+| `POST` | `/api/v1/ai/mock-interview` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
 | `POST` | `/api/v1/ai/mock-interview/evaluate` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `POST` | `/api/v1/ai/mock-interview/evaluate` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `POST` | `/api/v1/ai/mock-interview/evaluate` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
@@ -1824,14 +1824,14 @@
 | `POST` | `/api/v1/ai/mock-interview/evaluate` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `POST` | `/api/v1/ai/mock-interview/evaluate` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `POST` | `/api/v1/ai/mock-interview/evaluate` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `POST` | `/api/v1/ai/chat` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `POST` | `/api/v1/ai/chat` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `POST` | `/api/v1/ai/chat` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `POST` | `/api/v1/ai/chat` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `POST` | `/api/v1/ai/chat` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `POST` | `/api/v1/ai/chat` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `POST` | `/api/v1/ai/chat` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `POST` | `/api/v1/ai/chat` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/chat` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
+| `POST` | `/api/v1/ai/chat` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
+| `POST` | `/api/v1/ai/chat` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
+| `POST` | `/api/v1/ai/chat` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
+| `POST` | `/api/v1/ai/chat` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
+| `POST` | `/api/v1/ai/chat` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
+| `POST` | `/api/v1/ai/chat` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
+| `POST` | `/api/v1/ai/chat` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
 | `POST` | `/api/v1/ai/review` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
 | `POST` | `/api/v1/ai/review` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
 | `POST` | `/api/v1/ai/review` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
@@ -1872,14 +1872,14 @@
 | `POST` | `/api/v1/ai/optimize` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
 | `POST` | `/api/v1/ai/optimize` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
 | `POST` | `/api/v1/ai/optimize` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
-| `POST` | `/api/v1/ai/generate-tests` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `POST` | `/api/v1/ai/generate-tests` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `POST` | `/api/v1/ai/generate-tests` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `POST` | `/api/v1/ai/generate-tests` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `POST` | `/api/v1/ai/generate-tests` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `POST` | `/api/v1/ai/generate-tests` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `POST` | `/api/v1/ai/generate-tests` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `POST` | `/api/v1/ai/generate-tests` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/generate-tests` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
+| `POST` | `/api/v1/ai/generate-tests` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
+| `POST` | `/api/v1/ai/generate-tests` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
+| `POST` | `/api/v1/ai/generate-tests` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
+| `POST` | `/api/v1/ai/generate-tests` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
+| `POST` | `/api/v1/ai/generate-tests` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
+| `POST` | `/api/v1/ai/generate-tests` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
+| `POST` | `/api/v1/ai/generate-tests` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
 | `GET` | `/api/v1/ai/candidate-profile` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/ai/candidate-profile` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/ai/candidate-profile` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
@@ -1888,16 +1888,16 @@
 | `GET` | `/api/v1/ai/candidate-profile` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/ai/candidate-profile` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/ai/candidate-profile` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `GET` | `/api/v1/status` | `STUDENT` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `GET` | `/api/v1/status` | `DEVELOPER` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `GET` | `/api/v1/status` | `INTERVIEWER` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `GET` | `/api/v1/status` | `INSTRUCTOR` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `GET` | `/api/v1/status` | `MODERATOR` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `GET` | `/api/v1/status` | `CONTEST_ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `GET` | `/api/v1/status` | `PROBLEM_ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `GET` | `/api/v1/status` | `ADMIN` | `none` | Public / Optional | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `GET` | `/api/v1/status` | `STUDENT` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/status` | `DEVELOPER` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/status` | `INTERVIEWER` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/status` | `INSTRUCTOR` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/status` | `MODERATOR` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/status` | `CONTEST_ADMIN` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/status` | `PROBLEM_ADMIN` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
+| `GET` | `/api/v1/status` | `ADMIN` | `none` | Public / Optional | `404` | ✅ PASS | Authorized access reached application layer (HTTP 404) |
 | `GET` | `/api/v1/audit-logs` | `STUDENT` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
-| `GET` | `/api/v1/audit-logs` | `DEVELOPER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
+| `GET` | `/api/v1/audit-logs` | `DEVELOPER` | `adminAuth` | Allowed (non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/audit-logs` | `INTERVIEWER` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/audit-logs` | `INSTRUCTOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |
 | `GET` | `/api/v1/audit-logs` | `MODERATOR` | `adminAuth` | 403 Forbidden | `403` | ✅ PASS | Properly denied with 403 Forbidden |

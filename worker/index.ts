@@ -6,8 +6,22 @@ import { LanguageAdapterRegistry, buildCodeWithDriver } from "./src/adapters";
 import { validateCodeSecurity } from "../backend/src/security";
 import { publicWrongAnswerMessage, sanitizeTestResults } from "../backend/src/judgePrivacy";
 import { validateSandboxSafety } from "./src/sandbox";
+import { maybePruneGoCacheVolume } from "./src/sandbox/dockerRunner";
 
-const redisClient = createClient({ url: process.env.REDIS_URL || "redis://localhost:6379" });
+let redisClient: any = createClient({ url: process.env.REDIS_URL || "redis://localhost:6379" });
+
+async function connectWorkerRedis() {
+  try {
+    await redisClient.connect();
+  } catch (err: any) {
+    if (String(err?.message || "").includes("HELLO")) {
+      redisClient = createClient({ url: process.env.REDIS_URL || "redis://localhost:6379", RESP: 2 } as any);
+      await redisClient.connect();
+    } else {
+      throw err;
+    }
+  }
+}
 
 interface TestCase {
     input: string;
@@ -31,7 +45,7 @@ const DLQ_QUEUE = "problems:dlq";
 const WORKER_HEARTBEAT_KEY = "worker:heartbeat:judge_node_1";
 const MAX_RETRY_ATTEMPTS = 3;
 
-redisClient.connect()
+connectWorkerRedis()
     .then(async () => {
         console.log("⚡ CodeArena Sandbox Queue Worker connected (Reliable Queue Mode)...");
         // Production gate: the worker shares the authoritative PostgreSQL
@@ -55,6 +69,23 @@ redisClient.connect()
 
         // 2. Lease-aware recovery: Reclaim ONLY stranded tasks whose lease has expired (>60s)
         const VISIBILITY_TIMEOUT_MS = 60000;
+        
+        // 3. Periodic GOCACHE pruning (every 5 minutes, only if over threshold)
+        const GOCACHE_PRUNE_INTERVAL_MS = 5 * 60 * 1000;
+        const startPeriodicGoCachePruning = () => {
+          setInterval(async () => {
+            try {
+              const res = await maybePruneGoCacheVolume();
+              if (res.pruned) {
+                console.log(`[GOCACHE] Periodic prune completed: ${res.usedMb}MB -> ${res.maxMb}MB limit`);
+              }
+            } catch (err) {
+              console.warn("[GOCACHE] Periodic prune failed:", err);
+            }
+          }, GOCACHE_PRUNE_INTERVAL_MS);
+        };
+        startPeriodicGoCachePruning();
+        
         const checkExpiredLeases = async () => {
             try {
                 const processingItems = await redisClient.lRange(PROCESSING_QUEUE, 0, -1);

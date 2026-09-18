@@ -11,8 +11,9 @@ import { LANGUAGE_IMAGES, maybePruneGoCacheVolume, goCacheMaxBytes } from "./src
 
 if (process.argv.includes("--prune-only")) {
   const res = await maybePruneGoCacheVolume();
-  const usedMb = res.usedBytes === null ? "unknown" : `${Math.round(res.usedBytes / 1024 / 1024)}MB`;
-  console.log(`GOCACHE usage: ${usedMb} (limit ${Math.round(goCacheMaxBytes() / 1024 / 1024)}MB) — ${res.pruned ? "pruned" : "no action needed"}.`);
+  const usedMb = res.usedMb ?? (res.usedBytes === null ? "unknown" : `${Math.round((res.usedBytes ?? 0) / 1024 / 1024)}MB`);
+  const maxMb = res.maxMb ?? Math.round(goCacheMaxBytes() / 1024 / 1024);
+  console.log(`GOCACHE usage: ${usedMb}MB (limit ${maxMb}MB) — ${res.pruned ? "pruned" : "no action needed"}.`);
   process.exitCode = 0;
 } else {
 const unique = [...new Set(Object.values(LANGUAGE_IMAGES))];

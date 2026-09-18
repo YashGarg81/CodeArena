@@ -169,9 +169,18 @@ export async function goCacheUsageBytes(): Promise<number | null> {
  * content hash — it cannot poison other submissions, it just makes the next
  * build cold (~20s, inside the 60s compile budget).
  */
-export async function maybePruneGoCacheVolume(): Promise<{ pruned: boolean; usedBytes: number | null }> {
+export async function maybePruneGoCacheVolume(): Promise<{ pruned: boolean; usedBytes: number | null; usedMb?: number; maxMb?: number }> {
   const used = await goCacheUsageBytes();
-  if (used === null || !shouldPruneCache(used)) return { pruned: false, usedBytes: used };
+  const maxBytes = goCacheMaxBytes();
+  const maxMb = Math.round(maxBytes / 1024 / 1024);
+  if (used === null) {
+    return { pruned: false, usedBytes: null, usedMb: undefined, maxMb };
+  }
+  const usedMb = Math.round(used / 1024 / 1024);
+  if (!shouldPruneCache(used, maxBytes)) {
+    return { pruned: false, usedBytes: used, usedMb, maxMb };
+  }
+  console.log(`[GOCACHE] Pruning: ${usedMb}MB exceeds limit of ${maxMb}MB`);
   const cleaned = await runCacheTool(
     [
       "run", "--rm", "--user", "1000:1000",
@@ -181,7 +190,15 @@ export async function maybePruneGoCacheVolume(): Promise<{ pruned: boolean; used
     ],
     120000
   );
-  return { pruned: cleaned !== null, usedBytes: used };
+  const pruned = cleaned !== null;
+  if (pruned) {
+    const after = await goCacheUsageBytes();
+    const afterMb = after !== null ? Math.round(after / 1024 / 1024) : "unknown";
+    console.log(`[GOCACHE] Pruned: ${usedMb}MB -> ${afterMb}MB`);
+  } else {
+    console.warn(`[GOCACHE] Pruning attempted but failed`);
+  }
+  return { pruned, usedBytes: used, usedMb, maxMb };
 }
 
 // Compiler runtimes (Go, .NET, Kotlin, etc.) write caches to the container user's home

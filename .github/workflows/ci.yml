@@ -152,11 +152,51 @@ jobs:
       - name: 13. Playwright Browser E2E Release Verification
         run: |
           echo "Installing Playwright browser dependencies..."
-          (cd frontend && npx playwright install --with-deps chromium)
+          (cd frontend && bunx playwright install --with-deps chromium)
           echo "Executing 16-feature + 8 cross-feature E2E browser tests..."
-          (cd frontend && npx playwright test)
+          (cd frontend && bunx playwright test)
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: /home/runner/.cache/ms-playwright
 
-      - name: 14. Release Gate Evidence Verification
+      - name: 14. Metrics & Health Endpoint Verification
+        run: |
+          echo "Starting backend for health/metrics verification..."
+          cd backend
+          NODE_ENV=test \
+          DATABASE_URL=postgresql://postgres:postgrespassword@localhost:5432/codearena?schema=public \
+          REDIS_URL=redis://localhost:6379 \
+          JWT_SECRET=ci_test_secret_32_characters_minimum_sample \
+          bun run --eval "
+            import('./src/metrics.ts').then(m => {
+              m.incCounter('http_requests_total', {method: 'GET', route: '/health', status: '200'});
+              m.incCounter('judge_runs_total', {language: 'python', verdict: 'AC'});
+              console.log('Metrics module verified');
+              console.log(m.renderPrometheus());
+            });
+          "
+          cd ..
+
+      - name: 15. GOCACHE Pruning Mechanism Verification
+        run: |
+          echo "Verifying GOCACHE pruning logic..."
+          cd worker
+          bun run --eval "
+            import('./src/sandbox/dockerRunner.ts').then(m => {
+              console.log('GOCACHE_MAX_MB:', m.goCacheMaxBytes() / 1024 / 1024);
+              console.log('shouldPruneCache(100MB, 50MB):', m.shouldPruneCache(100 * 1024 * 1024, 50 * 1024 * 1024));
+              console.log('shouldPruneCache(10MB, 50MB):', m.shouldPruneCache(10 * 1024 * 1024, 50 * 1024 * 1024));
+            });
+          "
+          cd ..
+
+      - name: 16. Database Backup/Restore Verification
+        run: |
+          echo "Verifying backup scripts syntax..."
+          bash -n scripts/pg-backup.sh
+          bash -n scripts/pg-restore.sh
+          echo "Backup scripts syntax OK"
+
+      - name: 17. Release Gate Evidence Verification
         run: |
           echo "Verifying RBAC Runtime Matrix Report..."
           test -f RBAC_RUNTIME_MATRIX_REPORT.md

@@ -33,6 +33,12 @@ describe("Contest Deadline Race & Boundary Protection Suite", () => {
     const data = (await res.json()) as any;
     testUser = data.user;
     testToken = data.token;
+
+    // Ensure the problem is published so active window submissions are accepted
+    await prisma.problems.update({
+      where: { id: problemId },
+      data: { status: "Published" }
+    }).catch(() => {});
   });
 
   afterAll(async () => {
