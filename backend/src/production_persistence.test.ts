@@ -43,7 +43,7 @@ const redisUp = await tcpReachable(redisEp.host, redisEp.port);
 
 if (pgUp) {
   try {
-    Bun.spawnSync([process.execPath, "x", "prisma", "db", "push", "--skip-generate"], {
+    Bun.spawnSync([process.execPath, "x", "prisma", "db", "push", "--accept-data-loss"], {
       cwd: path.join(import.meta.dir, ".."),
       env: {
         ...process.env,
