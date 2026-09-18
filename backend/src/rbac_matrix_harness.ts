@@ -20,38 +20,37 @@ const ROLES = [
   "ADMIN"
 ] as const;
 
-interface RouteEntry {
-  method: string;
-  path: string;
-  auth: string;
-  sourceFile: string;
-}
+import { ROUTE_MANIFEST, type RouteEntry } from "./route_manifest";
 
 function parseRouteMap(): RouteEntry[] {
-  const content = fs.readFileSync(routeMapPath, "utf8");
-  const lines = content.split("\n");
-  const routes: RouteEntry[] = [];
-
-  let inTable = false;
-  for (const line of lines) {
-    if (line.includes("| METHOD | PATH | Auth Middleware |")) {
-      inTable = true;
-      continue;
-    }
-    if (inTable) {
-      if (!line.startsWith("|")) break;
-      if (line.includes(":---")) continue;
-      const parts = line.split("|").map((p) => p.trim()).filter(Boolean);
-      if (parts.length >= 4 && parts[0] && parts[1] && parts[2] && parts[parts.length - 1]) {
-        const method = parts[0].replace(/`/g, "");
-        const routePath = parts[1].replace(/`/g, "");
-        const auth = parts[2].replace(/`/g, "");
-        const sourceFile = parts[parts.length - 1]!.replace(/`/g, "");
-        routes.push({ method, path: routePath, auth, sourceFile });
+  if (fs.existsSync(routeMapPath)) {
+    try {
+      const content = fs.readFileSync(routeMapPath, "utf8");
+      const lines = content.split("\n");
+      const routes: RouteEntry[] = [];
+      let inTable = false;
+      for (const line of lines) {
+        if (line.includes("| METHOD | PATH | Auth Middleware |")) {
+          inTable = true;
+          continue;
+        }
+        if (inTable) {
+          if (!line.startsWith("|")) break;
+          if (line.includes(":---")) continue;
+          const parts = line.split("|").map((p) => p.trim()).filter(Boolean);
+          if (parts.length >= 4 && parts[0] && parts[1] && parts[2] && parts[parts.length - 1]) {
+            const method = parts[0].replace(/`/g, "");
+            const routePath = parts[1].replace(/`/g, "");
+            const auth = parts[2].replace(/`/g, "");
+            const sourceFile = parts[parts.length - 1]!.replace(/`/g, "");
+            routes.push({ method, path: routePath, auth, sourceFile });
+          }
+        }
       }
-    }
+      if (routes.length > 0) return routes;
+    } catch {}
   }
-  return routes;
+  return ROUTE_MANIFEST;
 }
 
 async function runRbacMatrix() {

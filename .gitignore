@@ -87,3 +87,6 @@ backend/*.html
 # Generated reports & audit documents (keep only README)
 RBAC_RUNTIME_MATRIX_REPORT.md
 PRODUCTION_READINESS_FINAL.md
+ROUTE_MAP.md
+route_map.md
+
