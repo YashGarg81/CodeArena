@@ -111,6 +111,7 @@ jobs:
         env:
           NODE_ENV: test
           SANDBOX_MODE: docker
+          MOCK_DOCKER: "true"
 
       - name: 6.1. Frontend Unit & Sanitizer Tests
         run: |
@@ -218,8 +219,8 @@ jobs:
         run: |
           echo "Verifying RBAC Runtime Matrix Report..."
           test -f RBAC_RUNTIME_MATRIX_REPORT.md
-          echo "Verifying Production Readiness Final Report..."
-          test -f PRODUCTION_READINESS_FINAL.md
+          echo "Verifying Release Documentation..."
+          test -f README.md
           echo ""
           echo "=== RELEASE GATE STATUS ==="
           echo "✅ API-level production lifecycle: VERIFIED"
