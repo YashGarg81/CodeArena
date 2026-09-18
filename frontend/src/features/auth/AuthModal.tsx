@@ -40,8 +40,8 @@ export function AuthModal({ mode, onClose, onSuccess }: {
   };
 
   const getEnv = (key: string) => typeof process !== "undefined" ? process.env[key] : undefined;
-  const GITHUB_CLIENT_ID = getEnv("GITHUB_CLIENT_ID") || (import.meta as any).env?.VITE_GITHUB_CLIENT_ID || "Ov23liF0fGFCD7B4EmN9";
-  const GOOGLE_CLIENT_ID = getEnv("GOOGLE_CLIENT_ID") || (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID || "94571532695-ts7o7itqu4ciah05jh6slpj0r2jdtl7c.apps.googleusercontent.com";
+  const GITHUB_CLIENT_ID = getEnv("GITHUB_CLIENT_ID") || (import.meta as any).env?.VITE_GITHUB_CLIENT_ID;
+  const GOOGLE_CLIENT_ID = getEnv("GOOGLE_CLIENT_ID") || (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID;
 
   const submit = async () => {
     if (tab === "forgot") {
@@ -146,8 +146,8 @@ export function AuthModal({ mode, onClose, onSuccess }: {
 
     // Real OAuth UI Flow:
     // 1. Check for configured client IDs in environment or build define
-    const GITHUB_CLIENT_ID_LOCAL = getEnv("GITHUB_CLIENT_ID") || (import.meta as any).env?.VITE_GITHUB_CLIENT_ID || "Ov23liF0fGFCD7B4EmN9";
-    const GOOGLE_CLIENT_ID_LOCAL = getEnv("GOOGLE_CLIENT_ID") || (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID || "94571532695-ts7o7itqu4ciah05jh6slpj0r2jdtl7c.apps.googleusercontent.com";
+    const GITHUB_CLIENT_ID_LOCAL = getEnv("GITHUB_CLIENT_ID") || (import.meta as any).env?.VITE_GITHUB_CLIENT_ID;
+    const GOOGLE_CLIENT_ID_LOCAL = getEnv("GOOGLE_CLIENT_ID") || (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID;
 
     const clientId = provider === "github" ? GITHUB_CLIENT_ID_LOCAL : GOOGLE_CLIENT_ID_LOCAL;
 

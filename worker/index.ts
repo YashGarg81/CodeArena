@@ -249,7 +249,7 @@ connectWorkerRedis()
 
                 // Scratch directory is removed in the finally block below (covers
                 // early-return/continue paths that previously leaked folders).
-                const scratchBase = process.env.WORKER_SCRATCH_HOST_PATH ? path.resolve(process.env.WORKER_SCRATCH_HOST_PATH) : __dirname;
+                const scratchBase = process.env.WORKER_SCRATCH_HOST_PATH ? "/app/worker/scratch" : __dirname;
                 folderPath = path.join(scratchBase, `code_${submissionId.replace(/[^a-zA-Z0-9_-]/g, "")}`);
                 if (!fs.existsSync(folderPath)) {
                     fs.mkdirSync(folderPath, { recursive: true });

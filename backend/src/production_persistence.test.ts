@@ -129,8 +129,8 @@ function bootWorker(): ReturnType<typeof Bun.spawn> {
       DATABASE_URL: process.env.DATABASE_URL || "postgresql://postgres:postgrespassword@localhost:5432/codearena?schema=public",
       ...(process.env.REDIS_URL ? { REDIS_URL: process.env.REDIS_URL } : {}),
     },
-    stdout: "ignore",
-    stderr: "ignore",
+    stdout: "inherit",
+    stderr: "inherit",
   });
   return proc;
 }
@@ -228,6 +228,11 @@ describe("PRODUCTION PERSISTENCE E2E", () => {
   }, 300000);
 
   test.skipIf(!pgUp || !redisUp || !dockerUp)("worker consumes queue from shared PG and returns verdict", async () => {
+    // Ensure the js runner image is cached locally before the judge loop executes
+    try {
+      Bun.spawnSync(["docker", "pull", "oven/bun:1-alpine"]);
+    } catch {}
+
     const { createClient } = await import("redis");
     let rq: any;
     try {
@@ -267,7 +272,7 @@ describe("PRODUCTION PERSISTENCE E2E", () => {
         let final: any = null;
         const start = Date.now();
         while (Date.now() - start < 180000) {
-          await new Promise((r) => setTimeout(r, 5000));
+          await new Promise((r) => setTimeout(r, 2000));
           const got = await fetch(`${a.base}/api/v1/submissions/${id}`, {
             headers: { Authorization: `Bearer ${token}` },
           });
@@ -277,6 +282,9 @@ describe("PRODUCTION PERSISTENCE E2E", () => {
             final = body.submission;
             break;
           }
+        }
+        if (!final) {
+          console.error(`[Worker Integration] Submission ${id} never finished within timeout. Worker exit code: ${worker.exitCode}`);
         }
         expect(final).not.toBeNull();
         expect(final.status).toBe("Success");

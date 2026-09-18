@@ -74,7 +74,7 @@ export class SandboxSecurityEngine extends EventEmitter {
     filesystemViolations: 0,
     containerEscapeAttempts: 0,
     totalThreatsNeutralized: 0,
-    activeIsolationMode: "Firecracker"
+activeIsolationMode: "Docker"
   };
 
   private auditLogs: SandboxSecurityEvent[] = [];

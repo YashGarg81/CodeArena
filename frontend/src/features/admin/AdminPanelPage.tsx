@@ -163,32 +163,21 @@ export function AdminPanelPage({ user, onToast }: { user: User | null; onToast: 
           if (r?.data?.stats) {
             setDashStats(r.data);
           } else {
-            // Provide sensible fallback stats if response payload lacks stats object
             setDashStats({
               stats: {
-                totalProblems: 25,
-                publishedProblems: 20,
-                draftProblems: 5,
+                totalProblems: 0,
+                publishedProblems: 0,
+                draftProblems: 0,
                 archivedProblems: 0,
-                totalSubmissions: 142,
-                totalUsers: 3
+                totalSubmissions: 0,
+                totalUsers: 0
               },
               recentProblems: []
             });
           }
         })
         .catch(() => {
-          setDashStats({
-            stats: {
-              totalProblems: 25,
-              publishedProblems: 20,
-              draftProblems: 5,
-              archivedProblems: 0,
-              totalSubmissions: 142,
-              totalUsers: 3
-            },
-            recentProblems: []
-          });
+          setDashStats(null);
         });
     }
   }, [tab]);
@@ -931,6 +920,17 @@ export function AdminPanelPage({ user, onToast }: { user: User | null; onToast: 
                   ))}
                 </div>
               </>
+            ) : dashStats === null ? (
+              <div style={{ textAlign: "center", padding: "40px 20px", color: "var(--text-muted)" }}>
+                <div style={{ fontSize: 48, marginBottom: 16 }}>⚠️</div>
+                <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>Unable to Load Dashboard</h3>
+                <p>Failed to fetch platform statistics. Please check the backend connection and try again.</p>
+                <button className="btn btn-primary" style={{ marginTop: 16 }} onClick={() => {
+                  api.get("/api/v1/admin/dashboard").then(r => {
+                    if (r?.data?.stats) setDashStats(r.data);
+                  }).catch(() => {});
+                }}>Retry</button>
+              </div>
             ) : (
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 16 }}>
                 {Array.from({ length: 6 }).map((_, i) => <div key={i} className="skeleton" style={{ height: 100, borderRadius: 12 }} />)}

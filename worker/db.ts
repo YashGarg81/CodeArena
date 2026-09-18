@@ -1,4 +1,5 @@
 import { PrismaClient } from "./generated/prisma";
+import { PrismaPg } from "@prisma/adapter-pg";
 
 const rawDbUrl = process.env.DATABASE_URL || "postgresql://postgres:postgrespassword@localhost:5432/codearena?schema=public";
 // In Docker compose, the worker must connect to the postgres container by name.
@@ -8,8 +9,19 @@ const dbUrl = (!isInCompose && rawDbUrl.includes("@postgres:")) ? rawDbUrl.repla
 
 console.log("[Worker DB] Connecting to:", dbUrl.replace(/:[^:]+@/, ":****@"));
 
-let rawPrisma: any = new PrismaClient({ datasources: { db: { url: dbUrl } } } as any);
-console.log("[Worker DB] PrismaClient created");
+let rawPrisma: any;
+try {
+  const adapter = new PrismaPg({ connectionString: dbUrl });
+  rawPrisma = new PrismaClient({ adapter } as any);
+  console.log("[Worker DB] PrismaPg adapter connected successfully");
+} catch (e: any) {
+  console.error("[Worker DB] PrismaPg adapter failed:", e.message);
+  try {
+    rawPrisma = new PrismaClient();
+  } catch {
+    rawPrisma = {};
+  }
+}
 
 export function isProductionStrict(): boolean {
   return process.env.NODE_ENV === "production" && process.env.ALLOW_IN_MEMORY_DB !== "true";

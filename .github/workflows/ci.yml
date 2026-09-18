@@ -70,6 +70,7 @@ jobs:
           (cd backend && bunx prisma generate)
           (cd worker && bunx prisma generate)
           (cd backend && bunx prisma db push --accept-data-loss)
+          docker pull oven/bun:1-alpine || true
 
       - name: 3. Static Typecheck
         run: |

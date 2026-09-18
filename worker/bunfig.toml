@@ -5,7 +5,7 @@ optional = []
 port = 3001
 
 [test]
-root = "src"
+root = ["src", "."]
 
 [run]
 experimental-sandbox = false
