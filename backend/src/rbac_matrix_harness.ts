@@ -1,7 +1,8 @@
+process.env.NODE_ENV = "test";
+process.env.SKIP_LLM = "true";
 import fs from "fs";
 import path from "path";
 import jwt from "jsonwebtoken";
-import { app } from "../index";
 import { prisma } from "../db";
 import { getJwtSecret } from "./config";
 
@@ -60,6 +61,7 @@ async function runRbacMatrix() {
   console.log(`Discovered ${routes.length} routes from ROUTE_MAP.md.`);
 
   // Start temporary server on random port
+  const { app } = await import("../index");
   const server = app.listen(0, "127.0.0.1");
   const addr = server.address() as any;
   const baseUrl = `http://127.0.0.1:${addr.port}`;

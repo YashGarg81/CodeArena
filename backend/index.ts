@@ -37,7 +37,7 @@ export { validateCodeSecurity } from "./src/security";
 
 const JWT_SECRET = getJwtSecret();
 
-if (!IS_TEST) {
+if (!IS_TEST && process.env.NODE_ENV !== "test") {
     initRedis().catch((err: any) => console.error("Redis connection failed:", err?.message || err));
 }
 
@@ -7273,7 +7273,7 @@ io.on("connection", (socket: any) => {
     });
 });
 
-if (!IS_TEST) {
+if (!IS_TEST && process.env.NODE_ENV !== "test") {
     // Production gate: never serve traffic without the authoritative database.
     // assertPostgresConnection throws in production when PG is unreachable.
     if (isProductionStrict()) {

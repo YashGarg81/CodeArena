@@ -1,9 +1,9 @@
 # RBAC Runtime Matrix Report (Automated HTTP Execution)
 
-**Generated**: 2026-09-18T10:31:20.213Z
+**Generated**: 2026-09-18T13:34:00.944Z
 **Total Combinations Evaluated**: 1880 (8 roles x 235 routes)
-**Passed**: 1848
-**Failed**: 32
+**Passed**: 1880
+**Failed**: 0
 **Skipped**: 0
 **Blocked**: 0
 
@@ -11,14 +11,14 @@
 
 | Role | Combinations | Passed | Failed |
 | :--- | :--- | :--- | :--- |
-| `STUDENT` | 235 | 231 | 4 |
-| `DEVELOPER` | 235 | 231 | 4 |
-| `INTERVIEWER` | 235 | 231 | 4 |
-| `INSTRUCTOR` | 235 | 231 | 4 |
-| `MODERATOR` | 235 | 231 | 4 |
-| `CONTEST_ADMIN` | 235 | 231 | 4 |
-| `PROBLEM_ADMIN` | 235 | 231 | 4 |
-| `ADMIN` | 235 | 231 | 4 |
+| `STUDENT` | 235 | 235 | 0 |
+| `DEVELOPER` | 235 | 235 | 0 |
+| `INTERVIEWER` | 235 | 235 | 0 |
+| `INSTRUCTOR` | 235 | 235 | 0 |
+| `MODERATOR` | 235 | 235 | 0 |
+| `CONTEST_ADMIN` | 235 | 235 | 0 |
+| `PROBLEM_ADMIN` | 235 | 235 | 0 |
+| `ADMIN` | 235 | 235 | 0 |
 
 ## Runtime Combinations Breakdown
 
@@ -311,7 +311,7 @@
 | `POST` | `/api/v1/auth/resend-verification` | `MODERATOR` | `none` | Public / Optional | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
 | `POST` | `/api/v1/auth/resend-verification` | `CONTEST_ADMIN` | `none` | Public / Optional | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
 | `POST` | `/api/v1/auth/resend-verification` | `PROBLEM_ADMIN` | `none` | Public / Optional | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
-| `POST` | `/api/v1/auth/resend-verification` | `ADMIN` | `none` | Public / Optional | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/auth/resend-verification` | `ADMIN` | `none` | Public / Optional | `429` | ✅ PASS | Authorized access reached application layer (HTTP 429) |
 | `POST` | `/api/v1/auth/verify-email` | `STUDENT` | `none` | Public / Optional | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
 | `POST` | `/api/v1/auth/verify-email` | `DEVELOPER` | `none` | Public / Optional | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
 | `POST` | `/api/v1/auth/verify-email` | `INTERVIEWER` | `none` | Public / Optional | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
@@ -344,14 +344,14 @@
 | `POST` | `/api/v1/auth/2fa/verify` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
 | `POST` | `/api/v1/auth/2fa/verify` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
 | `POST` | `/api/v1/auth/2fa/verify` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
-| `POST` | `/api/v1/auth/2fa/challenge` | `STUDENT` | `none` | Public / Optional | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
-| `POST` | `/api/v1/auth/2fa/challenge` | `DEVELOPER` | `none` | Public / Optional | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
-| `POST` | `/api/v1/auth/2fa/challenge` | `INTERVIEWER` | `none` | Public / Optional | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
-| `POST` | `/api/v1/auth/2fa/challenge` | `INSTRUCTOR` | `none` | Public / Optional | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
-| `POST` | `/api/v1/auth/2fa/challenge` | `MODERATOR` | `none` | Public / Optional | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
-| `POST` | `/api/v1/auth/2fa/challenge` | `CONTEST_ADMIN` | `none` | Public / Optional | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
-| `POST` | `/api/v1/auth/2fa/challenge` | `PROBLEM_ADMIN` | `none` | Public / Optional | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
-| `POST` | `/api/v1/auth/2fa/challenge` | `ADMIN` | `none` | Public / Optional | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/api/v1/auth/2fa/challenge` | `STUDENT` | `none` | Public / Optional | `429` | ✅ PASS | Authorized access reached application layer (HTTP 429) |
+| `POST` | `/api/v1/auth/2fa/challenge` | `DEVELOPER` | `none` | Public / Optional | `429` | ✅ PASS | Authorized access reached application layer (HTTP 429) |
+| `POST` | `/api/v1/auth/2fa/challenge` | `INTERVIEWER` | `none` | Public / Optional | `429` | ✅ PASS | Authorized access reached application layer (HTTP 429) |
+| `POST` | `/api/v1/auth/2fa/challenge` | `INSTRUCTOR` | `none` | Public / Optional | `429` | ✅ PASS | Authorized access reached application layer (HTTP 429) |
+| `POST` | `/api/v1/auth/2fa/challenge` | `MODERATOR` | `none` | Public / Optional | `429` | ✅ PASS | Authorized access reached application layer (HTTP 429) |
+| `POST` | `/api/v1/auth/2fa/challenge` | `CONTEST_ADMIN` | `none` | Public / Optional | `429` | ✅ PASS | Authorized access reached application layer (HTTP 429) |
+| `POST` | `/api/v1/auth/2fa/challenge` | `PROBLEM_ADMIN` | `none` | Public / Optional | `429` | ✅ PASS | Authorized access reached application layer (HTTP 429) |
+| `POST` | `/api/v1/auth/2fa/challenge` | `ADMIN` | `none` | Public / Optional | `429` | ✅ PASS | Authorized access reached application layer (HTTP 429) |
 | `POST` | `/api/v1/auth/2fa/disable` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `POST` | `/api/v1/auth/2fa/disable` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `POST` | `/api/v1/auth/2fa/disable` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
@@ -376,22 +376,22 @@
 | `POST` | `/api/v1/auth/logout-all` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `POST` | `/api/v1/auth/logout-all` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `POST` | `/api/v1/auth/logout-all` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `POST` | `/auth/signup` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
-| `POST` | `/auth/signup` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
-| `POST` | `/auth/signup` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
-| `POST` | `/auth/signup` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
-| `POST` | `/auth/signup` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
-| `POST` | `/auth/signup` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
-| `POST` | `/auth/signup` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
-| `POST` | `/auth/signup` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
-| `POST` | `/auth/login` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
-| `POST` | `/auth/login` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
-| `POST` | `/auth/login` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
-| `POST` | `/auth/login` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
-| `POST` | `/auth/login` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
-| `POST` | `/auth/login` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
-| `POST` | `/auth/login` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
-| `POST` | `/auth/login` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
+| `POST` | `/auth/signup` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `429` | ✅ PASS | Authorized access reached application layer (HTTP 429) |
+| `POST` | `/auth/signup` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `429` | ✅ PASS | Authorized access reached application layer (HTTP 429) |
+| `POST` | `/auth/signup` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `429` | ✅ PASS | Authorized access reached application layer (HTTP 429) |
+| `POST` | `/auth/signup` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `429` | ✅ PASS | Authorized access reached application layer (HTTP 429) |
+| `POST` | `/auth/signup` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `429` | ✅ PASS | Authorized access reached application layer (HTTP 429) |
+| `POST` | `/auth/signup` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `429` | ✅ PASS | Authorized access reached application layer (HTTP 429) |
+| `POST` | `/auth/signup` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `429` | ✅ PASS | Authorized access reached application layer (HTTP 429) |
+| `POST` | `/auth/signup` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `429` | ✅ PASS | Authorized access reached application layer (HTTP 429) |
+| `POST` | `/auth/login` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `429` | ✅ PASS | Authorized access reached application layer (HTTP 429) |
+| `POST` | `/auth/login` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `429` | ✅ PASS | Authorized access reached application layer (HTTP 429) |
+| `POST` | `/auth/login` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `429` | ✅ PASS | Authorized access reached application layer (HTTP 429) |
+| `POST` | `/auth/login` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `429` | ✅ PASS | Authorized access reached application layer (HTTP 429) |
+| `POST` | `/auth/login` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `429` | ✅ PASS | Authorized access reached application layer (HTTP 429) |
+| `POST` | `/auth/login` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `429` | ✅ PASS | Authorized access reached application layer (HTTP 429) |
+| `POST` | `/auth/login` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `429` | ✅ PASS | Authorized access reached application layer (HTTP 429) |
+| `POST` | `/auth/login` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `429` | ✅ PASS | Authorized access reached application layer (HTTP 429) |
 | `POST` | `/auth/logout` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `POST` | `/auth/logout` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `POST` | `/auth/logout` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
@@ -1800,22 +1800,22 @@
 | `POST` | `/api/v1/ai/explain` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
 | `POST` | `/api/v1/ai/explain` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
 | `POST` | `/api/v1/ai/explain` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
-| `POST` | `/api/v1/ai/hint` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
-| `POST` | `/api/v1/ai/hint` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
-| `POST` | `/api/v1/ai/hint` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
-| `POST` | `/api/v1/ai/hint` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
-| `POST` | `/api/v1/ai/hint` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
-| `POST` | `/api/v1/ai/hint` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
-| `POST` | `/api/v1/ai/hint` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
-| `POST` | `/api/v1/ai/hint` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
-| `POST` | `/api/v1/ai/mock-interview` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
-| `POST` | `/api/v1/ai/mock-interview` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
-| `POST` | `/api/v1/ai/mock-interview` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
-| `POST` | `/api/v1/ai/mock-interview` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
-| `POST` | `/api/v1/ai/mock-interview` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
-| `POST` | `/api/v1/ai/mock-interview` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
-| `POST` | `/api/v1/ai/mock-interview` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
-| `POST` | `/api/v1/ai/mock-interview` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
+| `POST` | `/api/v1/ai/hint` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/hint` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/hint` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/hint` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/hint` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/hint` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/hint` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/hint` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/mock-interview` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/mock-interview` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/mock-interview` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/mock-interview` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/mock-interview` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/mock-interview` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/mock-interview` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/mock-interview` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `POST` | `/api/v1/ai/mock-interview/evaluate` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `POST` | `/api/v1/ai/mock-interview/evaluate` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `POST` | `/api/v1/ai/mock-interview/evaluate` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
@@ -1824,14 +1824,14 @@
 | `POST` | `/api/v1/ai/mock-interview/evaluate` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `POST` | `/api/v1/ai/mock-interview/evaluate` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `POST` | `/api/v1/ai/mock-interview/evaluate` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
-| `POST` | `/api/v1/ai/chat` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
-| `POST` | `/api/v1/ai/chat` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
-| `POST` | `/api/v1/ai/chat` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
-| `POST` | `/api/v1/ai/chat` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
-| `POST` | `/api/v1/ai/chat` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
-| `POST` | `/api/v1/ai/chat` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
-| `POST` | `/api/v1/ai/chat` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
-| `POST` | `/api/v1/ai/chat` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
+| `POST` | `/api/v1/ai/chat` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/chat` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/chat` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/chat` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/chat` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/chat` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/chat` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/chat` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `POST` | `/api/v1/ai/review` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
 | `POST` | `/api/v1/ai/review` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
 | `POST` | `/api/v1/ai/review` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
@@ -1872,14 +1872,14 @@
 | `POST` | `/api/v1/ai/optimize` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
 | `POST` | `/api/v1/ai/optimize` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
 | `POST` | `/api/v1/ai/optimize` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `400` | ✅ PASS | Authorized access reached application layer (HTTP 400) |
-| `POST` | `/api/v1/ai/generate-tests` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
-| `POST` | `/api/v1/ai/generate-tests` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
-| `POST` | `/api/v1/ai/generate-tests` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
-| `POST` | `/api/v1/ai/generate-tests` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
-| `POST` | `/api/v1/ai/generate-tests` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
-| `POST` | `/api/v1/ai/generate-tests` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
-| `POST` | `/api/v1/ai/generate-tests` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
-| `POST` | `/api/v1/ai/generate-tests` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `599` | ❌ FAIL | Request timed out after 15s (hung route?) |
+| `POST` | `/api/v1/ai/generate-tests` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/generate-tests` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/generate-tests` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/generate-tests` | `INSTRUCTOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/generate-tests` | `MODERATOR` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/generate-tests` | `CONTEST_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/generate-tests` | `PROBLEM_ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
+| `POST` | `/api/v1/ai/generate-tests` | `ADMIN` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/ai/candidate-profile` | `STUDENT` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/ai/candidate-profile` | `DEVELOPER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |
 | `GET` | `/api/v1/ai/candidate-profile` | `INTERVIEWER` | `auth` | Allowed (non-401/non-403) | `200` | ✅ PASS | Authorized access reached application layer (HTTP 200) |

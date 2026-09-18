@@ -2,14 +2,22 @@ import { PrismaClient } from "./generated/prisma";
 import { PrismaPg } from "@prisma/adapter-pg";
 
 const rawDbUrl = process.env.DATABASE_URL || "postgresql://postgres:postgrespassword@localhost:5432/codearena?schema=public";
-const dbUrl = rawDbUrl.includes("@postgres:") ? rawDbUrl.replace("@postgres:", "@localhost:") : rawDbUrl;
+// In Docker compose, the worker must connect to the postgres container by name.
+// Only rewrite @postgres: to @localhost: when running locally outside compose (dev mode).
+const isInCompose = process.env.DOCKER_COMPOSE === "true" || process.env.IN_DOCKER === "true";
+const dbUrl = (!isInCompose && rawDbUrl.includes("@postgres:")) ? rawDbUrl.replace("@postgres:", "@localhost:") : rawDbUrl;
+
+console.log("[Worker DB] Connecting to:", dbUrl.replace(/:[^:]+@/, ":****@"));
 
 let rawPrisma: any;
 try {
   const adapter = new PrismaPg({ connectionString: dbUrl });
   rawPrisma = new PrismaClient({ adapter } as any);
-} catch {
-  rawPrisma = new PrismaClient();
+  console.log("[Worker DB] PrismaPg adapter connected successfully");
+} catch (e: any) {
+  console.error("[Worker DB] PrismaPg adapter failed:", e.message);
+  console.log("[Worker DB] Falling back to PrismaClient without adapter");
+  rawPrisma = new PrismaClient({ datasources: { db: { url: dbUrl } } });
 }
 
 export function isProductionStrict(): boolean {
@@ -17,11 +25,19 @@ export function isProductionStrict(): boolean {
 }
 
 export async function assertWorkerPostgres(): Promise<void> {
-  try {
-    await rawPrisma.$queryRaw`SELECT 1`;
-  } catch (err: any) {
-    throw new Error(`Production Database Error: PostgreSQL is unavailable: ${err?.message || err}`);
+  let lastErr: any;
+  for (let attempt = 1; attempt <= 10; attempt++) {
+    try {
+      await rawPrisma.$queryRaw`SELECT 1`;
+      console.log("[Worker DB] PostgreSQL connection verified");
+      return;
+    } catch (err: any) {
+      lastErr = err;
+      console.warn(`[Worker DB] Connection attempt ${attempt}/10 failed: ${err.message}`);
+      await new Promise(r => setTimeout(r, 2000));
+    }
   }
+  throw new Error(`Production Database Error: PostgreSQL is unavailable after retries: ${lastErr?.message || lastErr}`);
 }
 
 const workerStore: Record<string, any[]> = {

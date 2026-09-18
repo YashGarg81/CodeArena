@@ -302,7 +302,16 @@ export async function compileInDocker(
   }
 
   const image = resolveDockerImage(languageKey);
-  const hostPath = path.resolve(options.folderPath);
+  // Translate container path to host path for Docker volume mount
+  const containerScratchBase = "/app/worker/scratch";
+  const hostScratchBase = process.env.WORKER_SCRATCH_HOST_PATH || containerScratchBase;
+  let hostPath: string;
+  if (options.folderPath.startsWith(containerScratchBase)) {
+    const relativePath = options.folderPath.slice(containerScratchBase.length);
+    hostPath = path.join(hostScratchBase, relativePath);
+  } else {
+    hostPath = path.resolve(options.folderPath);
+  }
   const timeoutMs = options.timeoutMs || 15000;
 
   await ensureLanguageVolumes(languageKey);
@@ -417,7 +426,18 @@ export async function runInDocker(
   }
 
   const image = resolveDockerImage(languageKey);
-  const hostPath = path.resolve(folderPath);
+  // Translate container path to host path for Docker volume mount
+  // When worker runs in container with bind mount, folderPath is container path (e.g., /app/worker/scratch/code_xxx)
+  // Host path is WORKER_SCRATCH_HOST_PATH (e.g., /host/path/worker-scratch)
+  const containerScratchBase = "/app/worker/scratch";
+  const hostScratchBase = process.env.WORKER_SCRATCH_HOST_PATH || containerScratchBase;
+  let hostPath: string;
+  if (folderPath.startsWith(containerScratchBase)) {
+    const relativePath = folderPath.slice(containerScratchBase.length);
+    hostPath = path.join(hostScratchBase, relativePath);
+  } else {
+    hostPath = path.resolve(folderPath);
+  }
   const memory = `${memoryLimitMb || 256}m`;
 
   await ensureLanguageVolumes(languageKey);

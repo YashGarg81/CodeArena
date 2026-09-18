@@ -2,6 +2,7 @@
 import { Router } from "express";
 import { prisma } from "../db";
 import { auth, type AuthenticatedRequest } from "./auth";
+import { IS_TEST } from "./config";
 
 export const aiRouter = Router();
 
@@ -45,6 +46,7 @@ export function generateProgressiveHint(problemTitle: string, hintLevel = 1): st
  * Live external LLM provider caller (OpenAI / Gemini / Anthropic compatible endpoint).
  */
 async function callLiveLLM(prompt: string, systemInstruction?: string): Promise<{ text: string; tokensUsed: number; model: string } | null> {
+  if (IS_TEST || process.env.NODE_ENV === "test" || process.env.SKIP_LLM === "true") return null;
   const apiKey = process.env.AI_API_KEY || process.env.OPENAI_API_KEY || process.env.GEMINI_API_KEY;
   if (!apiKey) return null;
 
@@ -200,27 +202,30 @@ Your goal is to evaluate their logic, ask probing questions on edge cases, discu
 
     let reply = "That's an interesting approach! Before we write the code, what is the expected Time and Space complexity, and how will it handle duplicate or negative inputs?";
 
-    try {
-      const response = await fetch(apiEndpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model,
-          messages,
-          temperature: 0.4,
-          max_tokens: 500,
-        })
-      });
+    if (apiKey && !IS_TEST && process.env.NODE_ENV !== "test" && process.env.SKIP_LLM !== "true") {
+      try {
+        const response = await fetch(apiEndpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({
+            model,
+            messages,
+            temperature: 0.4,
+            max_tokens: 500,
+          }),
+          signal: AbortSignal.timeout(6000),
+        });
 
-      if (response.ok) {
-        const json: any = await response.json();
-        reply = json.choices?.[0]?.message?.content || reply;
+        if (response.ok) {
+          const json: any = await response.json();
+          reply = json.choices?.[0]?.message?.content || reply;
+        }
+      } catch (err: any) {
+        console.warn("[AI Mock Interviewer] LLM error:", err.message);
       }
-    } catch (err: any) {
-      console.warn("[AI Mock Interviewer] LLM error:", err.message);
     }
 
     res.json({
@@ -300,8 +305,9 @@ Provide an objective JSON assessment (scores from 1 to 10):
     const apiEndpoint = process.env.AI_API_ENDPOINT || "https://gorouter.app/v1/chat/completions";
     const model = process.env.AI_MODEL || "claude-opus-5-thinking";
 
-    try {
-      const response = await fetch(apiEndpoint, {
+    if (apiKey && !IS_TEST && process.env.NODE_ENV !== "test" && process.env.SKIP_LLM !== "true") {
+      try {
+        const response = await fetch(apiEndpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -338,6 +344,7 @@ Provide an objective JSON assessment (scores from 1 to 10):
     } catch (llmErr) {
       console.warn("[Mock Interview Evaluator] LLM error, falling back to AST analysis:", llmErr);
     }
+  }
 
     // Heuristic Fallback based on genuine user code & dialog
     const review = aiMentorEngine.reviewCode(code, language);

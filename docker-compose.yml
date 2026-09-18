@@ -77,8 +77,11 @@ services:
       SANDBOX_MODE: ${SANDBOX_MODE:-docker}
       DOCKER_SANDBOX: ${DOCKER_SANDBOX:-true}
       STRICT_SANDBOX: ${STRICT_SANDBOX:-false}
+      DOCKER_COMPOSE: "true"
+      WORKER_SCRATCH_HOST_PATH: ${WORKER_SCRATCH_HOST_PATH:-${PWD}/worker-scratch}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ${WORKER_SCRATCH_HOST_PATH:-${PWD}/worker-scratch}:/app/worker/scratch
     depends_on:
       postgres:
         condition: service_healthy
