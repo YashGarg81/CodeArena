@@ -151,6 +151,7 @@ jobs:
             -e NODE_ENV=test \
             -e SANDBOX_MODE=docker \
             -v /var/run/docker.sock:/var/run/docker.sock \
+            -v /tmp:/tmp \
             codearena-worker:ci \
             bun test
 

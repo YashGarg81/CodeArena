@@ -318,7 +318,7 @@ export async function compileInDocker(
     fs.chmodSync(hostPath, 0o777);
     if (fs.existsSync(hostPath) && fs.statSync(hostPath).isDirectory()) {
       for (const f of fs.readdirSync(hostPath)) {
-        try { fs.chmodSync(path.join(hostPath, f), 0o666); } catch {}
+        try { fs.chmodSync(path.join(hostPath, f), 0o777); } catch {}
       }
     }
   } catch {}
@@ -453,7 +453,7 @@ export async function runInDocker(
     fs.chmodSync(hostPath, 0o777);
     if (fs.existsSync(hostPath) && fs.statSync(hostPath).isDirectory()) {
       for (const f of fs.readdirSync(hostPath)) {
-        try { fs.chmodSync(path.join(hostPath, f), 0o666); } catch {}
+        try { fs.chmodSync(path.join(hostPath, f), 0o777); } catch {}
       }
     }
   } catch {}

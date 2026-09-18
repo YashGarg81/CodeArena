@@ -1,4 +1,7 @@
 import { test, expect, describe } from "bun:test";
+import fs from "fs";
+import os from "os";
+import path from "path";
 import { LanguageAdapterRegistry, type SupportedLanguage } from "./src/adapters";
 import { LANGUAGE_IMAGES } from "./src/sandbox/dockerRunner";
 import { DRIVERS } from "./drivers";
@@ -61,9 +64,8 @@ describe("Issue 11 — Multi-Language Compatibility & Adapter Validation Matrix"
     test("JS adapter correctly executes standard input/output programs", async () => {
         const adapter = LanguageAdapterRegistry.get("js");
         expect(adapter).toBeDefined();
-        const tmpFolder = __dirname + "/code_matrix_test";
-        const fs = await import("fs");
-        if (!fs.existsSync(tmpFolder)) fs.mkdirSync(tmpFolder, { recursive: true });
+        const tmpFolder = fs.mkdtempSync(path.join(os.tmpdir(), "code_matrix_test_"));
+        try { fs.chmodSync(tmpFolder, 0o777); } catch {}
 
         try {
             const result = await adapter!.execute({
@@ -84,9 +86,8 @@ describe("Issue 11 — Multi-Language Compatibility & Adapter Validation Matrix"
 
     test("JS adapter enforces timeout limits (TLE)", async () => {
         const adapter = LanguageAdapterRegistry.get("js");
-        const tmpFolder = __dirname + "/code_matrix_tle";
-        const fs = await import("fs");
-        if (!fs.existsSync(tmpFolder)) fs.mkdirSync(tmpFolder, { recursive: true });
+        const tmpFolder = fs.mkdtempSync(path.join(os.tmpdir(), "code_matrix_tle_"));
+        try { fs.chmodSync(tmpFolder, 0o777); } catch {}
 
         try {
             const result = await adapter!.execute({
