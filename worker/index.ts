@@ -155,6 +155,9 @@ connectWorkerRedis()
             const problemId = parsedResponse?.problemId;
             const code = parsedResponse?.code;
             const language = parsedResponse?.language || "js";
+            const isRun = parsedResponse?.isRun === true;
+            const runTestInput = parsedResponse?.testInput;
+            const runExpectedOutput = parsedResponse?.expectedOutput;
 
             if (!submissionId || !problemId || typeof code !== "string") {
                 console.error(`[Queue Error] Submission payload missing required fields:`, parsedResponse);
@@ -162,7 +165,7 @@ connectWorkerRedis()
                 continue;
             }
 
-            console.log(`\n[Queue] Evaluating submission ${submissionId} for [${problemId}] in (${language})...`);
+            console.log(`\n[Queue] Evaluating submission ${submissionId} for [${problemId}] in (${language})${isRun ? " (RUN MODE)" : ""}...`);
 
             const sandboxCheck = await validateSandboxSafety().catch((sandboxErr: any) => ({
                 safe: false,
@@ -221,7 +224,15 @@ connectWorkerRedis()
 
                 // Canonical test cases: use relational TestCases table, fallback to legacy JSON if not migrated
                 let testCases: TestCase[] = [];
-                if (problem.testCasesRel && problem.testCasesRel.length > 0) {
+                if (isRun && runTestInput !== undefined && runExpectedOutput !== undefined) {
+                    // Run mode: use the single test case provided in the job payload
+                    testCases = [{
+                        input: runTestInput,
+                        output: runExpectedOutput,
+                        isHidden: false
+                    }];
+                    console.log(`[Run Mode] Using provided test case for submission ${submissionId}`);
+                } else if (problem.testCasesRel && problem.testCasesRel.length > 0) {
                     testCases = problem.testCasesRel.map((tc: any) => ({
                         input: tc.input,
                         output: tc.expectedOutput,
@@ -447,7 +458,7 @@ connectWorkerRedis()
                     }
                 } catch {}
 
-                if (finalStatus === "Success") {
+                if (finalStatus === "Success" && !isRun) {
                     // 1. Idempotently increment problem solveCount: only if this user hasn't already solved this problem
                     let alreadySolvedByUser = false;
                     if (existingSubmission?.userId) {

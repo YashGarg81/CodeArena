@@ -4208,7 +4208,7 @@ app.delete("/api/v1/admin/contests/:id", adminAuth, async (req: any, res) => {
 
 // ─── RUN CODE / SUBMISSIONS ───────────────────────────────────────────────────
 
-// Ephemeral custom run execution endpoint (instant feedback)
+// Ephemeral custom run execution endpoint (instant feedback) - uses worker queue for Docker-based execution
 app.post("/api/v1/submissions/run", runCodeRateLimiter, auth, async (req: any, res) => {
     const { problemId, code, language = "js", input, expectedOutput } = req.body;
     if (!problemId || typeof code !== "string" || !code.trim()) return res.status(400).json({ error: "problemId and non-empty code are required" });
@@ -4226,10 +4226,76 @@ app.post("/api/v1/submissions/run", runCodeRateLimiter, auth, async (req: any, r
         const testInput = input !== undefined ? String(input).slice(0, 64_000) : (publicTc?.input || "");
         const expected = expectedOutput !== undefined ? String(expectedOutput).slice(0, 64_000) : (publicTc?.output || "");
 
-        const result = await executeSingleTest(problemId, code, language, testInput, expected, problem.timeLimit || 4000);
+        // Create a run submission record and queue to worker for Docker-based execution
+        const submission = await prisma.submissions.create({
+            data: {
+                problemId,
+                userId: req.userId,
+                code,
+                language,
+                status: "Processing",
+                testCasesTotal: 1,
+                testCasesPassed: 0,
+                isPublic: false
+            }
+        });
+
+        // Queue to worker for Docker-based execution
+        const redis = getRedisClient();
+        if (redis) {
+            await redis.lPush("problems", JSON.stringify({ 
+                submissionId: submission.id, 
+                problemId, 
+                code, 
+                language,
+                isRun: true,  // Flag to indicate this is a run (single test case)
+                testInput,
+                expectedOutput: expected
+            }));
+        }
+
+        // Poll for result (max 30 seconds)
+        const maxWaitMs = 30000;
+        const pollIntervalMs = 500;
+        const startTime = Date.now();
+        let result = null;
+
+        while (Date.now() - startTime < maxWaitMs) {
+            await new Promise(r => setTimeout(r, pollIntervalMs));
+            const updated = await prisma.submissions.findUnique({ where: { id: submission.id } });
+            if (updated && updated.status !== "Processing") {
+                result = updated;
+                break;
+            }
+        }
+
+        if (!result) {
+            // Timeout - return pending status
+            return res.json({ 
+                result: { 
+                    passed: false, 
+                    got: "", 
+                    expected, 
+                    runtime: 0, 
+                    error: "Execution timed out. Please check submission status." 
+                },
+                submissionId: submission.id,
+                status: "pending"
+            });
+        }
+
         recordJudgeRun(language, result.passed ? "AC" : (result.error ? "RE" : "WA"), result.runtime || 0);
 
-        res.json({ result });
+        // Convert submission result to run result format
+        const runResult = {
+            passed: result.status === "Success",
+            got: result.output || "",
+            expected,
+            runtime: result.runtime || 0,
+            error: result.status !== "Success" ? (result.output || result.errorMessage || "Execution failed") : undefined
+        };
+
+        res.json({ result: runResult, submissionId: submission.id });
     } catch (err: any) { res.status(500).json({ error: safeErrorMessage(err) }); }
 });
 
